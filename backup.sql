@@ -219,6 +219,48 @@ CREATE TABLE IF NOT EXISTS packaging_material (
     INDEX (material_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS packaging_solution (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    structure_type VARCHAR(255) NOT NULL,
+    sequence INT NOT NULL,
+    storage_condition_id BIGINT UNSIGNED NOT NULL,
+    display_shelf_life_days INT NOT NULL,
+    product_id BIGINT UNSIGNED NOT NULL,
+    product_category_id BIGINT UNSIGNED NOT NULL,
+    product_form_id BIGINT UNSIGNED NOT NULL,
+    packaging_treatment_id BIGINT UNSIGNED NOT NULL,
+    packing_type_id BIGINT UNSIGNED NOT NULL,
+    packaging_machine_id BIGINT UNSIGNED NOT NULL,
+    packaging_material_id BIGINT UNSIGNED NOT NULL,
+    product_min_weight DECIMAL(10,2) NOT NULL,
+    product_max_weight DECIMAL(10,2) NOT NULL,
+    min_order_quantity INT NOT NULL,
+    min_order_quantity_unit_id BIGINT UNSIGNED NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (storage_condition_id) REFERENCES storage_condition(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES product(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_category_id) REFERENCES categories(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_form_id) REFERENCES product_form(id) ON DELETE CASCADE,
+    FOREIGN KEY (packaging_treatment_id) REFERENCES packing_treatment(id) ON DELETE CASCADE,
+    FOREIGN KEY (packing_type_id) REFERENCES packing_type(id) ON DELETE CASCADE,
+    FOREIGN KEY (packaging_machine_id) REFERENCES packing_machine(id) ON DELETE CASCADE,
+    FOREIGN KEY (packaging_material_id) REFERENCES packaging_material(id) ON DELETE CASCADE,
+    FOREIGN KEY (min_order_quantity_unit_id) REFERENCES measurement_unit(id) ON DELETE CASCADE,
+    INDEX (structure_type),
+    INDEX (sequence),
+    INDEX (display_shelf_life_days),
+    INDEX (product_id),
+    INDEX (product_category_id),
+    INDEX (product_form_id),
+    INDEX (packaging_treatment_id),
+    INDEX (packing_type_id),
+    INDEX (packaging_machine_id),
+    INDEX (packaging_material_id),
+    INDEX (min_order_quantity)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
 -- Banner and Advertisement
 
 CREATE TABLE IF NOT EXISTS banner (

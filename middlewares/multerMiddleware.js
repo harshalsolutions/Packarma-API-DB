@@ -6,7 +6,9 @@ const storage = diskStorage({
         cb(null, "./media");
     },
     filename: function (req, file, cb) {
-        cb(null, `${req.body.fileName}`);
+        const fileExtension = path.extname(file.originalname);
+        const title = req.body.title.replace(/\s+/g, '_').toLowerCase();
+        cb(null, `${req.body.type.toLowerCase()}_${title}${fileExtension}`);
     }
 });
 

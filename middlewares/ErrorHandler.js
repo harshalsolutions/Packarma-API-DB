@@ -6,7 +6,6 @@ const ErrorHandler = (err, req, res, next) => {
         null,
         err.message || 'An unexpected error occurred'
     );
-
     res.status(response.statusCode).json(response);
 };
 

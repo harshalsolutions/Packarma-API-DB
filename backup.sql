@@ -236,20 +236,6 @@ CREATE TABLE IF NOT EXISTS banner (
     INDEX (title)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS advertisement (
-    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    description TEXT,
-    start_date_time DATETIME NOT NULL,
-    end_date_time DATETIME NOT NULL,
-    link VARCHAR(511),
-    app_page VARCHAR(255),
-    image VARCHAR(511) NOT NULL,
-    status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
-    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX (title)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS banner_activity (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -265,6 +251,21 @@ CREATE TABLE IF NOT EXISTS banner_activity (
     INDEX (activity_timestamp)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS advertisement (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    start_date_time DATETIME NOT NULL,
+    end_date_time DATETIME NOT NULL,
+    link VARCHAR(511),
+    app_page VARCHAR(255),
+    image VARCHAR(511) NOT NULL,
+    status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX (title)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS advertisement_activity (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     user_id INT UNSIGNED NOT NULL,
@@ -277,4 +278,12 @@ CREATE TABLE IF NOT EXISTS advertisement_activity (
     INDEX (advertisement_id),
     INDEX (activity_type),
     INDEX (activity_timestamp)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS advertisement_product (
+    advertisement_id BIGINT UNSIGNED NOT NULL,
+    product_id BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY (advertisement_id, product_id),
+    FOREIGN KEY (advertisement_id) REFERENCES advertisement(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES product(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

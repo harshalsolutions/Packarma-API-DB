@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import authMiddleware from '../middlewares/authMiddleware.js';
-import { getUserController, loginController, registerController, requestOtpController, requestPasswordResetOtpController, resetPasswordController, updateUserController, verifyOtpController } from "../controllers/userController.js"
+import authMiddleware from '../../middlewares/authMiddleware.js';
+import { getUserController, loginController, registerController, requestOtpController, requestPasswordResetOtpController, resetPasswordController, updateUserController, verifyOtpController } from "../../controllers/App/userController.js"
 const router = Router();
 
 router.post('/register', registerController);

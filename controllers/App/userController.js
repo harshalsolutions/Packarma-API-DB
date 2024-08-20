@@ -1,9 +1,9 @@
-import ApiResponse from '../utils/ApiResponse.js';
-import pool from '../config/database.js';
+import ApiResponse from '../../utils/ApiResponse.js';
+import pool from '../../config/database.js';
 import bcrypt from 'bcryptjs';
-import otpGenerator from '../utils/otpGenerator.js';
-import sendOtpEmail from "../utils/emailSender.js";
-import CustomError from '../utils/CustomError.js';
+import otpGenerator from '../../utils/otpGenerator.js';
+import sendOtpEmail from "../../utils/emailSender.js";
+import CustomError from '../../utils/CustomError.js';
 import dotenv from 'dotenv';
 import jwt from "jsonwebtoken";
 dotenv.config();
@@ -11,7 +11,7 @@ dotenv.config();
 const handleError = (error, next) => {
     if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Email already in use'));
     if (error.code === 'ER_BAD_FIELD_ERROR') return next(new CustomError(400, 'Invalid field in update query'));
-    next(new CustomError(500, error.message));
+    else next(new CustomError(500, error.message));
 };
 
 const generateToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });

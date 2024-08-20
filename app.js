@@ -2,9 +2,11 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import userRoutes from './routes/App/userRoutes.js';
-import bannerRoutes from './routes/Admin/bannerRoutes.js';
-import advertisementRoutes from './routes/Admin/advertisementRoutes.js';
+import userAppRoutes from './routes/App/userAppRoutes.js';
+import advertisementAppRoutes from './routes/App/advertisementAppRoutes.js';
+import bannerAppRoutes from './routes/App/bannerAppRoutes.js';
+import bannerAdminRoutes from './routes/Admin/bannerAdminRoutes.js';
+import advertisementAdminRoutes from './routes/Admin/advertisementAdminRoutes.js';
 
 export const app = express();
 
@@ -16,8 +18,10 @@ app.use('/media', express.static(path.join(__dirname, 'media')));
 
 
 //Application Routes
-app.use('/api/app/users', userRoutes);
+app.use('/api/app/users', userAppRoutes);
+app.use('/api/app/banners', bannerAppRoutes);
+app.use('/api/app/advertisements', advertisementAppRoutes);
 
 //Admin Routes
-app.use('/api/admin/banners', bannerRoutes);
-app.use('/api/admin/advertisement', advertisementRoutes);
+app.use('/api/admin/banners', bannerAdminRoutes);
+app.use('/api/admin/advertisements', advertisementAdminRoutes);

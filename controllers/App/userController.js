@@ -30,10 +30,8 @@ export const registerController = async (req, res, next) => {
                 'INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)',
                 [firstname, lastname, email, hashedPassword]
             );
-
             const userId = userResult.insertId;
             const newReferralCode = generateReferralCode(10);
-
             if (referralCode) {
                 const [referralCodeResult] = await connection.query(
                     'SELECT id FROM referral_codes WHERE code = ?',
@@ -42,7 +40,6 @@ export const registerController = async (req, res, next) => {
 
                 if (referralCodeResult.length > 0) {
                     const referralCodeId = referralCodeResult[0].id;
-
                     await connection.query(
                         'INSERT INTO referrals (referral_code_id, referred_user_id, account_created) VALUES (?, ?, ?)',
                         [referralCodeId, userId, true]
@@ -51,14 +48,16 @@ export const registerController = async (req, res, next) => {
                     throw new CustomError(400, 'Invalid referral code');
                 }
             }
-
-            await connection.query(
+            const [newReferralCodeResult] = await connection.query(
                 'INSERT INTO referral_codes (user_id, code) VALUES (?, ?)',
                 [userId, newReferralCode]
             );
-
+            const newReferralCodeId = newReferralCodeResult.insertId;
+            await connection.query(
+                'UPDATE users SET referral_code_id = ? WHERE user_id = ?',
+                [newReferralCodeId, userId]
+            );
             await connection.commit();
-
             res.status(201).json(new ApiResponse(201, { referralCode: newReferralCode }, 'User registered successfully'));
         } catch (error) {
             await connection.rollback();

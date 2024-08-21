@@ -16,8 +16,6 @@ CREATE TABLE IF NOT EXISTS users (
     email_verified_at TIMESTAMP NULL,
     phone_number VARCHAR(20) NULL,
     country_code VARCHAR(5) NULL,
-    building VARCHAR(100) NULL,
-    area VARCHAR(100) NULL,
     referral_code_id INT UNSIGNED NULL,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

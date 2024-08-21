@@ -8,22 +8,43 @@ CREATE TABLE IF NOT EXISTS users (
     firstname VARCHAR(50) NOT NULL,
     lastname VARCHAR(50) NOT NULL,
     email VARCHAR(191) NOT NULL UNIQUE,
+    email_domain VARCHAR(100) NULL,
     password VARCHAR(255) NOT NULL,
     email_verified BOOLEAN DEFAULT 0,
-    approved BOOLEAN DEFAULT 0,
-    approved_by INT UNSIGNED NULL,
     gst_number VARCHAR(50) NULL,
     gst_document_link VARCHAR(511) NULL,
     email_verified_at TIMESTAMP NULL,
     phone_number VARCHAR(20) NULL,
     country_code VARCHAR(5) NULL,
+    building VARCHAR(100) NULL,
+    area VARCHAR(100) NULL,
+    referral_code_id INT UNSIGNED NULL,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX (email)
-    -- FOREIGN KEY (approved_by) REFERENCES users(user_id) ON DELETE SET NULL
+    INDEX (email),
+    INDEX (referral_code_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS referral_codes (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id INT UNSIGNED NOT NULL,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS referrals (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    referral_code_id INT UNSIGNED NOT NULL,
+    referred_user_id INT UNSIGNED NOT NULL,
+    account_created BOOLEAN DEFAULT 0,
+    subscription_completed BOOLEAN DEFAULT 0,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX (referral_code_id),
+    INDEX (referred_user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS otp (
     otp_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -32,9 +53,29 @@ CREATE TABLE IF NOT EXISTS otp (
     otp VARCHAR(6) NOT NULL,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     expiresAt TIMESTAMP NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     INDEX (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Adding Foreign Keys
+
+ALTER TABLE users
+ADD CONSTRAINT fk_users_referral_code_id
+FOREIGN KEY (referral_code_id) REFERENCES referral_codes(id) ON DELETE SET NULL;
+
+ALTER TABLE referral_codes
+ADD CONSTRAINT fk_referral_codes_user_id
+FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE;
+
+ALTER TABLE referrals
+ADD CONSTRAINT fk_referrals_referral_code_id
+FOREIGN KEY (referral_code_id) REFERENCES referral_codes(id) ON DELETE CASCADE,
+ADD CONSTRAINT fk_referrals_referred_user_id
+FOREIGN KEY (referred_user_id) REFERENCES users(user_id) ON DELETE CASCADE;
+
+ALTER TABLE otp
+ADD CONSTRAINT fk_otp_user_id
+FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE;
+
 
 -- Country and City Table
 

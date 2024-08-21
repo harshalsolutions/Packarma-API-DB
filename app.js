@@ -6,6 +6,7 @@ import userAppRoutes from './routes/App/userAppRoutes.js';
 import advertisementAppRoutes from './routes/App/advertisementAppRoutes.js';
 import bannerAppRoutes from './routes/App/bannerAppRoutes.js';
 import productAppRoutes from './routes/App/productAppRoutes.js';
+import referalAppRoutes from './routes/App/referralAppRoutes.js';
 
 import bannerAdminRoutes from './routes/Admin/bannerAdminRoutes.js';
 import advertisementAdminRoutes from './routes/Admin/advertisementAdminRoutes.js';
@@ -24,6 +25,7 @@ app.use('/api/app/users', userAppRoutes);
 app.use('/api/app/banners', bannerAppRoutes);
 app.use('/api/app/advertisements', advertisementAppRoutes);
 app.use('/api/app/product', productAppRoutes);
+app.use('/api/app/referral', referalAppRoutes);
 
 //Admin Routes
 app.use('/api/admin/banners', bannerAdminRoutes);

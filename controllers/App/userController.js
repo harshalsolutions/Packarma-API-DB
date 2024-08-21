@@ -6,6 +6,8 @@ import sendOtpEmail from "../../utils/emailSender.js";
 import CustomError from '../../utils/CustomError.js';
 import dotenv from 'dotenv';
 import jwt from "jsonwebtoken";
+import { generateReferralCode } from '../../utils/generateReferalCode.js';
+
 dotenv.config();
 
 const handleError = (error, next) => {
@@ -18,15 +20,57 @@ const generateToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET, {
 
 export const registerController = async (req, res, next) => {
     try {
-        const { firstname, lastname, email, password } = req.body;
+        const { firstname, lastname, email, password, referralCode } = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);
-        await pool.query('INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)',
-            [firstname, lastname, email, hashedPassword]);
-        res.status(201).json(new ApiResponse(201, null, 'User registered successfully'));
+        const connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        try {
+            const [userResult] = await connection.query(
+                'INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)',
+                [firstname, lastname, email, hashedPassword]
+            );
+
+            const userId = userResult.insertId;
+            const newReferralCode = generateReferralCode(10);
+
+            if (referralCode) {
+                const [referralCodeResult] = await connection.query(
+                    'SELECT id FROM referral_codes WHERE code = ?',
+                    [referralCode]
+                );
+
+                if (referralCodeResult.length > 0) {
+                    const referralCodeId = referralCodeResult[0].id;
+
+                    await connection.query(
+                        'INSERT INTO referrals (referral_code_id, referred_user_id, account_created) VALUES (?, ?, ?)',
+                        [referralCodeId, userId, true]
+                    );
+                } else {
+                    throw new CustomError(400, 'Invalid referral code');
+                }
+            }
+
+            await connection.query(
+                'INSERT INTO referral_codes (user_id, code) VALUES (?, ?)',
+                [userId, newReferralCode]
+            );
+
+            await connection.commit();
+
+            res.status(201).json(new ApiResponse(201, { referralCode: newReferralCode }, 'User registered successfully'));
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
     } catch (error) {
         handleError(error, next);
     }
 };
+
 
 export const loginController = async (req, res, next) => {
     try {
@@ -51,13 +95,27 @@ export const updateUserController = async (req, res, next) => {
         const updateData = req.body;
         const fields = Object.keys(updateData).map(field => `${field} = ?`).join(', ');
         const values = [...Object.values(updateData), userId];
-        const query = `UPDATE users SET ${fields}, updatedAt = CURRENT_TIMESTAMP WHERE user_id = ?`;
-        await pool.query(query, values);
-        res.json(new ApiResponse(200, null, 'User updated successfully'));
+
+        const connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        try {
+            const query = `UPDATE users SET ${fields}, updatedAt = CURRENT_TIMESTAMP WHERE user_id = ?`;
+            await connection.query(query, values);
+
+            await connection.commit();
+            res.json(new ApiResponse(200, null, 'User updated successfully'));
+        } catch (error) {
+            await connection.rollback();
+            handleError(error, next);
+        } finally {
+            connection.release();
+        }
     } catch (error) {
         handleError(error, next);
     }
 };
+
 
 export const getUserController = async (req, res, next) => {
     try {
@@ -96,19 +154,40 @@ export const verifyOtpController = async (req, res, next) => {
         const userId = req.user.userId;
         const { otp } = req.body;
 
-        const [rows] = await pool.query('SELECT otp, expiresAt FROM otp WHERE user_id = ? AND otp_type = "verify_email"', [userId]);
-        if (!rows.length) throw new CustomError(404, 'OTP not found');
+        const connection = await pool.getConnection();
+        await connection.beginTransaction();
 
-        const { otp: savedOtp, expiresAt } = rows[0];
-        if (savedOtp !== otp || Date.now() > new Date(expiresAt).getTime()) throw new CustomError(400, 'Invalid or expired OTP');
-
-        await pool.query('UPDATE users SET email_verified = 1, email_verified_at = CURRENT_TIMESTAMP WHERE user_id = ?', [userId]);
-        await pool.query('DELETE FROM otp WHERE user_id = ? AND otp_type = "verify_email"', [userId]);
-        res.json(new ApiResponse(200, null, 'Email Verified!'));
+        try {
+            const [rows] = await connection.query(
+                'SELECT otp, expiresAt FROM otp WHERE user_id = ? AND otp_type = "verify_email"',
+                [userId]
+            );
+            if (!rows.length) throw new CustomError(404, 'OTP not found');
+            const { otp: savedOtp, expiresAt } = rows[0];
+            if (savedOtp !== otp || Date.now() > new Date(expiresAt).getTime()) {
+                throw new CustomError(400, 'Invalid or expired OTP');
+            }
+            await connection.query(
+                'UPDATE users SET email_verified = 1, email_verified_at = CURRENT_TIMESTAMP WHERE user_id = ?',
+                [userId]
+            );
+            await connection.query(
+                'DELETE FROM otp WHERE user_id = ? AND otp_type = "verify_email"',
+                [userId]
+            );
+            await connection.commit();
+            res.json(new ApiResponse(200, null, 'Email Verified!'));
+        } catch (error) {
+            await connection.rollback();
+            handleError(error, next);
+        } finally {
+            connection.release();
+        }
     } catch (error) {
-        next(error);
+        handleError(error, next);
     }
 };
+
 
 export const requestPasswordResetOtpController = async (req, res, next) => {
     try {
@@ -132,17 +211,42 @@ export const resetPasswordController = async (req, res, next) => {
     try {
         const { email, otp, newPassword } = req.body;
 
-        const [rows] = await pool.query('SELECT otp, expiresAt FROM otp WHERE user_id = (SELECT user_id FROM users WHERE email = ?) AND otp_type = "reset_password"', [email]);
-        if (!rows.length) throw new CustomError(404, 'User not found or OTP expired');
+        const connection = await pool.getConnection();
+        await connection.beginTransaction();
 
-        const { otp: savedOtp, expiresAt } = rows[0];
-        if (savedOtp !== otp || Date.now() > new Date(expiresAt).getTime()) throw new CustomError(400, 'Invalid or expired OTP');
+        try {
+            const [rows] = await connection.query(
+                'SELECT otp, expiresAt FROM otp WHERE user_id = (SELECT user_id FROM users WHERE email = ?) AND otp_type = "reset_password"',
+                [email]
+            );
 
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        await pool.query('UPDATE users SET password = ?, updatedAt = CURRENT_TIMESTAMP WHERE email = ?', [hashedPassword, email]);
-        await pool.query('DELETE FROM otp WHERE user_id = (SELECT user_id FROM users WHERE email = ?) AND otp_type = "reset_password"', [email]);
-        res.json(new ApiResponse(200, null, 'Password updated successfully'));
+            if (!rows.length) throw new CustomError(404, 'User not found or OTP expired');
+
+            const { otp: savedOtp, expiresAt } = rows[0];
+            if (savedOtp !== otp || Date.now() > new Date(expiresAt).getTime()) {
+                throw new CustomError(400, 'Invalid or expired OTP');
+            }
+
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+            await connection.query(
+                'UPDATE users SET password = ?, updatedAt = CURRENT_TIMESTAMP WHERE email = ?',
+                [hashedPassword, email]
+            );
+
+            await connection.query(
+                'DELETE FROM otp WHERE user_id = (SELECT user_id FROM users WHERE email = ?) AND otp_type = "reset_password"',
+                [email]
+            );
+
+            await connection.commit();
+            res.json(new ApiResponse(200, null, 'Password updated successfully'));
+        } catch (error) {
+            await connection.rollback();
+            handleError(error, next);
+        } finally {
+            connection.release();
+        }
     } catch (error) {
-        next(new CustomError(500, error.message));
+        handleError(error, next);
     }
 };

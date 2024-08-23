@@ -7,6 +7,7 @@ import CustomError from '../../utils/CustomError.js';
 import dotenv from 'dotenv';
 import jwt from "jsonwebtoken";
 import { generateReferralCode } from '../../utils/generateReferalCode.js';
+import upload from '../../middlewares/multerMiddleware.js';
 
 dotenv.config();
 
@@ -247,5 +248,93 @@ export const resetPasswordController = async (req, res, next) => {
         }
     } catch (error) {
         handleError(error, next);
+    }
+};
+
+export const updatePasswordController = async (req, res, next) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const userId = req.user.userId;
+
+        const connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        try {
+            const [rows] = await connection.query(
+                'SELECT password FROM users WHERE user_id = ?',
+                [userId]
+            );
+
+            if (!rows.length) throw new CustomError(404, 'User not found');
+
+            const { password: hashedPassword } = rows[0];
+
+            const isPasswordValid = await bcrypt.compare(currentPassword, hashedPassword);
+            if (!isPasswordValid) {
+                throw new CustomError(400, 'Current password is incorrect');
+            }
+
+            const newHashedPassword = await bcrypt.hash(newPassword, 10);
+            await connection.query(
+                'UPDATE users SET password = ?, updatedAt = CURRENT_TIMESTAMP WHERE user_id = ?',
+                [newHashedPassword, userId]
+            );
+
+            await connection.commit();
+            res.json(new ApiResponse(200, null, 'Password updated successfully'));
+        } catch (error) {
+            await connection.rollback();
+            handleError(error, next);
+        } finally {
+            connection.release();
+        }
+    } catch (error) {
+        handleError(error, next);
+    }
+};
+
+
+export const freeCreditDocumentController = async (req, res, next) => {
+    const connection = await pool.getConnection();
+    const userId = req.user.userId;
+
+    try {
+        const { email_domain, gst_number } = req.body;
+        let gst_document_link = null;
+        if (req.file) {
+            gst_document_link = `/media/${req.body.type}/${req.file.filename}`;
+        }
+
+        await connection.beginTransaction();
+
+        const updateData = [];
+        let query = 'UPDATE users SET ';
+
+        if (email_domain) {
+            query += 'email_domain = ?, ';
+            updateData.push(email_domain);
+        }
+        if (gst_number) {
+            query += 'gst_number = ?, ';
+            updateData.push(gst_number);
+        }
+        if (gst_document_link) {
+            query += 'gst_document_link = ?, ';
+            updateData.push(gst_document_link);
+        }
+
+        query = query.slice(0, -2);
+        query += ' WHERE user_id = ?';
+        updateData.push(userId);
+
+        await connection.query(query, updateData);
+        await connection.commit();
+
+        res.json(new ApiResponse(200, null, 'Data updated successfully'));
+    } catch (error) {
+        await connection.rollback();
+        handleError(error, next);
+    } finally {
+        connection.release();
     }
 };

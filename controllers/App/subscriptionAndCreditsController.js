@@ -1,6 +1,7 @@
 import ApiResponse from '../../utils/ApiResponse.js';
 import pool from '../../config/database.js';
 import CustomError from '../../utils/CustomError.js';
+import { handleError } from "../../utils/ErrorHandler.js"
 
 export const modifyCredits = async (req, res, next) => {
     const { credits, description } = req.body;

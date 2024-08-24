@@ -6,18 +6,18 @@ import { addUserSubscription, getCreditHistory, modifyCredits } from '../../cont
 
 const router = Router();
 
-router.use(authMiddleware);
 
 router.post('/register', registerController);
 router.post('/login', loginController);
-
-
-router.get('/me', getUserController);
-router.put('/update-user', updateUserController);
 router.post('/otp/request', requestOtpController);
 router.post('/otp/verify', verifyOtpController);
 router.post('/password/otp/request', requestPasswordResetOtpController);
 router.post('/password/reset', resetPasswordController);
+
+router.use(authMiddleware);
+
+router.get('/me', getUserController);
+router.put('/update-user', updateUserController);
 router.post('/password/update', updatePasswordController);
 
 

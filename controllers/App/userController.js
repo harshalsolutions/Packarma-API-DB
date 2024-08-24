@@ -7,15 +7,10 @@ import CustomError from '../../utils/CustomError.js';
 import dotenv from 'dotenv';
 import jwt from "jsonwebtoken";
 import { generateReferralCode } from '../../utils/generateReferalCode.js';
-import upload from '../../middlewares/multerMiddleware.js';
+import { handleError } from "../../utils/ErrorHandler.js"
 
 dotenv.config();
 
-const handleError = (error, next) => {
-    if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Email already in use'));
-    if (error.code === 'ER_BAD_FIELD_ERROR') return next(new CustomError(400, 'Invalid field in update query'));
-    else next(new CustomError(500, error.message));
-};
 
 const generateToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
@@ -133,48 +128,65 @@ export const getUserController = async (req, res, next) => {
 
 export const requestOtpController = async (req, res, next) => {
     try {
-        const userId = req.user.userId;
-        const [rows] = await pool.query('SELECT email FROM users WHERE user_id = ?', [userId]);
-        if (!rows.length) throw new CustomError(404, 'User not found');
+        const { email } = req.body;
+        const [userRows] = await pool.query('SELECT user_id FROM users WHERE email = ?', [email]);
 
-        const user = rows[0];
+        if (userRows.length === 0) {
+            throw new CustomError(404, 'User not found');
+        }
+
+        const userId = userRows[0].user_id;
+        const otpType = 'verify_email';
+
+        await pool.query('DELETE FROM otp WHERE user_id = ? AND otp_type = ?', [userId, otpType]);
+
         const otp = otpGenerator();
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-        await pool.query('INSERT INTO otp (user_id, otp_type, otp, expiresAt) VALUES (?, ?, ?, ?)',
-            [userId, 'verify_email', otp, expiresAt]);
-        await sendOtpEmail(user.email, otp);
+
+        await pool.query(
+            'INSERT INTO otp (user_id, otp_type, otp, expiresAt) VALUES (?, ?, ?, ?)',
+            [userId, otpType, otp, expiresAt]
+        );
+
+        await sendOtpEmail(email, otp);
+
         res.json(new ApiResponse(200, null, 'OTP sent successfully'));
     } catch (error) {
         next(new CustomError(500, error.message));
     }
 };
 
+
 export const verifyOtpController = async (req, res, next) => {
     try {
-        const userId = req.user.userId;
-        const { otp } = req.body;
+        const { email, otp } = req.body;
 
         const connection = await pool.getConnection();
         await connection.beginTransaction();
 
         try {
             const [rows] = await connection.query(
-                'SELECT otp, expiresAt FROM otp WHERE user_id = ? AND otp_type = "verify_email"',
-                [userId]
+                'SELECT otp, expiresAt FROM otp WHERE user_id = (SELECT user_id FROM users WHERE email = ?) AND otp_type = "verify_email"',
+                [email]
             );
+
             if (!rows.length) throw new CustomError(404, 'OTP not found');
+
             const { otp: savedOtp, expiresAt } = rows[0];
             if (savedOtp !== otp || Date.now() > new Date(expiresAt).getTime()) {
                 throw new CustomError(400, 'Invalid or expired OTP');
             }
+
             await connection.query(
-                'UPDATE users SET email_verified = 1, email_verified_at = CURRENT_TIMESTAMP WHERE user_id = ?',
-                [userId]
+                'UPDATE users SET email_verified = 1, email_verified_at = CURRENT_TIMESTAMP WHERE email = ?',
+                [email]
             );
+
             await connection.query(
-                'DELETE FROM otp WHERE user_id = ? AND otp_type = "verify_email"',
-                [userId]
+                'DELETE FROM otp WHERE user_id = (SELECT user_id FROM users WHERE email = ?) AND otp_type = "verify_email"',
+                [email]
             );
+
             await connection.commit();
             res.json(new ApiResponse(200, null, 'Email Verified!'));
         } catch (error) {
@@ -188,24 +200,35 @@ export const verifyOtpController = async (req, res, next) => {
     }
 };
 
-
 export const requestPasswordResetOtpController = async (req, res, next) => {
     try {
         const { email } = req.body;
         const [rows] = await pool.query('SELECT user_id, email FROM users WHERE email = ?', [email]);
+
         if (!rows.length) throw new CustomError(404, 'User not found');
 
         const user = rows[0];
+        const otpType = 'reset_password';
+
+        await pool.query('DELETE FROM otp WHERE user_id = ? AND otp_type = ?', [user.user_id, otpType]);
+
         const otp = otpGenerator();
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-        await pool.query('INSERT INTO otp (user_id, otp_type, otp, expiresAt) VALUES (?, ?, ?, ?)',
-            [user.user_id, 'reset_password', otp, expiresAt]);
+
+        await pool.query(
+            'INSERT INTO otp (user_id, otp_type, otp, expiresAt) VALUES (?, ?, ?, ?)',
+            [user.user_id, otpType, otp, expiresAt]
+        );
+
         await sendOtpEmail(user.email, otp);
+
         res.json(new ApiResponse(200, null, 'OTP sent successfully for password reset'));
     } catch (error) {
         next(new CustomError(500, error.message));
     }
 };
+
+
 
 export const resetPasswordController = async (req, res, next) => {
     try {
@@ -250,6 +273,7 @@ export const resetPasswordController = async (req, res, next) => {
         handleError(error, next);
     }
 };
+
 
 export const updatePasswordController = async (req, res, next) => {
     try {

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getCategoryController, getPackagingTreatmentsController, getPackingTypesController, getProductsController, getProductWeightOptionsController, getShelfLifeOptionsController, searchProductSuggestionsController } from '../../controllers/App/ProductController.js';
+import { getCategoryController, getPackagingTreatmentsController, getPackingTypesController, getProductsController, getProductWeightOptionsController, getShelfLifeOptionsController, searchPackagingSolutionsController, searchProductSuggestionsController } from '../../controllers/App/ProductController.js';
 const router = Router();
 
 router.get('/category', getCategoryController);
@@ -11,5 +11,7 @@ router.get('/packing-types', getPackingTypesController);
 router.get('/shelf-life-options', getShelfLifeOptionsController);
 router.get('/product-weight-options', getProductWeightOptionsController);
 
+
+router.post('/search-solution', searchPackagingSolutionsController);
 
 export default router;

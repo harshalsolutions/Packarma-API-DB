@@ -101,15 +101,36 @@ export const getProductsController = async (req, res, next) => {
         }
 
         let query = `
-            SELECT id AS product_id, product_name, product_image
-            FROM product
-            WHERE sub_category_id = ?
+            SELECT 
+                p.id AS product_id,
+                p.product_name,
+                p.category_id,
+                c.name AS category_name,
+                p.sub_category_id,
+                sc.name AS subcategory_name,
+                p.product_form_id,
+                pf.name AS product_form_name,
+                p.packing_treatment_id,
+                pt.name AS packing_treatment_name,
+                p.measurement_unit_id,
+                mu.name AS measurement_unit_name,
+                p.product_image,
+                p.status,
+                p.createdAt,
+                p.updatedAt
+            FROM product p
+            JOIN categories c ON p.category_id = c.id
+            JOIN subcategories sc ON p.sub_category_id = sc.id
+            JOIN product_form pf ON p.product_form_id = pf.id
+            JOIN packing_treatment pt ON p.packing_treatment_id = pt.id
+            JOIN measurement_unit mu ON p.measurement_unit_id = mu.id
+            WHERE p.sub_category_id = ?
         `;
 
         const queryParams = [sub_category_id];
 
         if (status) {
-            query += ' AND status = ?';
+            query += ' AND p.status = ?';
             queryParams.push(status);
         }
 
@@ -124,6 +145,7 @@ export const getProductsController = async (req, res, next) => {
         next(new CustomError(500, error.message));
     }
 };
+
 
 export const searchProductSuggestionsController = async (req, res, next) => {
     try {
@@ -238,6 +260,73 @@ export const getProductWeightOptionsController = async (req, res, next) => {
         }));
 
         res.json(new ApiResponse(200, weightOptions, 'Product weight options fetched successfully'));
+    } catch (error) {
+        next(new CustomError(500, error.message));
+    }
+};
+
+export const searchPackagingSolutionsController = async (req, res, next) => {
+    try {
+        const {
+            category_id,
+            product_id,
+            packing_type_id,
+            shelf_life_days,
+            product_weight,
+            grams
+        } = req.body;
+
+        const { limit = 10 } = req.query;
+
+        let query = `
+            SELECT ps.*, c.name AS category_name, p.product_name
+            FROM packaging_solution ps
+            JOIN categories c ON ps.product_category_id = c.id
+            JOIN product p ON ps.product_id = p.id
+            JOIN packaging_material pm ON ps.packaging_material_id = pm.id
+            WHERE 1 = 1
+        `;
+
+        const queryParams = [];
+
+        if (category_id) {
+            query += ' AND ps.product_category_id = ?';
+            queryParams.push(category_id);
+        }
+
+        if (product_id) {
+            query += ' AND ps.product_id = ?';
+            queryParams.push(product_id);
+        }
+
+        if (packing_type_id) {
+            query += ' AND ps.packing_type_id = ?';
+            queryParams.push(packing_type_id);
+        }
+
+        if (shelf_life_days) {
+            query += ' AND ps.display_shelf_life_days >= ?';
+            queryParams.push(shelf_life_days);
+        }
+
+        if (product_weight) {
+            query += ' AND ps.product_min_weight <= ? AND ps.product_max_weight >= ?';
+            queryParams.push(product_weight, product_weight);
+        }
+
+        if (grams) {
+            query += ' AND pm.gsm >= ?';
+            queryParams.push(grams);
+        }
+
+        query += ' ORDER BY ps.id LIMIT ?';
+        queryParams.push(parseInt(limit));
+
+        const [rows] = await pool.query(query, queryParams);
+
+        if (!rows.length) throw new CustomError(404, 'No packaging solutions found');
+
+        res.json(new ApiResponse(200, rows, 'Packaging solutions fetched successfully'));
     } catch (error) {
         next(new CustomError(500, error.message));
     }

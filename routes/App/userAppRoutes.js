@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import authMiddleware from '../../middlewares/authMiddleware.js';
-import { freeCreditDocumentController, getUserController, loginController, registerController, requestOtpController, requestPasswordResetOtpController, resetPasswordController, updatePasswordController, updateUserController, verifyOtpController } from "../../controllers/App/userController.js"
+import { addHelpSupportController, freeCreditDocumentController, getUserController, loginController, registerController, requestOtpController, requestPasswordResetOtpController, resetPasswordController, updatePasswordController, updateUserController, verifyOtpController } from "../../controllers/App/userController.js"
 import upload from '../../middlewares/multerMiddleware.js';
 import { addUserSubscription, getCreditHistory, modifyCredits } from '../../controllers/App/subscriptionAndCreditsController.js';
 
@@ -13,6 +13,8 @@ router.post('/otp/request', requestOtpController);
 router.post('/otp/verify', verifyOtpController);
 router.post('/password/otp/request', requestPasswordResetOtpController);
 router.post('/password/reset', resetPasswordController);
+
+router.post('/add-help-support', addHelpSupportController);
 
 router.use(authMiddleware);
 

@@ -362,3 +362,29 @@ export const freeCreditDocumentController = async (req, res, next) => {
         connection.release();
     }
 };
+
+export const addHelpSupportController = async (req, res, next) => {
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        const { name, phone_number, issue } = req.body;
+
+        if (!name || !issue) throw new CustomError(400, 'Name and issue are required');
+
+        await connection.query(
+            'INSERT INTO help_support (name, phone_number, issue) VALUES (?, ?, ?)',
+            [name, phone_number, issue]
+        );
+
+        await connection.commit();
+
+        res.json(new ApiResponse(201, null, 'Help and support request added successfully'));
+    } catch (error) {
+        await connection.rollback();
+        next(new CustomError(500, error.message));
+    } finally {
+        connection.release();
+    }
+};
+

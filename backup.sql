@@ -335,6 +335,18 @@ CREATE TABLE IF NOT EXISTS packaging_solution (
     INDEX (min_order_quantity)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS search_history (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    user_id INT UNSIGNED NOT NULL,
+    packaging_solution_id BIGINT UNSIGNED NOT NULL,
+    search_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (packaging_solution_id) REFERENCES packaging_solution(id) ON DELETE CASCADE,
+    INDEX (user_id),
+    INDEX (packaging_solution_id),
+    INDEX (search_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 -- Banner and Advertisement
 

@@ -331,3 +331,61 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
         next(new CustomError(500, error.message));
     }
 };
+
+export const addSearchHistoryController = async (req, res, next) => {
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
+        const userId = req.user.userId;
+        const { packaging_solution_id } = req.body;
+
+        const insertQuery = `
+            INSERT INTO search_history (user_id, packaging_solution_id)
+            VALUES (?, ?)
+        `;
+
+        const [result] = await connection.query(insertQuery, [userId, packaging_solution_id]);
+
+        if (result.affectedRows === 0) {
+            throw new CustomError(400, 'Failed to add search history');
+        }
+
+        await connection.commit();
+        res.json(new ApiResponse(201, null, 'Search history added successfully'));
+    } catch (error) {
+        await connection.rollback();
+        next(new CustomError(500, error.message));
+    } finally {
+        connection.release();
+    }
+};
+
+export const getSearchHistoryController = async (req, res, next) => {
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
+        const userId = req.user.userId;
+        const selectQuery = `
+            SELECT sh.*, ps.*, u.firstname, u.lastname
+            FROM search_history sh
+            JOIN packaging_solution ps ON sh.packaging_solution_id = ps.id
+            JOIN users u ON sh.user_id = u.user_id
+            WHERE sh.user_id = ?
+            ORDER BY sh.search_time DESC
+        `;
+
+        const [rows] = await connection.query(selectQuery, [userId]);
+
+        if (!rows.length) {
+            throw new CustomError(404, 'No search history found');
+        }
+
+        await connection.commit();
+        res.json(new ApiResponse(200, rows, 'Search history fetched successfully'));
+    } catch (error) {
+        await connection.rollback();
+        next(new CustomError(500, error.message));
+    } finally {
+        connection.release();
+    }
+};

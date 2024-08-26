@@ -13,11 +13,11 @@ const router = express.Router();
 
 router.get('/get-banners', getAllBannerController);
 router.get('/get-banner/:id', getBannerController);
-router.post('/banners', upload.single("banner_image"), createBannerController);
-router.put('/update-banner/:id', updateBannerController);
+router.post('/add-banner', upload.single("banner_image"), createBannerController);
+router.patch('/update-banner/:id', upload.single("banner_image"), updateBannerController);
 router.delete('/delete-banner/:id', deleteBannerController);
 
-router.get('/activity-log/:bannerId', getBannerActivityStatsController);
+router.get('/activity-log/:id', getBannerActivityStatsController);
 
 
 export default router;

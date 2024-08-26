@@ -19,7 +19,7 @@ router.post('/add-help-support', addHelpSupportController);
 router.use(authMiddleware);
 
 router.get('/me', getUserController);
-router.put('/update-user', updateUserController);
+router.patch('/update-user', updateUserController);
 router.post('/password/update', updatePasswordController);
 
 

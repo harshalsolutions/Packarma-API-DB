@@ -14,8 +14,8 @@ import advertisementAdminRoutes from './routes/Admin/advertisementAdminRoutes.js
 
 export const app = express();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+export const __filename = fileURLToPath(import.meta.url);
+export const __dirname = dirname(__filename);
 
 app.use(express.json());
 app.use('/media', express.static(path.join(__dirname, 'media')));

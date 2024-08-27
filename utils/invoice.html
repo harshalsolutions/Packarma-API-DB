@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tax Invoice</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+        font-family: "Roboto", sans-serif;
+      }
+
+      body {
+        padding: 4rem;
+      }
+
+      .table-data {
+        font-size: 16px;
+        font-weight: 400;
+        text-align: center;
+        padding: 6px;
+      }
+
+      table {
+        border: 1px solid #000000;
+        width: 1024px;
+        border-collapse: collapse;
+        margin: auto;
+      }
+
+      td,
+      th {
+        white-space: nowrap;
+      }
+
+      .highlight {
+        background-color: #bad530;
+        font-weight: bold;
+      }
+
+      .footer {
+        width: 100%;
+        margin: auto;
+        font-size: 14px;
+        margin-top: 10px;
+      }
+
+      ol {
+        list-style-position: inside;
+      }
+    </style>
+  </head>
+
+  <body>
+    <table border="1" cellpadding="0" cellspacing="0">
+      <tbody>
+        <tr>
+          <td colspan="4" style="text-align: center">
+            <figure>
+              <img
+                src="data:image/png;base64,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"
+                alt="Company Logo"
+                width="81px"
+                height="85px"
+              />
+            </figure>
+          </td>
+
+          <td colspan="12" style="padding: 1rem">
+            <strong> Packult Studio Pvt. Ltd. </strong>
+            <p style="margin: 6px 0">
+              230, Udyog Bhavan, Sonawala Rd, Jay Prakash
+            </p>
+            <p style="margin: 6px 0">Nagar, Goregaon, Mumbai, Maharashtra</p>
+            <p>400063</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td colspan="5" class="table-data">
+            <span style="font-weight: 700"> GSTIN: </span>
+            27AAMCP2500K1ZD
+          </td>
+          <td colspan="6" class="table-data">
+            <span style="font-weight: 700"> CIN No.: </span>
+            U74999MH2021PTC366605
+          </td>
+          <td colspan="5" class="table-data">
+            <span style="font-weight: 700"> PAN No.: </span>
+            AAMCP2500K
+          </td>
+        </tr>
+
+        <tr>
+          <th
+            colspan="16"
+            style="
+              font-size: 18px;
+              text-align: center;
+              padding: 4px;
+              background: #bad530;
+            "
+          >
+            Tax Invoice
+          </th>
+        </tr>
+
+        <tr>
+          <td colspan="7" class="table-data">
+            <span style="font-weight: 700"> Invoice No: </span>
+            {{invoice_no}}
+          </td>
+          <td colspan="9" class="table-data">
+            <span style="font-weight: 700">State:</span>
+            {{state}}
+          </td>
+        </tr>
+
+        <tr>
+          <td colspan="7" class="table-data">
+            <span style="font-weight: 700"> Invoice Date: </span>
+            {{invoice_date}}
+          </td>
+          <td colspan="9"></td>
+        </tr>
+
+        <tr>
+          <th
+            colspan="16"
+            style="
+              font-size: 14px;
+              text-align: center;
+              padding: 4px;
+              background: #bad530;
+            "
+          >
+            Bill to Party
+          </th>
+        </tr>
+        <tr>
+          <td
+            colspan="16"
+            style="padding: 0.25rem; text-align: start"
+            class="table-data"
+          >
+            Name: {{customer_name}}
+          </td>
+        </tr>
+        <tr>
+          <td
+            colspan="16"
+            style="padding: 0.25rem; text-align: start"
+            class="table-data"
+          >
+            Address: {{customer_address}}
+          </td>
+        </tr>
+        <tr>
+          <td
+            colspan="16"
+            style="padding: 0.25rem; text-align: start"
+            class="table-data"
+          >
+            GSTIN: {{customer_gstin}}
+          </td>
+        </tr>
+        <tr>
+          <td
+            colspan="16"
+            style="padding: 0.25rem; text-align: start"
+            class="table-data"
+          >
+            State: {{state}} Code : India {{state}}
+          </td>
+        </tr>
+
+        <tr class="highlight">
+          <th rowspan="2" class="table-data">Sr. No</th>
+          <th rowspan="2" class="table-data" colspan="4">
+            Product Description
+          </th>
+          <th rowspan="2" class="table-data">Amount</th>
+          <th rowspan="2" class="table-data">Discount/Ad</th>
+          <th rowspan="2" class="table-data">Taxable Value</th>
+          <th colspan="2" class="table-data">CGST</th>
+          <th colspan="2" class="table-data">SGST</th>
+          <th colspan="2" class="table-data">IGST</th>
+          <th rowspan="2" class="table-data">Total</th>
+        </tr>
+
+        <tr class="highlight">
+          <th class="table-data">Rate</th>
+          <th class="table-data">Amount</th>
+          <th class="table-data">Rate</th>
+          <th class="table-data">Amount</th>
+          <th class="table-data">Rate</th>
+          <th class="table-data">Amount</th>
+        </tr>
+
+        {{PRODUCT_ROWS}}
+
+        <tr>
+          <td colspan="5" class="table-data" style="font-weight: 700">
+            Grand Total
+          </td>
+          <td class="table-data">&nbsp;</td>
+          <td class="table-data">&nbsp;</td>
+          <td class="table-data">&nbsp;</td>
+          <td class="table-data">&nbsp;</td>
+          <td class="table-data">&nbsp;</td>
+          <td class="table-data">&nbsp;</td>
+          <td class="table-data">&nbsp;</td>
+          <td class="table-data">&nbsp;</td>
+          <td class="table-data">&nbsp;</td>
+          <td class="table-data"><strong>₹ {{grand_total}}</strong></td>
+        </tr>
+
+        <tr>
+          <td class="table-data" style="font-weight: 700" colspan="16">
+            Total Invoice amount (in words): {{total_in_words}}
+          </td>
+        </tr>
+
+        <tr>
+          <th colspan="5" style="text-align: start; padding: 6px">
+            Bank Details
+          </th>
+          <th colspan="6">&nbsp;</th>
+          <th colspan="5" class="table-data">
+            <span style="font-weight: 700"> State : </span> Maharastra
+          </th>
+        </tr>
+
+        <tr>
+          <td
+            colspan="5"
+            class="table-data"
+            style="text-align: start; padding: 6px"
+          >
+            Bank Name: HDFC Bank
+          </td>
+          <td colspan="6" class="table-data">Transaction ID: 0000015486</td>
+          <td
+            colspan="5"
+            rowspan="2"
+            class="table-data"
+            style="white-space: wrap; text-align: start"
+          >
+            Certified that the particular given above are true and correct
+          </td>
+        </tr>
+
+        <tr>
+          <td
+            colspan="5"
+            class="table-data"
+            style="text-align: start; padding: 6px"
+          >
+            Bank A/C No. : 50200064942088
+          </td>
+          <td rowspan="2" colspan="6" class="table-data">Common Seal</td>
+        </tr>
+
+        <tr style="height: 3rem">
+          <td
+            colspan="5"
+            class="table-data"
+            style="text-align: start; padding: 6px"
+          >
+            Bank IFSC. : HDFC0000227
+          </td>
+          <td
+            colspan="5"
+            class="table-data"
+            style="white-space: wrap; text-align: start"
+          >
+            Authorised Signatory
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <ol>
+        <li>
+          This is a computer-generated invoice that does not require a
+          signature.
+        </li>
+
+        <li>Packarma is owned by Packult Studio Private Limited.</li>
+
+        <li>
+          Declaration: It is hereby certified that the above information is true
+          and correct and the GST charged in the above bill be paid to the
+          Government exchequer as per the provisions of GST. It is further
+          certified that the taxable service described above has been rendered
+          by us and no other consideration is received towards the above
+          service, directly or indirectly from the service receiver.
+        </li>
+      </ol>
+    </div>
+  </body>
+</html>

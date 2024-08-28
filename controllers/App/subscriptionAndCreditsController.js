@@ -93,3 +93,29 @@ export const addUserSubscription = async (req, res, next) => {
         handleError(error, next);
     }
 };
+
+export const getSubscriptionsController = async (req, res, next) => {
+    try {
+        let query = `
+            SELECT 
+                s.*, 
+                JSON_ARRAYAGG(sb.benefit_text) AS benefits
+            FROM 
+                subscriptions s
+            LEFT JOIN 
+                subscription_benefits sb 
+            ON 
+                s.id = sb.subscription_id
+            GROUP BY 
+                s.id;
+        `;
+
+        const [rows] = await pool.query(query);
+
+        if (!rows.length) throw new CustomError(404, 'No subscriptions found');
+
+        res.json(new ApiResponse(200, rows, 'Subscriptions fetched successfully'));
+    } catch (error) {
+        next(new CustomError(500, error.message));
+    }
+}

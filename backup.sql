@@ -131,13 +131,15 @@ CREATE TABLE IF NOT EXISTS cities (
 
 CREATE TABLE IF NOT EXISTS subscriptions (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    type ENUM('free','monthly','quarterly','semi_yearly','yearly') NOT NULL,
+    type VARCHAR(50) NOT NULL,  
     amount INT UNSIGNED NOT NULL,
     credit_amount INT UNSIGNED NOT NULL DEFAULT '0',
+    duration INT UNSIGNED NOT NULL, 
     deleted_at TIMESTAMP NULL DEFAULT NULL,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 CREATE TABLE IF NOT EXISTS user_subscriptions (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -424,6 +426,28 @@ CREATE TABLE IF NOT EXISTS help_support (
     name VARCHAR(100) NOT NULL,
     phone_number VARCHAR(20) NULL,
     issue TEXT NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Customer General Settings
+
+CREATE TABLE IF NOT EXISTS CustomerGeneralSettings (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    terms_and_conditions TEXT NOT NULL,
+    privacy_policy TEXT NOT NULL,
+    about_us TEXT,
+    instagram_link VARCHAR(511),
+    facebook_link VARCHAR(511),
+    twitter_link VARCHAR(511),
+    youtube_link VARCHAR(511),
+    app_link_android VARCHAR(511),
+    app_link_ios VARCHAR(511),
+    app_version_android VARCHAR(100),
+    app_version_ios VARCHAR(100),
+    credit_price DECIMAL(10, 2) DEFAULT 0.00,
+    credit_discount_price DECIMAL(10, 2) DEFAULT 0.00,
+    system_email VARCHAR(255) NOT NULL,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

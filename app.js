@@ -9,6 +9,8 @@ import productAppRoutes from './routes/App/productAppRoutes.js';
 import referalAppRoutes from './routes/App/referralAppRoutes.js';
 import addressAppRoutes from "./routes/App/addressAppRoutes.js"
 import invoiceAppRoutes from "./routes/App/InvoiceAppRoutes.js"
+import subscriptionAppRoutes from "./routes/App/SubscriptionCreditAppRoutes.js"
+import AppDataRoutes from "./routes/App/AppDataRoutes.js"
 
 import bannerAdminRoutes from './routes/Admin/bannerAdminRoutes.js';
 import advertisementAdminRoutes from './routes/Admin/advertisementAdminRoutes.js';
@@ -31,6 +33,8 @@ app.use('/api/app/product', productAppRoutes);
 app.use('/api/app/referral', referalAppRoutes);
 app.use('/api/app/address', addressAppRoutes);
 app.use('/api/app/invoice', invoiceAppRoutes);
+app.use('/api/app/subscription', subscriptionAppRoutes);
+app.use('/api/app/data', AppDataRoutes);
 
 //Admin Routes
 app.use('/api/admin/banners', bannerAdminRoutes);

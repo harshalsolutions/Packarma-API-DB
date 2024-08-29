@@ -15,6 +15,7 @@ import PaymentAppRoutes from "./routes/App/PaymentRoute.js"
 
 import bannerAdminRoutes from './routes/Admin/bannerAdminRoutes.js';
 import advertisementAdminRoutes from './routes/Admin/advertisementAdminRoutes.js';
+import productAdminRoutes from './routes/Admin/ProductAdminRoutes.js';
 
 export const app = express();
 
@@ -42,3 +43,4 @@ app.use('/api/app/payment', PaymentAppRoutes);
 //Admin Routes
 app.use('/api/admin/banners', bannerAdminRoutes);
 app.use('/api/admin/advertisements', advertisementAdminRoutes);
+app.use('/api/admin/product', productAdminRoutes);

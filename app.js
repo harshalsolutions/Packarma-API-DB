@@ -11,6 +11,7 @@ import addressAppRoutes from "./routes/App/addressAppRoutes.js"
 import invoiceAppRoutes from "./routes/App/InvoiceAppRoutes.js"
 import subscriptionAppRoutes from "./routes/App/SubscriptionCreditAppRoutes.js"
 import AppDataRoutes from "./routes/App/AppDataRoutes.js"
+import PaymentAppRoutes from "./routes/App/PaymentRoute.js"
 
 import bannerAdminRoutes from './routes/Admin/bannerAdminRoutes.js';
 import advertisementAdminRoutes from './routes/Admin/advertisementAdminRoutes.js';
@@ -35,6 +36,8 @@ app.use('/api/app/address', addressAppRoutes);
 app.use('/api/app/invoice', invoiceAppRoutes);
 app.use('/api/app/subscription', subscriptionAppRoutes);
 app.use('/api/app/data', AppDataRoutes);
+
+app.use('/api/app/payment', PaymentAppRoutes);
 
 //Admin Routes
 app.use('/api/admin/banners', bannerAdminRoutes);

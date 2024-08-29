@@ -2,9 +2,9 @@ import { handleError } from '../../utils/ErrorHandler.js';
 import CustomError from '../../utils/CustomError.js';
 import pdf from 'html-pdf';
 import fs from 'fs';
-import path, { format } from 'path';
+import path from 'path';
 import { totalInWords } from '../../utils/InvoiceUtils.js';
-
+import pool from '../../config/database.js';
 import { __dirname } from "../../app.js"
 
 export const generateInvoiceController = async (req, res, next) => {
@@ -74,5 +74,120 @@ export const generateInvoiceController = async (req, res, next) => {
         });
     } catch (error) {
         handleError(error, next);
+    }
+};
+
+export const getCreditInvoicesController = async (req, res, next) => {
+    try {
+        const userId = req.user.userId;
+
+        let query = `
+            SELECT id, user_id, plan_type, number_of_credits, total, invoice_date, createdAt, updatedAt 
+            FROM credit_invoice 
+        `;
+        const queryParams = [];
+
+        if (userId) {
+            query += ' WHERE user_id = ?';
+            queryParams.push(userId);
+        }
+
+        const [rows] = await pool.query(query, queryParams);
+
+        if (!rows.length) throw new CustomError(404, 'No credit invoices found');
+
+        res.json(new ApiResponse(200, rows, 'Credit invoices fetched successfully'));
+    } catch (error) {
+        next(new CustomError(500, error.message));
+    }
+};
+
+export const addCreditInvoiceController = async (req, res, next) => {
+    const connection = await pool.getConnection();
+    const userId = req.user.userId;
+
+    try {
+        const { plan_type, number_of_credits, total, invoice_date } = req.body;
+
+        if (!userId || !plan_type || !number_of_credits || !total || !invoice_date) {
+            throw new CustomError(400, 'All fields are required');
+        }
+
+        await connection.beginTransaction();
+
+        const query = `
+            INSERT INTO credit_invoice (user_id, plan_type, number_of_credits, total, invoice_date)
+            VALUES (?, ?, ?, ?, ?)
+        `;
+        const queryParams = [userId, plan_type, number_of_credits, total, invoice_date];
+
+        await connection.query(query, queryParams);
+
+        await connection.commit();
+
+        res.json(new ApiResponse(200, {}, 'Credit invoice added successfully'));
+    } catch (error) {
+        await connection.rollback();
+        next(new CustomError(500, error.message));
+    } finally {
+        connection.release();
+    }
+};
+
+
+export const getSubscriptionInvoicesController = async (req, res, next) => {
+    try {
+        const userId = req.user.userId;
+
+        let query = `
+            SELECT id, user_id, plan_type, total, invoice_date, createdAt, updatedAt 
+            FROM subscription_invoice 
+        `;
+        const queryParams = [];
+
+        if (userId) {
+            query += ' WHERE user_id = ?';
+            queryParams.push(userId);
+        }
+
+        const [rows] = await pool.query(query, queryParams);
+
+        if (!rows.length) throw new CustomError(404, 'No subscription invoices found');
+
+        res.json(new ApiResponse(200, rows, 'Subscription invoices fetched successfully'));
+    } catch (error) {
+        next(new CustomError(500, error.message));
+    }
+};
+
+
+export const addSubscriptionInvoiceController = async (req, res, next) => {
+    const connection = await pool.getConnection();
+    const userId = req.user.userId;
+    try {
+        const { plan_type, total, invoice_date } = req.body;
+
+        if (!userId || !plan_type || !total || !invoice_date) {
+            throw new CustomError(400, 'All fields are required');
+        }
+
+        await connection.beginTransaction();
+
+        const query = `
+            INSERT INTO subscription_invoice (user_id, plan_type, total, invoice_date)
+            VALUES (?, ?, ?, ?)
+        `;
+        const queryParams = [userId, plan_type, total, invoice_date];
+
+        await connection.query(query, queryParams);
+
+        await connection.commit();
+
+        res.json(new ApiResponse(200, {}, 'Subscription invoice added successfully'));
+    } catch (error) {
+        await connection.rollback();
+        next(new CustomError(500, error.message));
+    } finally {
+        connection.release();
     }
 };

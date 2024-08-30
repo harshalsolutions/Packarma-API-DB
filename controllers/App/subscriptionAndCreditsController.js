@@ -97,20 +97,14 @@ export const addUserSubscription = async (req, res, next) => {
 export const getSubscriptionsController = async (req, res, next) => {
     try {
         let query = `
-            SELECT 
-                s.*, 
-                JSON_ARRAYAGG(sb.benefit_text) AS benefits
-            FROM 
-                subscriptions s
-            LEFT JOIN 
-                subscription_benefits sb 
-            ON 
-                s.id = sb.subscription_id
-            GROUP BY 
-                s.id;
+            SELECT * FROM subscriptions;
         `;
 
         const [rows] = await pool.query(query);
+
+        rows.forEach(row => {
+            row.benefits = row.benefits ? row.benefits.split('#') : [];
+        });
 
         if (!rows.length) throw new CustomError(404, 'No subscriptions found');
 

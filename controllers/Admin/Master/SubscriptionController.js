@@ -10,15 +10,11 @@ export const getAllSubscriptionsController = async (req, res, next) => {
         const query = `
            SELECT 
                 s.*, 
-                JSON_ARRAYAGG(sb.benefit_text) AS benefits
+                IFNULL(s.benefits, '') AS benefits
             FROM 
                 subscriptions s
-            LEFT JOIN 
-                subscription_benefits sb 
-            ON 
-                s.id = sb.subscription_id
-            GROUP BY 
-                s.id
+            WHERE
+                s.deleted_at IS NULL
             LIMIT ? OFFSET ?;
         `;
 
@@ -28,7 +24,19 @@ export const getAllSubscriptionsController = async (req, res, next) => {
 
         if (!rows.length) throw new CustomError(404, 'No subscriptions found');
 
-        res.json(new ApiResponse(200, rows, 'Subscriptions fetched successfully'));
+        const total = totalCount[0].count;
+        const totalPages = Math.ceil(total / limit);
+        const pagination = {
+            currentPage: Number(page),
+            totalPages: totalPages,
+            totalItems: total,
+            itemsPerPage: Number(limit)
+        };
+
+        res.json(new ApiResponse(200, {
+            subscriptions: rows,
+            pagination
+        }));
     } catch (error) {
         next(new CustomError(500, error.message));
     }
@@ -36,10 +44,10 @@ export const getAllSubscriptionsController = async (req, res, next) => {
 
 export const createSubscriptionController = async (req, res, next) => {
     try {
-        const { type, amount, credit_amount, duration } = req.body;
+        const { type, amount, credit_amount, duration, benefits = '' } = req.body;
 
-        const query = 'INSERT INTO subscriptions (type, amount, credit_amount, duration) VALUES (?, ?, ?, ?)';
-        const [result] = await pool.query(query, [type, amount, credit_amount, duration]);
+        const query = 'INSERT INTO subscriptions (type, amount, credit_amount, duration, benefits) VALUES (?, ?, ?, ?, ?)';
+        const [result] = await pool.query(query, [type, amount, credit_amount, duration, benefits]);
 
         res.status(201).json(new ApiResponse(201, { id: result.insertId }, 'Subscription created successfully'));
     } catch (error) {
@@ -50,14 +58,14 @@ export const createSubscriptionController = async (req, res, next) => {
 export const updateSubscriptionController = async (req, res, next) => {
     try {
         const subscriptionId = req.params.id;
-        const { type, amount, credit_amount, duration } = req.body;
+        const { type, amount, credit_amount, duration, benefits } = req.body;
 
         const query = `
             UPDATE subscriptions 
-            SET type = ?, amount = ?, credit_amount = ?, duration = ?
+            SET type = ?, amount = ?, credit_amount = ?, duration = ?, benefits = ?
             WHERE id = ? AND deleted_at IS NULL
         `;
-        const [result] = await pool.query(query, [type, amount, credit_amount, duration, subscriptionId]);
+        const [result] = await pool.query(query, [type, amount, credit_amount, duration, benefits, subscriptionId]);
 
         if (result.affectedRows === 0) throw new CustomError(404, 'Subscription not found');
 

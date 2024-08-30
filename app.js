@@ -19,6 +19,8 @@ import bannerAdminRoutes from './routes/Admin/bannerAdminRoutes.js';
 import advertisementAdminRoutes from './routes/Admin/advertisementAdminRoutes.js';
 import productAdminRoutes from './routes/Admin/ProductAdminRoutes.js';
 import AuthAdminRoutes from "./routes/Admin/AuthAdminRoutes.js"
+import SubscriptionAdminRoutes from "./routes/Admin/Master/SubscriptionAdminRoutes.js"
+import BenefitsAdminRoutes from "./routes/Admin/Master/SubscriptionBenefitsAdminRoutes.js"
 
 export const app = express();
 
@@ -61,5 +63,6 @@ app.use('/api/admin/advertisements', advertisementAdminRoutes);
 app.use('/api/admin/product', productAdminRoutes);
 app.use('/api/admin/auth', AuthAdminRoutes);
 // Master Routes
-app.use('/api/admin/master',);
+app.use('/api/admin/master', SubscriptionAdminRoutes);
+app.use('/api/admin/master', BenefitsAdminRoutes);
 

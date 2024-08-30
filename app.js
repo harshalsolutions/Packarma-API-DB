@@ -1,7 +1,9 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import cors from "cors"
 import { dirname } from 'path';
+
 import userAppRoutes from './routes/App/userAppRoutes.js';
 import advertisementAppRoutes from './routes/App/advertisementAppRoutes.js';
 import bannerAppRoutes from './routes/App/bannerAppRoutes.js';
@@ -16,6 +18,8 @@ import PaymentAppRoutes from "./routes/App/PaymentRoute.js"
 import bannerAdminRoutes from './routes/Admin/bannerAdminRoutes.js';
 import advertisementAdminRoutes from './routes/Admin/advertisementAdminRoutes.js';
 import productAdminRoutes from './routes/Admin/ProductAdminRoutes.js';
+import AuthAdminRoutes from "./routes/Admin/AuthAdminRoutes.js"
+import CountryStateAdminRoutes from "./routes/Admin/Master/CountryStateAdminRoutes.js"
 
 export const app = express();
 
@@ -25,7 +29,19 @@ export const __dirname = dirname(__filename);
 app.use(express.json());
 app.use('/media', express.static(path.join(__dirname, 'media')));
 app.use('/invoices', express.static(path.join(__dirname, 'invoices')));
+const allowedOrigins = [process.env.ADMIN_FRONTEND_URL, 'http://localhost:5173'];
 
+app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            console.log('CORS blocked origin:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true
+}));
 
 //Application Routes
 app.use('/api/app/users', userAppRoutes);
@@ -44,3 +60,7 @@ app.use('/api/app/payment', PaymentAppRoutes);
 app.use('/api/admin/banners', bannerAdminRoutes);
 app.use('/api/admin/advertisements', advertisementAdminRoutes);
 app.use('/api/admin/product', productAdminRoutes);
+app.use('/api/admin/auth', AuthAdminRoutes);
+// Master Routes
+app.use('/api/admin/master', CountryStateAdminRoutes);
+

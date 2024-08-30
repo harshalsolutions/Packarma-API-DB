@@ -19,7 +19,6 @@ import bannerAdminRoutes from './routes/Admin/bannerAdminRoutes.js';
 import advertisementAdminRoutes from './routes/Admin/advertisementAdminRoutes.js';
 import productAdminRoutes from './routes/Admin/ProductAdminRoutes.js';
 import AuthAdminRoutes from "./routes/Admin/AuthAdminRoutes.js"
-import CountryStateAdminRoutes from "./routes/Admin/Master/CountryStateAdminRoutes.js"
 
 export const app = express();
 
@@ -62,5 +61,5 @@ app.use('/api/admin/advertisements', advertisementAdminRoutes);
 app.use('/api/admin/product', productAdminRoutes);
 app.use('/api/admin/auth', AuthAdminRoutes);
 // Master Routes
-app.use('/api/admin/master', CountryStateAdminRoutes);
+app.use('/api/admin/master',);
 

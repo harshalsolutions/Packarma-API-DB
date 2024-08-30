@@ -97,34 +97,6 @@ ALTER TABLE otp
 ADD CONSTRAINT fk_otp_user_id
 FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE;
 
-
--- Country and City Table
-
-CREATE TABLE IF NOT EXISTS country (
-    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    country_name VARCHAR(100) NOT NULL,
-    phone_code CHAR(3) NOT NULL,
-    phone_length CHAR(3) NOT NULL,
-    currency_id INT NOT NULL DEFAULT '1',
-    status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
-    deleted_at TIMESTAMP NULL DEFAULT NULL,
-    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX (phone_code)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS state (
-    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    state_name VARCHAR(100) NOT NULL,
-    country_id BIGINT UNSIGNED NOT NULL,
-    status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
-    deleted_at TIMESTAMP NULL DEFAULT NULL,
-    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (country_id) REFERENCES country(id) ON DELETE CASCADE,
-    INDEX (country_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 -- Subscription Table
 
 CREATE TABLE IF NOT EXISTS subscriptions (

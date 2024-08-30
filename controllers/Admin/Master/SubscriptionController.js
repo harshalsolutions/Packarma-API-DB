@@ -8,10 +8,18 @@ export const getAllSubscriptionsController = async (req, res, next) => {
         const offset = (page - 1) * limit;
 
         const query = `
-            SELECT *
-            FROM subscriptions
-            WHERE deleted_at IS NULL
-            LIMIT ? OFFSET ?
+           SELECT 
+                s.*, 
+                JSON_ARRAYAGG(sb.benefit_text) AS benefits
+            FROM 
+                subscriptions s
+            LEFT JOIN 
+                subscription_benefits sb 
+            ON 
+                s.id = sb.subscription_id
+            GROUP BY 
+                s.id
+            LIMIT ? OFFSET ?;
         `;
 
         const [rows] = await pool.query(query, [Number(limit), Number(offset)]);
@@ -20,21 +28,9 @@ export const getAllSubscriptionsController = async (req, res, next) => {
 
         if (!rows.length) throw new CustomError(404, 'No subscriptions found');
 
-        const total = totalCount[0].count;
-        const totalPages = Math.ceil(total / limit);
-        const pagination = {
-            currentPage: Number(page),
-            totalPages: totalPages,
-            totalItems: total,
-            itemsPerPage: Number(limit)
-        };
-
-        res.json(new ApiResponse(200, {
-            subscriptions: rows,
-            pagination
-        }));
+        res.json(new ApiResponse(200, rows, 'Subscriptions fetched successfully'));
     } catch (error) {
-        next(error);
+        next(new CustomError(500, error.message));
     }
 };
 

@@ -57,9 +57,9 @@ export const generateInvoiceController = async (req, res, next) => {
         const pdfFilePath = path.join(pdfFolder, `invoice_${invoice_no}.pdf`);
 
 
-
         pdf.create(populatedHtml, { format: "Letter" }).toFile(pdfFilePath, (err, result) => {
             if (err) {
+                console.log('generateInvoiceController during pdf creation error:', err);
                 return next(new CustomError(500, 'Failed to generate PDF'));
             }
 

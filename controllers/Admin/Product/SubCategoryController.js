@@ -2,7 +2,7 @@ import ApiResponse from "../../../utils/ApiResponse.js";
 import pool from "../../../config/database.js";
 import CustomError from '../../../utils/CustomError.js';
 import { unlink } from 'fs';
-import { __dirname } from "../../../app.js";
+import path from 'path';
 
 export const getSubCategoryController = async (req, res, next) => {
     try {

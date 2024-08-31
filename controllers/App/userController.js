@@ -62,6 +62,7 @@ export const registerController = async (req, res, next) => {
             connection.release();
         }
     } catch (error) {
+        console.log('registerController error:', error);
         handleError(error, next);
     }
 };
@@ -80,6 +81,7 @@ export const loginController = async (req, res, next) => {
         const { password: _, ...userWithoutPassword } = user;
         res.json(new ApiResponse(200, { user: userWithoutPassword, token }, 'Login successful'));
     } catch (error) {
+        console.log('loginController error:', error);
         next(error);
     }
 };
@@ -102,6 +104,7 @@ export const updateUserController = async (req, res, next) => {
             res.json(new ApiResponse(200, null, 'User updated successfully'));
         } catch (error) {
             await connection.rollback();
+            console.log('updateUserController error:', error);
             handleError(error, next);
         } finally {
             connection.release();
@@ -122,6 +125,7 @@ export const getUserController = async (req, res, next) => {
         const { password: _, ...userWithoutPassword } = user;
         res.json(new ApiResponse(200, userWithoutPassword));
     } catch (error) {
+        console.log('getUserController error:', error);
         next(error);
     }
 };
@@ -152,6 +156,7 @@ export const requestOtpController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, null, 'OTP sent successfully'));
     } catch (error) {
+        console.log('requestOtpController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -191,6 +196,7 @@ export const verifyOtpController = async (req, res, next) => {
             res.json(new ApiResponse(200, null, 'Email Verified!'));
         } catch (error) {
             await connection.rollback();
+            console.log('verifyOtpController error:', error);
             handleError(error, next);
         } finally {
             connection.release();
@@ -313,6 +319,7 @@ export const updatePasswordController = async (req, res, next) => {
             connection.release();
         }
     } catch (error) {
+        console.log('updatePasswordController error:', error);
         handleError(error, next);
     }
 };
@@ -357,6 +364,7 @@ export const freeCreditDocumentController = async (req, res, next) => {
         res.json(new ApiResponse(200, null, 'Data updated successfully'));
     } catch (error) {
         await connection.rollback();
+        console.log('freeCreditDocumentController error:', error);
         handleError(error, next);
     } finally {
         connection.release();
@@ -382,6 +390,7 @@ export const addHelpSupportController = async (req, res, next) => {
         res.json(new ApiResponse(201, null, 'Help and support request added successfully'));
     } catch (error) {
         await connection.rollback();
+        console.log('addHelpSupportController error:', error);
         next(new CustomError(500, error.message));
     } finally {
         connection.release();

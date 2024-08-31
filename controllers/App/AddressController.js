@@ -13,6 +13,7 @@ export const getAddressController = async (req, res, next) => {
 
         res.status(200).json(new ApiResponse(200, addresses, 'Addresses retrieved successfully'));
     } catch (error) {
+        console.log('getAddressController error:', error);
         handleError(error, next);
     }
 };
@@ -39,6 +40,7 @@ export const addAddressController = async (req, res, next) => {
             connection.release();
         }
     } catch (error) {
+        console.log('addAddressController error:', error);
         handleError(error, next);
     }
 };
@@ -73,6 +75,7 @@ export const updateAddressController = async (req, res, next) => {
             connection.release();
         }
     } catch (error) {
+        console.log('updateAddressController error:', error);
         handleError(error, next);
     }
 };
@@ -105,6 +108,7 @@ export const deleteAddressController = async (req, res, next) => {
             connection.release();
         }
     } catch (error) {
+        console.log('deleteAddressController error:', error);
         handleError(error, next);
     }
 };

@@ -88,6 +88,7 @@ export const getPackagingTreatmentsController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, rows, 'Packaging treatments fetched successfully'));
     } catch (error) {
+        console.log('getPackagingTreatmentsController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -142,6 +143,7 @@ export const getProductsController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, rows, 'Products fetched successfully'));
     } catch (error) {
+        console.log('getProductsController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -171,6 +173,7 @@ export const searchProductSuggestionsController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, rows, 'Product suggestions fetched successfully'));
     } catch (error) {
+        console.log('searchProductSuggestionsController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -200,6 +203,7 @@ export const getPackingTypesController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, rows, 'Packing types fetched successfully'));
     } catch (error) {
+        console.log('getPackingTypesController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -230,6 +234,7 @@ export const getShelfLifeOptionsController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, shelfLifeOptions, 'Shelf life options fetched successfully'));
     } catch (error) {
+        console.log('getShelfLifeOptionsController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -261,6 +266,7 @@ export const getProductWeightOptionsController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, weightOptions, 'Product weight options fetched successfully'));
     } catch (error) {
+        console.log('getProductWeightOptionsController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -328,6 +334,7 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, rows, 'Packaging solutions fetched successfully'));
     } catch (error) {
+        console.log('searchPackagingSolutionsController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -354,6 +361,7 @@ export const addSearchHistoryController = async (req, res, next) => {
         res.json(new ApiResponse(201, null, 'Search history added successfully'));
     } catch (error) {
         await connection.rollback();
+        console.log('addSearchHistoryController error:', error);
         next(new CustomError(500, error.message));
     } finally {
         connection.release();
@@ -384,6 +392,7 @@ export const getSearchHistoryController = async (req, res, next) => {
         res.json(new ApiResponse(200, rows, 'Search history fetched successfully'));
     } catch (error) {
         await connection.rollback();
+        console.log('getSearchHistoryController error:', error);
         next(new CustomError(500, error.message));
     } finally {
         connection.release();

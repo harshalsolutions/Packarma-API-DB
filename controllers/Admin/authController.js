@@ -23,6 +23,7 @@ export const loginAdminController = async (req, res, next) => {
         const { password: _, ...adminWithoutPassword } = admin;
         res.json(new ApiResponse(200, { admin: adminWithoutPassword, token }, 'Login successful'));
     } catch (error) {
+        console.log('loginAdminController error:', error);
         handleError(error, next);
     }
 };
@@ -52,6 +53,7 @@ export const updateAdminController = async (req, res, next) => {
             connection.release();
         }
     } catch (error) {
+        console.log('updateAdminController error:', error);
         handleError(error, next);
     }
 };
@@ -82,6 +84,7 @@ export const addAdminController = async (req, res, next) => {
             connection.release();
         }
     } catch (error) {
+        console.log('addAdminController error:', error);
         handleError(error, next);
     }
 };
@@ -105,6 +108,7 @@ export const deleteAdminController = async (req, res, next) => {
             connection.release();
         }
     } catch (error) {
+        console.log('deleteAdminController error:', error);
         handleError(error, next);
     }
 };

@@ -17,6 +17,7 @@ export const checkReferralCodeController = async (req, res, next) => {
             res.status(404).json(new ApiResponse(404, { valid: false }, 'Referral code is invalid'));
         }
     } catch (error) {
+        console.log('checkReferralCodeController error:', error);
         handleError(error, next);
     }
 };
@@ -69,6 +70,7 @@ export const updateReferralController = async (req, res, next) => {
             connection.release();
         }
     } catch (error) {
+        console.log('updateReferralController error:', error);
         handleError(error, next);
     }
 };
@@ -94,6 +96,7 @@ export const getUsersByReferralCodeController = async (req, res, next) => {
         }
         res.json(new ApiResponse(200, rows, 'Users and referral status fetched successfully'));
     } catch (error) {
+        console.log('getUsersByReferralCodeController error:', error);
         next(error);
     }
 };

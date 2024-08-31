@@ -17,6 +17,7 @@ export const CreatePaymentController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, order, 'Order created successfully'));
     } catch (error) {
+        console.log('CreatePaymentController error:', error);
         next(new CustomError(500, error.message));
     }
 }
@@ -36,6 +37,7 @@ export const VerifyPaymentController = async (req, res, next) => {
             throw new CustomError(400, 'Payment verification failed');
         }
     } catch (error) {
+        console.log('VerifyPaymentController error:', error);
         next(new CustomError(500, error.message));
     }
 };

@@ -5,13 +5,12 @@ import fs from 'fs';
 import path from 'path';
 import { totalInWords } from '../../utils/InvoiceUtils.js';
 import pool from '../../config/database.js';
-import { __dirname } from "../../app.js"
 
 export const generateInvoiceController = async (req, res, next) => {
     try {
         const { invoice_no, invoice_date, customer_name, customer_gstin, state, products, customer_address } = req.body;
 
-        const htmlPath = __dirname + "/utils/invoice.html";
+        const htmlPath = path.join(process.cwd(), 'utils/invoice.html');
         const htmlTemplate = fs.readFileSync(htmlPath, 'utf8');
 
         let productRows = '';
@@ -49,7 +48,7 @@ export const generateInvoiceController = async (req, res, next) => {
             .replace(/{{total_in_words}}/g, totalInWords(parsedTotal))
             .replace('{{PRODUCT_ROWS}}', productRows);
 
-        const pdfFolder = path.join(__dirname, 'invoices');
+        const pdfFolder = path.join(process.cwd(), 'invoices');
 
         if (!fs.existsSync(pdfFolder)) {
             fs.mkdirSync(pdfFolder);

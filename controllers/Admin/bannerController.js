@@ -117,7 +117,7 @@ export const updateBannerController = async (req, res, next) => {
             const oldFilePath = existingBannerRows[0].banner_image;
 
             if (oldFilePath) {
-                const absolutePath = __dirname + oldFilePath.replaceAll("/", "\\")
+                const absolutePath = path.join(process.cwd(), oldFilePath.replaceAll("/", "\\"));
                 unlink(absolutePath, (err) => {
                     if (err) console.error(`Error deleting file: ${err.message}`);
                 });
@@ -147,7 +147,7 @@ export const deleteBannerController = async (req, res, next) => {
         if (!existingBannerRows.length) throw new CustomError(404, 'Banner not found');
         const oldFilePath = existingBannerRows[0].banner_image;
         if (oldFilePath) {
-            const absolutePath = __dirname + oldFilePath.replaceAll("/", "\\")
+            const absolutePath = path.join(process.cwd(), oldFilePath.replaceAll("/", "\\"))
             unlink(absolutePath, (err) => {
                 if (err) console.error(`Error deleting file: ${err.message}`);
             });

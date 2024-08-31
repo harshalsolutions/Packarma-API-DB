@@ -86,7 +86,7 @@ export const updateSubCategoryController = async (req, res, next) => {
 
             const oldFilePath = existingSubCategoryRows[0].image;
             if (oldFilePath) {
-                const absolutePath = __dirname + oldFilePath.replaceAll("/", "\\");
+                const absolutePath = path.join(process.cwd(), oldFilePath.replaceAll("/", "\\"));
                 unlink(absolutePath, (err) => {
                     if (err) console.error(`Error deleting file: ${err.message}`);
                 });
@@ -115,7 +115,7 @@ export const deleteSubCategoryController = async (req, res, next) => {
 
         const oldFilePath = existingSubCategoryRows[0].image;
         if (oldFilePath) {
-            const absolutePath = __dirname + oldFilePath.replaceAll("/", "\\");
+            const absolutePath = path.join(process.cwd(), oldFilePath.replaceAll("/", "\\"));
             unlink(absolutePath, (err) => {
                 if (err) console.error(`Error deleting file: ${err.message}`);
             });

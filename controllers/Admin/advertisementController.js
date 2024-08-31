@@ -108,7 +108,7 @@ export const updateAdvertisementController = async (req, res, next) => {
             const oldFilePath = existingAdRows[0].image;
 
             if (oldFilePath) {
-                const absolutePath = path.join(process.cwd(), oldFilePath.replaceAll("/", "\\"));
+                const absolutePath = path.join(process.cwd(), oldFilePath);
                 unlink(absolutePath, (err) => {
                     if (err) console.error(`Error deleting file: ${err.message}`);
                 });
@@ -140,7 +140,7 @@ export const deleteAdvertisementController = async (req, res, next) => {
         const oldFilePath = existingAdRows[0].image;
 
         if (oldFilePath) {
-            const absolutePath = path.join(process.cwd(), oldFilePath.replaceAll("/", "\\"));
+            const absolutePath = path.join(process.cwd(), oldFilePath);
             unlink(absolutePath, (err) => {
                 if (err) console.error(`Error deleting file: ${err.message}`);
             });

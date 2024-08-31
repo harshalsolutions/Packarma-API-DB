@@ -84,7 +84,7 @@ export const updateCategoryController = async (req, res, next) => {
 
             const oldFilePath = existingCategoryRows[0].image;
             if (oldFilePath) {
-                const absolutePath = path.join(process.cwd(), oldFilePath.replaceAll("/", "\\"));
+                const absolutePath = path.join(process.cwd(), oldFilePath);
                 unlink(absolutePath, (err) => {
                     if (err) console.error(`Error deleting file: ${err.message}`);
                 });
@@ -113,7 +113,7 @@ export const deleteCategoryController = async (req, res, next) => {
 
         const oldFilePath = existingCategoryRows[0].image;
         if (oldFilePath) {
-            const absolutePath = path.join(process.cwd(), oldFilePath.replaceAll("/", "\\"));
+            const absolutePath = path.join(process.cwd(), oldFilePath);
             unlink(absolutePath, (err) => {
                 if (err) console.error(`Error deleting file: ${err.message}`);
             });

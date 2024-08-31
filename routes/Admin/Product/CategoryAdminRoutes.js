@@ -1,6 +1,6 @@
 import express from 'express';
-import upload from '../../middlewares/multerMiddleware.js';
-import { createCategoryController, deleteCategoryController, getAllCategoriesController, getCategoryController, updateCategoryController } from '../../controllers/Admin/Product/CategoryController.js';
+import upload from '../../../middlewares/multerMiddleware.js';
+import { createCategoryController, deleteCategoryController, getAllCategoriesController, getCategoryController, updateCategoryController } from '../../../controllers/Admin/Product/CategoryController.js';
 
 const router = express.Router();
 

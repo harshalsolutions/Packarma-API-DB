@@ -9,8 +9,9 @@ export const getCategoryController = async (req, res, next) => {
     try {
         const { id } = req.params;
         const [rows] = await pool.query('SELECT * FROM categories WHERE id = ?', [id]);
-        if (!rows.length) throw new CustomError(404, 'Category not found');
-
+        if (!rows.length) res.json(new ApiResponse(200, {
+            category: []
+        }, 'No Category found'));
         res.json(new ApiResponse(200, rows[0], 'Category retrieved successfully'));
     } catch (error) {
         next(new CustomError(500, error.message));
@@ -38,7 +39,9 @@ export const getAllCategoriesController = async (req, res, next) => {
         const [rows] = await pool.query(query, queryParams);
         const [totalCount] = await pool.query('SELECT COUNT(*) as count FROM categories' + (status ? ' WHERE status = ?' : ''), status ? [status] : []);
 
-        if (!rows.length) throw new CustomError(404, 'No categories found');
+        if (!rows.length) res.json(new ApiResponse(200, {
+            category: []
+        }, 'No Category found'));
 
         const totalPages = Math.ceil(totalCount[0].count / limit);
 

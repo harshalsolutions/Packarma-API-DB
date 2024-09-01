@@ -17,11 +17,11 @@ import PaymentAppRoutes from "./routes/App/PaymentRoute.js"
 
 import bannerAdminRoutes from './routes/Admin/bannerAdminRoutes.js';
 import advertisementAdminRoutes from './routes/Admin/advertisementAdminRoutes.js';
-import CategoryAdminRoutes from './routes/Admin/Product/CategoryAdminRoutes.js';
-import SubCategoryAdminRoutes from './routes/Admin/Product/SubCategoryAdminRoutes.js';
 import AuthAdminRoutes from "./routes/Admin/AuthAdminRoutes.js"
 import SubscriptionAdminRoutes from "./routes/Admin/Master/SubscriptionAdminRoutes.js"
-
+import SubCategoryAdminRoutes from './routes/Admin/Product/SubCategoryAdminRoutes.js';
+import CategoryAdminRoutes from './routes/Admin/Product/CategoryAdminRoutes.js';
+import ProductFormAdminRoutes from "./routes/Admin/Product/ProductFormAdminRoutes.js"
 export const app = express();
 
 export const __filename = fileURLToPath(import.meta.url);
@@ -58,11 +58,14 @@ app.use('/api/app/data', AppDataRoutes);
 app.use('/api/app/payment', PaymentAppRoutes);
 
 //Admin Routes
+app.use('/api/admin/auth', AuthAdminRoutes);
 app.use('/api/admin/banners', bannerAdminRoutes);
 app.use('/api/admin/advertisements', advertisementAdminRoutes);
-app.use('/api/admin/product', CategoryAdminRoutes);
-app.use('/api/admin/product', SubCategoryAdminRoutes);
-app.use('/api/admin/auth', AuthAdminRoutes);
+
 // Master Routes
 app.use('/api/admin/master', SubscriptionAdminRoutes);
 
+//Product Master Routes
+app.use('/api/admin/product', CategoryAdminRoutes);
+app.use('/api/admin/product', SubCategoryAdminRoutes);
+app.use('/api/admin/product', ProductFormAdminRoutes);

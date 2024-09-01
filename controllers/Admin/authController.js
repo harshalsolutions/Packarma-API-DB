@@ -112,3 +112,20 @@ export const deleteAdminController = async (req, res, next) => {
         handleError(error, next);
     }
 };
+
+export const getAdminController = async (req, res, next) => {
+    try {
+        const adminId = req.user.adminId;
+        const [rows] = await pool.query(`
+            SELECT a.id, a.name, a.emailid, a.role_id, r.role_name 
+            FROM admin a 
+            JOIN roles r ON a.role_id = r.id 
+            WHERE a.id = ?`, [adminId]);
+        if (!rows.length) throw new CustomError(404, 'Admin not found');
+
+        res.json(new ApiResponse(200, rows[0], 'Admin data retrieved successfully'));
+    } catch (error) {
+        console.log('getAdminController error:', error);
+        handleError(error, next);
+    }
+};

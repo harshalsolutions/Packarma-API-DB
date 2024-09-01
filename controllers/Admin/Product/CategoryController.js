@@ -42,14 +42,20 @@ export const getAllCategoriesController = async (req, res, next) => {
             category: []
         }, 'No Category found'));
 
-        const totalPages = Math.ceil(totalCount[0].count / limit);
+        const total = totalCount[0].count;
+        const totalPages = Math.ceil(total / limit);
+        const pagination = {
+            currentPage: Number(page),
+            totalPages: totalPages,
+            totalItems: total,
+            itemsPerPage: Number(limit)
+        };
 
         res.json(new ApiResponse(200, {
             categories: rows,
-            currentPage: parseInt(page),
-            totalPages,
-            totalItems: totalCount[0].count
-        }, 'Categories retrieved successfully'));
+            pagination
+        }, "Categories retrieved successfully"));
+
     } catch (error) {
         next(new CustomError(500, error.message));
     }

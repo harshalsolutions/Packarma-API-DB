@@ -45,14 +45,19 @@ export const getAllSubCategoriesController = async (req, res, next) => {
             subcategories: []
         }, 'No Subcategories found'));
 
-        const totalPages = Math.ceil(totalCount[0].count / limit);
+        const total = totalCount[0].count;
+        const totalPages = Math.ceil(total / limit);
+        const pagination = {
+            currentPage: Number(page),
+            totalPages: totalPages,
+            totalItems: total,
+            itemsPerPage: Number(limit)
+        };
 
         res.json(new ApiResponse(200, {
             subcategories: rows,
-            currentPage: parseInt(page),
-            totalPages,
-            totalItems: totalCount[0].count
-        }, 'Subcategories retrieved successfully'));
+            pagination
+        }, "Subcategories retrieved successfully"));
     } catch (error) {
         next(new CustomError(500, error.message));
     }

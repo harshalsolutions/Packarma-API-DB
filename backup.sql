@@ -176,9 +176,10 @@ CREATE TABLE IF NOT EXISTS packing_type (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
-CREATE TABLE IF NOT EXISTS packing_machine (
+CREATE TABLE IF NOT EXISTS packaging_machine (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
+    image VARCHAR(255) NOT NULL,
     short_description TEXT NOT NULL,
     status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -186,7 +187,7 @@ CREATE TABLE IF NOT EXISTS packing_machine (
     INDEX (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS packing_treatment (
+CREATE TABLE IF NOT EXISTS packaging_treatment (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     short_description TEXT NOT NULL,
@@ -224,7 +225,7 @@ CREATE TABLE IF NOT EXISTS product (
     category_id BIGINT UNSIGNED NOT NULL,
     sub_category_id BIGINT UNSIGNED NOT NULL,
     product_form_id BIGINT UNSIGNED NOT NULL,
-    packing_treatment_id BIGINT UNSIGNED NOT NULL,
+    packaging_treatment_id BIGINT UNSIGNED NOT NULL,
     measurement_unit_id BIGINT UNSIGNED NOT NULL,
     product_image VARCHAR(255) NOT NULL,
     status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
@@ -233,13 +234,13 @@ CREATE TABLE IF NOT EXISTS product (
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
     FOREIGN KEY (sub_category_id) REFERENCES subcategories(id) ON DELETE CASCADE,
     FOREIGN KEY (product_form_id) REFERENCES product_form(id) ON DELETE CASCADE,
-    FOREIGN KEY (packing_treatment_id) REFERENCES packing_treatment(id) ON DELETE CASCADE,
+    FOREIGN KEY (packaging_treatment_id) REFERENCES packaging_treatment(id) ON DELETE CASCADE,
     FOREIGN KEY (measurement_unit_id) REFERENCES measurement_unit(id) ON DELETE CASCADE,
     INDEX (product_name),
     INDEX (category_id),
     INDEX (sub_category_id),
     INDEX (product_form_id),
-    INDEX (packing_treatment_id),
+    INDEX (packaging_treatment_id),
     INDEX (measurement_unit_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -281,9 +282,9 @@ CREATE TABLE IF NOT EXISTS packaging_solution (
     FOREIGN KEY (product_id) REFERENCES product(id) ON DELETE CASCADE,
     FOREIGN KEY (product_category_id) REFERENCES categories(id) ON DELETE CASCADE,
     FOREIGN KEY (product_form_id) REFERENCES product_form(id) ON DELETE CASCADE,
-    FOREIGN KEY (packaging_treatment_id) REFERENCES packing_treatment(id) ON DELETE CASCADE,
+    FOREIGN KEY (packaging_treatment_id) REFERENCES packaging_treatment(id) ON DELETE CASCADE,
     FOREIGN KEY (packing_type_id) REFERENCES packing_type(id) ON DELETE CASCADE,
-    FOREIGN KEY (packaging_machine_id) REFERENCES packing_machine(id) ON DELETE CASCADE,
+    FOREIGN KEY (packaging_machine_id) REFERENCES packaging_machine(id) ON DELETE CASCADE,
     FOREIGN KEY (packaging_material_id) REFERENCES packaging_material(id) ON DELETE CASCADE,
     FOREIGN KEY (min_order_quantity_unit_id) REFERENCES measurement_unit(id) ON DELETE CASCADE,
     INDEX (structure_type),

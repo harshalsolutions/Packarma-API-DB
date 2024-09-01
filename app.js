@@ -22,6 +22,9 @@ import SubscriptionAdminRoutes from "./routes/Admin/Master/SubscriptionAdminRout
 import SubCategoryAdminRoutes from './routes/Admin/Product/SubCategoryAdminRoutes.js';
 import CategoryAdminRoutes from './routes/Admin/Product/CategoryAdminRoutes.js';
 import ProductFormAdminRoutes from "./routes/Admin/Product/ProductFormAdminRoutes.js"
+import PackagingMachineAdminRoutes from "./routes/Admin/Product/PackagingMachineAdminRoutes.js"
+
+
 export const app = express();
 
 export const __filename = fileURLToPath(import.meta.url);
@@ -69,3 +72,4 @@ app.use('/api/admin/master', SubscriptionAdminRoutes);
 app.use('/api/admin/product', CategoryAdminRoutes);
 app.use('/api/admin/product', SubCategoryAdminRoutes);
 app.use('/api/admin/product', ProductFormAdminRoutes);
+app.use('/api/admin/product', PackagingMachineAdminRoutes);

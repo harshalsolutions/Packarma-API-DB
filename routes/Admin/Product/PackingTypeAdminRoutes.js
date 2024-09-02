@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllPackingTypesController, getPackingTypeController, createPackingTypeController, updatePackingTypeController, deletePackingTypeController } from '../../../controllers/Admin/Product/PackingTypeController';
+import { getAllPackingTypesController, createPackingTypeController, updatePackingTypeController, deletePackingTypeController, getPackingTypeController } from '../../../controllers/Admin/Product/PackingTypeController.js';
 
 const router = express.Router();
 

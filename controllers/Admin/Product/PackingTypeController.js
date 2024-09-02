@@ -13,7 +13,7 @@ export const createPackingTypeController = async (req, res, next) => {
     }
 };
 
-export const getProductFormController = async (req, res, next) => {
+export const getPackingTypeController = async (req, res, next) => {
     try {
         const { id } = req.params;
         const [rows] = await pool.query('SELECT * FROM packing_type WHERE id = ?', [id]);

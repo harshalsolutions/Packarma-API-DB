@@ -23,7 +23,8 @@ import SubCategoryAdminRoutes from './routes/Admin/Product/SubCategoryAdminRoute
 import CategoryAdminRoutes from './routes/Admin/Product/CategoryAdminRoutes.js';
 import ProductFormAdminRoutes from "./routes/Admin/Product/ProductFormAdminRoutes.js"
 import PackagingMachineAdminRoutes from "./routes/Admin/Product/PackagingMachineAdminRoutes.js"
-
+import PackingTypeAdminRoutes from "./routes/Admin/Product/PackingTypeAdminRoutes.js"
+import PackagingTreatmentAdminRoutes from "./routes/Admin/Product/PackagingTreatmentAdminRoutes.js"
 
 export const app = express();
 
@@ -73,3 +74,5 @@ app.use('/api/admin/product', CategoryAdminRoutes);
 app.use('/api/admin/product', SubCategoryAdminRoutes);
 app.use('/api/admin/product', ProductFormAdminRoutes);
 app.use('/api/admin/product', PackagingMachineAdminRoutes);
+app.use('/api/admin/product', PackingTypeAdminRoutes);
+app.use('/api/admin/product', PackagingTreatmentAdminRoutes);

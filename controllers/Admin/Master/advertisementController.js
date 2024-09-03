@@ -6,7 +6,7 @@ import path from 'path';
 
 export const getAllAdvertisementController = async (req, res, next) => {
     try {
-        const { status } = req.query;
+        const { status, page = 1, limit = 10 } = req.query;
 
         let query = `
             SELECT 
@@ -31,14 +31,28 @@ export const getAllAdvertisementController = async (req, res, next) => {
         }
 
         query += ' GROUP BY a.id';
+        query += ' LIMIT ? OFFSET ?';
+        queryParams.push(Number(limit), (Number(page) - 1) * Number(limit));
 
         const [rows] = await pool.query(query, queryParams);
 
+        const [[{ totalCount }]] = await pool.query(`SELECT COUNT(*) as totalCount FROM advertisement a ${status ? 'WHERE a.status = ?' : ''}`, status ? [status] : []);
+
+        const totalPages = Math.ceil(totalCount / limit);
+
         if (!rows.length) {
-            return res.json(new ApiResponse(200, null, 'No advertisements found'));
+            return res.json(new ApiResponse(200, { advertisements: [], pagination: { currentPage: page, totalPages, totalItems: totalCount, itemsPerPage: limit } }, 'No advertisements found'));
         }
 
-        res.json(new ApiResponse(200, rows));
+        res.json(new ApiResponse(200, {
+            advertisements: rows,
+            pagination: {
+                currentPage: Number(page),
+                totalPages,
+                totalItems: totalCount,
+                itemsPerPage: Number(limit)
+            }
+        }));
     } catch (error) {
         console.log('getAllAdvertisementController error:', error);
         next(error);
@@ -107,7 +121,7 @@ export const updateAdvertisementController = async (req, res, next) => {
             const [existingAdRows] = await pool.query('SELECT image FROM advertisement WHERE id = ?', [advertisementId]);
             if (!existingAdRows.length) throw new CustomError(404, 'Advertisement not found');
 
-            const oldFilePath = existingAdRows[0].image;
+            const oldFilePath = existingAdRows[0].advertisement_image;
 
             if (oldFilePath) {
                 const absolutePath = path.join(process.cwd(), oldFilePath);

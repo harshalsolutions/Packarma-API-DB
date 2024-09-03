@@ -7,6 +7,8 @@ import path from 'path';
 export const getAllBannerController = async (req, res, next) => {
     try {
         const { status } = req.query;
+        const { page = 1, limit = 10 } = req.query;
+        const offset = (page - 1) * limit;
 
         let query = `
             SELECT 
@@ -35,22 +37,40 @@ export const getAllBannerController = async (req, res, next) => {
             queryParams.push(status);
         }
 
+        query += ' LIMIT ? OFFSET ?';
+        queryParams.push(Number(limit), Number(offset));
+
         const [rows] = await pool.query(query, queryParams);
 
         if (!rows.length) {
             return res.json(new ApiResponse(200, null, 'No banners found'));
         }
+        const [totalCount] = await pool.query('SELECT COUNT(*) as count FROM banner');
 
-        res.json(new ApiResponse(200, rows));
+        const total = totalCount[0].count;
+        const totalPages = Math.ceil(total / limit);
+        const pagination = {
+            currentPage: Number(page),
+            totalPages: totalPages,
+            totalItems: total,
+            itemsPerPage: Number(limit)
+        };
+
+        res.json(new ApiResponse(200, {
+            banners: rows,
+            pagination
+        }));
+
     } catch (error) {
         next(error);
     }
 };
 
-
 export const getBannerController = async (req, res, next) => {
     try {
         const bannerId = req.params.id;
+        const { page = 1, limit = 10 } = req.query;
+        const offset = (page - 1) * limit;
 
         let query = `
         SELECT 
@@ -74,20 +94,31 @@ export const getBannerController = async (req, res, next) => {
             ) AS activity ON b.id = activity.banner_id
         WHERE 
             b.id = ?
-    `;
+        LIMIT ? OFFSET ?`;
 
-        const [rows] = await pool.query(query, [bannerId, bannerId]);
+        const [rows] = await pool.query(query, [bannerId, bannerId, limit, offset]);
+        const [totalCount] = await pool.query('SELECT COUNT(*) as count FROM banner');
 
         if (!rows.length) throw new CustomError(404, 'Banner not found');
 
-        res.json(new ApiResponse(200, rows[0]));
+        const total = totalCount[0].count;
+        const totalPages = Math.ceil(total / limit);
+        const pagination = {
+            currentPage: Number(page),
+            totalPages: totalPages,
+            totalItems: total,
+            itemsPerPage: Number(limit)
+        };
+
+        res.json(new ApiResponse(200, {
+            banners: rows,
+            pagination
+        }));
     } catch (error) {
         console.log('getBannerController error:', error);
         next(error);
     }
 };
-
-
 
 export const createBannerController = async (req, res, next) => {
     try {
@@ -107,6 +138,7 @@ export const createBannerController = async (req, res, next) => {
         next(new CustomError(500, error.message));
     }
 };
+
 export const updateBannerController = async (req, res, next) => {
     try {
         const bannerId = req.params.id;
@@ -140,7 +172,6 @@ export const updateBannerController = async (req, res, next) => {
         next(new CustomError(500, error.message));
     }
 };
-
 
 export const deleteBannerController = async (req, res, next) => {
     try {

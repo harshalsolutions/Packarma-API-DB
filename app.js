@@ -25,6 +25,8 @@ import ProductFormAdminRoutes from "./routes/Admin/Product/ProductFormAdminRoute
 import PackagingMachineAdminRoutes from "./routes/Admin/Product/PackagingMachineAdminRoutes.js"
 import PackingTypeAdminRoutes from "./routes/Admin/Product/PackingTypeAdminRoutes.js"
 import PackagingTreatmentAdminRoutes from "./routes/Admin/Product/PackagingTreatmentAdminRoutes.js"
+import StorageConditionAdminRoutes from "./routes/Admin/Product/StorageConditionAdminRoutes.js"
+import MeasurementUnitAdminRoutes from "./routes/Admin/Product/MeasurementUnitAdminRoutes.js"
 
 export const app = express();
 
@@ -76,3 +78,6 @@ app.use('/api/admin/product', ProductFormAdminRoutes);
 app.use('/api/admin/product', PackagingMachineAdminRoutes);
 app.use('/api/admin/product', PackingTypeAdminRoutes);
 app.use('/api/admin/product', PackagingTreatmentAdminRoutes);
+app.use('/api/admin/product', StorageConditionAdminRoutes);
+app.use('/api/admin/product', MeasurementUnitAdminRoutes);
+

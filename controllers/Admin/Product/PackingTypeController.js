@@ -48,16 +48,8 @@ export const updatePackingTypeController = async (req, res, next) => {
 export const deletePackingTypeController = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const [existingPackingTypeRows] = await pool.query('SELECT image FROM packing_type WHERE id = ?', [id]);
+        const [existingPackingTypeRows] = await pool.query('SELECT * FROM packing_type WHERE id = ?', [id]);
         if (!existingPackingTypeRows.length) throw new CustomError(404, 'Packing Type not found');
-
-        const oldFilePath = existingPackingTypeRows[0].image;
-        if (oldFilePath) {
-            const absolutePath = path.join(process.cwd(), oldFilePath);
-            unlink(absolutePath, (err) => {
-                if (err) console.error(`Error deleting file: ${err.message}`);
-            });
-        }
 
         await pool.query('DELETE FROM packing_type WHERE id = ?', [id]);
         res.json(new ApiResponse(200, null, 'Packing Type deleted successfully'));

@@ -201,12 +201,12 @@ CREATE TABLE IF NOT EXISTS packaging_treatment (
 
 CREATE TABLE IF NOT EXISTS storage_condition (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
     short_description TEXT NOT NULL,
     status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX (title)
+    INDEX (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS measurement_unit (

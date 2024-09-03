@@ -4,9 +4,9 @@ import CustomError from '../../../utils/CustomError.js';
 
 export const createMeasurementUnitController = async (req, res, next) => {
     try {
-        const { name, short_description, symbol, status } = req.body;
-        const query = 'INSERT INTO measurement_unit (name, short_description, symbol, status) VALUES (?, ?, ?, ?)';
-        await pool.query(query, [name, short_description, symbol, status]);
+        const { name, symbol, status } = req.body;
+        const query = 'INSERT INTO measurement_unit (name, symbol, status) VALUES (?, ?, ?, ?)';
+        await pool.query(query, [name, symbol, status]);
         res.status(201).json(new ApiResponse(201, null, 'Measurement Unit created successfully'));
     } catch (error) {
         next(new CustomError(500, error.message));

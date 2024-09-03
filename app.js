@@ -15,10 +15,12 @@ import subscriptionAppRoutes from "./routes/App/SubscriptionCreditAppRoutes.js"
 import AppDataRoutes from "./routes/App/AppDataRoutes.js"
 import PaymentAppRoutes from "./routes/App/PaymentRoute.js"
 
-import bannerAdminRoutes from './routes/Admin/bannerAdminRoutes.js';
-import advertisementAdminRoutes from './routes/Admin/advertisementAdminRoutes.js';
+import bannerAdminRoutes from './routes/Admin/Master/bannerAdminRoutes.js';
+import advertisementAdminRoutes from './routes/Admin/Master/advertisementAdminRoutes.js';
 import AuthAdminRoutes from "./routes/Admin/AuthAdminRoutes.js"
 import SubscriptionAdminRoutes from "./routes/Admin/Master/SubscriptionAdminRoutes.js"
+import CreditMasterAdminRoutes from "./routes/Admin/Master/CreditMasterAdminRoute.js"
+
 import SubCategoryAdminRoutes from './routes/Admin/Product/SubCategoryAdminRoutes.js';
 import CategoryAdminRoutes from './routes/Admin/Product/CategoryAdminRoutes.js';
 import ProductFormAdminRoutes from "./routes/Admin/Product/ProductFormAdminRoutes.js"
@@ -65,12 +67,12 @@ app.use('/api/app/payment', PaymentAppRoutes);
 
 //Admin Routes
 app.use('/api/admin/auth', AuthAdminRoutes);
-app.use('/api/admin/banners', bannerAdminRoutes);
-app.use('/api/admin/advertisements', advertisementAdminRoutes);
 
 // Master Routes
 app.use('/api/admin/master', SubscriptionAdminRoutes);
-
+app.use('/api/admin/master', CreditMasterAdminRoutes);
+app.use('/api/admin/master', bannerAdminRoutes);
+app.use('/api/admin/master', advertisementAdminRoutes);
 //Product Master Routes
 app.use('/api/admin/product', CategoryAdminRoutes);
 app.use('/api/admin/product', SubCategoryAdminRoutes);
@@ -80,4 +82,5 @@ app.use('/api/admin/product', PackingTypeAdminRoutes);
 app.use('/api/admin/product', PackagingTreatmentAdminRoutes);
 app.use('/api/admin/product', StorageConditionAdminRoutes);
 app.use('/api/admin/product', MeasurementUnitAdminRoutes);
+
 

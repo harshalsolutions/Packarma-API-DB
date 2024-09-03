@@ -6,9 +6,8 @@ import {
     deleteBannerController,
     getAllBannerController,
     getBannerActivityStatsController
-} from '../../controllers/Admin/bannerController.js';
-import upload from '../../middlewares/multerMiddleware.js';
-
+} from '../../../controllers/Admin/Master/bannerController.js';
+import upload from "../../../middlewares/multerMiddleware.js"
 const router = express.Router();
 
 router.get('/get-banners', getAllBannerController);

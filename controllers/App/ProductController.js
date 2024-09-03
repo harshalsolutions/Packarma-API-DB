@@ -139,7 +139,9 @@ export const getProductsController = async (req, res, next) => {
 
         const [rows] = await pool.query(query, queryParams);
 
-        if (!rows.length) throw new CustomError(404, 'No products found');
+        if (!rows.length) {
+            return res.json(new ApiResponse(200, null, 'No products found'));
+        }
 
         res.json(new ApiResponse(200, rows, 'Products fetched successfully'));
     } catch (error) {

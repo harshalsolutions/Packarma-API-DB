@@ -13,7 +13,7 @@ export const getGeneralSettingsController = async (req, res, next) => {
         const [rows] = await pool.query(query);
 
         if (rows.length === 0) {
-            throw new CustomError(404, 'No data found');
+            throw new CustomError(200, 'No data found');
         }
 
         res.json(new ApiResponse(200, {

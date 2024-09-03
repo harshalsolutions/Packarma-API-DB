@@ -6,8 +6,8 @@ import {
     deleteAdvertisementController,
     getAllAdvertisementController,
     getAdvertisementActivityStatsController,
-} from '../../controllers/Admin/advertisementController.js';
-import upload from '../../middlewares/multerMiddleware.js';
+} from '../../../controllers/Admin/Master/advertisementController.js';
+import upload from '../../../middlewares/multerMiddleware.js';
 
 const router = express.Router();
 

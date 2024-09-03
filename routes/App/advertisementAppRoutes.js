@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllAdvertisementController } from '../../controllers/Admin/advertisementController.js';
+import { getAllAdvertisementController } from "../../controllers/Admin/Master/advertisementController.js"
 import authMiddleware from '../../middlewares/authMiddleware.js';
 import { logAdvertisementActivityController } from '../../controllers/App/AdvertisementActivity.js';
 

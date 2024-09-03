@@ -1,6 +1,6 @@
-import ApiResponse from '../../utils/ApiResponse.js';
-import pool from '../../config/database.js';
-import CustomError from '../../utils/CustomError.js';
+import ApiResponse from '../../../utils/ApiResponse.js';
+import pool from '../../../config/database.js';
+import CustomError from '../../../utils/CustomError.js';
 import { unlink } from 'fs';
 import path from 'path';
 
@@ -37,7 +37,9 @@ export const getAllBannerController = async (req, res, next) => {
 
         const [rows] = await pool.query(query, queryParams);
 
-        if (!rows.length) throw new CustomError(404, 'No banners found');
+        if (!rows.length) {
+            return res.json(new ApiResponse(200, null, 'No banners found'));
+        }
 
         res.json(new ApiResponse(200, rows));
     } catch (error) {

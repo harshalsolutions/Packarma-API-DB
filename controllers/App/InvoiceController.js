@@ -94,7 +94,9 @@ export const getCreditInvoicesController = async (req, res, next) => {
 
         const [rows] = await pool.query(query, queryParams);
 
-        if (!rows.length) throw new CustomError(404, 'No credit invoices found');
+        if (!rows.length) {
+            return res.json(new ApiResponse(200, null, 'No credit invoices found'));
+        }
 
         res.json(new ApiResponse(200, rows, 'Credit invoices fetched successfully'));
     } catch (error) {

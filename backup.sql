@@ -409,7 +409,7 @@ CREATE TABLE IF NOT EXISTS CustomerGeneralSettings (
     app_version_android VARCHAR(100),
     app_version_ios VARCHAR(100),
     credit_price DECIMAL(10, 2) DEFAULT 0.00,
-    credit_discount_price DECIMAL(10, 2) DEFAULT 0.00,
+    credit_percentage DECIMAL(10, 2) DEFAULT 0.00,
     system_email VARCHAR(255) NOT NULL,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

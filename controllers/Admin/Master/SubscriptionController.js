@@ -38,7 +38,7 @@ export const getAllSubscriptionsController = async (req, res, next) => {
             pagination
         }));
     } catch (error) {
-        console.log('getAllSubscriptionsController error:', error); // {{ edit_1 }}
+        console.log('getAllSubscriptionsController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -52,7 +52,7 @@ export const createSubscriptionController = async (req, res, next) => {
 
         res.status(201).json(new ApiResponse(201, { id: result.insertId }, 'Subscription created successfully'));
     } catch (error) {
-        console.log('createSubscriptionController error:', error); // {{ edit_2 }}
+        console.log('createSubscriptionController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -73,7 +73,7 @@ export const updateSubscriptionController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, null, 'Subscription updated successfully'));
     } catch (error) {
-        console.log('updateSubscriptionController error:', error); // {{ edit_3 }}
+        console.log('updateSubscriptionController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -89,7 +89,7 @@ export const deleteSubscriptionController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, null, 'Subscription deleted successfully'));
     } catch (error) {
-        console.log('deleteSubscriptionController error:', error); // {{ edit_4 }}
+        console.log('deleteSubscriptionController error:', error);
         next(new CustomError(500, error.message));
     }
 };

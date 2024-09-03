@@ -1,8 +1,7 @@
 import express from 'express';
-import { getAllBannerController } from '../../controllers/Admin/bannerController.js';
-import { logBannerActivityController } from '../../controllers/App/BannerActivity.js';
 import authMiddleware from '../../middlewares/authMiddleware.js';
-
+import { getAllBannerController } from "../../controllers/Admin/Master/bannerController.js"
+import { logBannerActivityController } from "../../controllers/App/BannerActivity.js"
 const router = express.Router();
 
 router.get('/get-banners', getAllBannerController);

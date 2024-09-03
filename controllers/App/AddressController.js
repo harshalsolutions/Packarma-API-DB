@@ -11,6 +11,10 @@ export const getAddressController = async (req, res, next) => {
             [userId]
         );
 
+        if (!addresses.length) {
+            return res.json(new ApiResponse(200, null, 'No addresses found'));
+        }
+
         res.status(200).json(new ApiResponse(200, addresses, 'Addresses retrieved successfully'));
     } catch (error) {
         console.log('getAddressController error:', error);

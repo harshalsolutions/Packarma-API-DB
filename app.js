@@ -33,6 +33,8 @@ import MeasurementUnitAdminRoutes from "./routes/Admin/Product/MeasurementUnitAd
 import ProductAdminRoutes from "./routes/Admin/Product/ProductAdminRoutes.js";
 import PackagingMaterialAdminRoutes from "./routes/Admin/Product/PackagingMaterialAdminRoute.js";
 
+import userCustomerRoutes from './routes/Admin/Customer/UserAdminRoutes.js';
+
 export const app = express();
 export const __filename = fileURLToPath(import.meta.url);
 export const __dirname = dirname(__filename);
@@ -95,3 +97,6 @@ const productRoutes = [
 ];
 
 productRoutes.forEach(route => app.use('/api/admin/product', route));
+
+app.use('/api/admin/customer/users', userCustomerRoutes);
+

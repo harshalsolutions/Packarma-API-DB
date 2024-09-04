@@ -17,6 +17,6 @@ router.post('/add-advertisement', upload.single("advertisement_image"), createAd
 router.patch('/update-advertisement/:id', upload.single("advertisement_image"), updateAdvertisementController);
 router.delete('/delete-advertisement/:id', deleteAdvertisementController);
 
-router.get('/activity-log/:id', getAdvertisementActivityStatsController);
+router.get('/advertisement/activity-log/:id', getAdvertisementActivityStatsController);
 
 export default router;

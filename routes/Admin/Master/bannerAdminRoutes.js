@@ -16,7 +16,7 @@ router.post('/add-banner', upload.single("banner"), createBannerController);
 router.put('/update-banner/:id', upload.single("banner"), updateBannerController);
 router.delete('/delete-banner/:id', deleteBannerController);
 
-router.get('/activity-log/:id', getBannerActivityStatsController);
+router.get('/banner/activity-log/:id', getBannerActivityStatsController);
 
 
 export default router;

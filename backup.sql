@@ -254,6 +254,7 @@ CREATE TABLE IF NOT EXISTS packaging_material (
     sit DECIMAL(10,2),
     gsm DECIMAL(10,2),
     special_feature TEXT,
+    status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX (material_name)

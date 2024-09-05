@@ -262,6 +262,7 @@ CREATE TABLE IF NOT EXISTS packaging_material (
 
 CREATE TABLE IF NOT EXISTS packaging_solution (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
     structure_type VARCHAR(255) NOT NULL,
     sequence INT NOT NULL,
     storage_condition_id BIGINT UNSIGNED NOT NULL,
@@ -277,6 +278,7 @@ CREATE TABLE IF NOT EXISTS packaging_solution (
     product_max_weight DECIMAL(10,2) NOT NULL,
     min_order_quantity INT NOT NULL,
     min_order_quantity_unit_id BIGINT UNSIGNED NOT NULL,
+    status   NOT NULL DEFAULT 'active',
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (storage_condition_id) REFERENCES storage_condition(id) ON DELETE CASCADE,
@@ -298,7 +300,8 @@ CREATE TABLE IF NOT EXISTS packaging_solution (
     INDEX (packing_type_id),
     INDEX (packaging_machine_id),
     INDEX (packaging_material_id),
-    INDEX (min_order_quantity)
+    INDEX (min_order_quantity),
+    INDEX (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS search_history (

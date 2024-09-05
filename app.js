@@ -32,6 +32,7 @@ import StorageConditionAdminRoutes from "./routes/Admin/Product/StorageCondition
 import MeasurementUnitAdminRoutes from "./routes/Admin/Product/MeasurementUnitAdminRoutes.js";
 import ProductAdminRoutes from "./routes/Admin/Product/ProductAdminRoutes.js";
 import PackagingMaterialAdminRoutes from "./routes/Admin/Product/PackagingMaterialAdminRoute.js";
+import PackagingSolutionAdminRoutes from "./routes/Admin/Product/PackagingSolutionAdminRoute.js";
 
 import userCustomerRoutes from './routes/Admin/Customer/UserAdminRoutes.js';
 
@@ -94,6 +95,7 @@ const productRoutes = [
     MeasurementUnitAdminRoutes,
     ProductAdminRoutes,
     PackagingMaterialAdminRoutes,
+    PackagingSolutionAdminRoutes,
 ];
 
 productRoutes.forEach(route => app.use('/api/admin/product', route));

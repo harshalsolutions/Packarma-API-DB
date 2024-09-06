@@ -35,6 +35,7 @@ import PackagingMaterialAdminRoutes from "./routes/Admin/Product/PackagingMateri
 import PackagingSolutionAdminRoutes from "./routes/Admin/Product/PackagingSolutionAdminRoute.js";
 
 import userCustomerRoutes from './routes/Admin/Customer/UserAdminRoutes.js';
+import authMiddleware from './middlewares/authMiddleware.js';
 
 export const app = express();
 export const __filename = fileURLToPath(import.meta.url);
@@ -82,7 +83,7 @@ const masterRoutes = [
     advertisementAdminRoutes,
 ];
 
-masterRoutes.forEach(route => app.use('/api/admin/master', route));
+masterRoutes.forEach(route => app.use('/api/admin/master', authMiddleware, route));
 
 const productRoutes = [
     CategoryAdminRoutes,
@@ -98,7 +99,7 @@ const productRoutes = [
     PackagingSolutionAdminRoutes,
 ];
 
-productRoutes.forEach(route => app.use('/api/admin/product', route));
+productRoutes.forEach(route => app.use('/api/admin/product', authMiddleware, route));
 
-app.use('/api/admin/customer/users', userCustomerRoutes);
+app.use('/api/admin/customer/users', authMiddleware, userCustomerRoutes);
 

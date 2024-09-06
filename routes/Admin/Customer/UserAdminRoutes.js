@@ -3,7 +3,7 @@ import { getAllUserAddressesController, getAllUsersController } from '../../../c
 
 const router = express.Router();
 
-router.get('/', getAllUsersController);
-router.get('/addresses', getAllUserAddressesController);
+router.get('/users', getAllUsersController);
+router.get('/users/addresses', getAllUserAddressesController);
 
 export default router;

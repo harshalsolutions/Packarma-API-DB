@@ -35,6 +35,9 @@ import PackagingMaterialAdminRoutes from "./routes/Admin/Product/PackagingMateri
 import PackagingSolutionAdminRoutes from "./routes/Admin/Product/PackagingSolutionAdminRoute.js";
 
 import userCustomerRoutes from './routes/Admin/Customer/UserAdminRoutes.js';
+import referralAdminRoutes from './routes/Admin/Customer/ReferalAdminRoutes.js';
+import creditPurchaseAdminRoutes from "./routes/Admin/Customer/CreditPurchaseRoutes.js"
+
 import authMiddleware from './middlewares/authMiddleware.js';
 
 export const app = express();
@@ -102,4 +105,6 @@ const productRoutes = [
 productRoutes.forEach(route => app.use('/api/admin/product', authMiddleware, route));
 
 app.use('/api/admin/customer/users', authMiddleware, userCustomerRoutes);
+app.use('/api/admin/customer/referrals', referralAdminRoutes);
+app.use('/api/admin/customer/credit-purchase', creditPurchaseAdminRoutes);
 

@@ -10,8 +10,7 @@ const pool = createPool({
     database: process.env.DB_NAME,
     waitForConnections: true,
     connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT, 10) || 10,
-    queueLimit: 0,
-    ...(process.env.NODE_ENV === 'production' ? { ssl: { rejectUnauthorized: true } } : {})
+    queueLimit: 0
 });
 
 export default pool.promise();

@@ -39,6 +39,8 @@ import referralAdminRoutes from './routes/Admin/Customer/ReferalAdminRoutes.js';
 import creditPurchaseAdminRoutes from "./routes/Admin/Customer/CreditPurchaseRoutes.js"
 import customerEnquiryRoutes from "./routes/Admin/Customer/CustomerEnquiryRoutes.js"
 import subscriptionAdminRoutes from "./routes/Admin/Customer/SubscriptionAdminRoutes.js"
+import PermissionAdminRoutes from "./routes/Admin/Staff/PermissionAdminRoutes.js"
+import PageAdminRoutes from "./routes/Admin/Staff/PageAdminRoutes.js"
 
 import authMiddleware from './middlewares/authMiddleware.js';
 
@@ -116,4 +118,9 @@ const customerRoutes = [
 
 customerRoutes.forEach(route => app.use('/api/admin/customer', route));
 
+const staffRoutes = [
+    PermissionAdminRoutes,
+    PageAdminRoutes,
+];
 
+staffRoutes.forEach(route => app.use('/api/admin/staff', route));

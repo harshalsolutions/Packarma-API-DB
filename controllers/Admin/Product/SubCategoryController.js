@@ -22,6 +22,16 @@ export const getAllSubCategoriesController = async (req, res, next) => {
     try {
         const { category_id, page = 1, limit = 10 } = req.query;
         const offset = (page - 1) * limit;
+        if (category_id) {
+            query += ' WHERE subcategories.category_id = ?';
+            queryParams.push(category_id);
+        }
+
+        const { status } = req.query;
+        if (status) {
+            query += category_id ? ' AND subcategories.status = ?' : ' WHERE subcategories.status = ?';
+            queryParams.push(status);
+        }
 
         let query = `
             SELECT subcategories.*, categories.name AS category_name

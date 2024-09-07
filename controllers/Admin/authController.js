@@ -31,7 +31,7 @@ export const loginAdminController = async (req, res, next) => {
 export const updateAdminController = async (req, res, next) => {
     try {
         const { adminId } = req.params;
-        const { name, emailid, phonenumber, country_code, address, role_id } = req.body;
+        const { name, emailid, phonenumber, country_code, address, status } = req.body;
         const connection = await pool.getConnection();
         await connection.beginTransaction();
 
@@ -40,8 +40,8 @@ export const updateAdminController = async (req, res, next) => {
             if (!existingAdmin.length) throw new CustomError(404, 'Admin not found');
 
             await connection.query(
-                'UPDATE admin SET name = ?, emailid = ?, phonenumber = ?, country_code = ?, address = ?, role_id = ? WHERE id = ?',
-                [name, emailid, phonenumber, country_code, address, role_id, adminId]
+                'UPDATE admin SET name = ?, emailid = ?, phonenumber = ?, country_code = ?, address = ?, status = ? WHERE id = ?',
+                [name, emailid, phonenumber, country_code, address, status, adminId]
             );
 
             await connection.commit();
@@ -60,7 +60,7 @@ export const updateAdminController = async (req, res, next) => {
 
 export const addAdminController = async (req, res, next) => {
     try {
-        const { name, emailid, password, phonenumber, country_code, address, role_id } = req.body;
+        const { name, emailid, password, phonenumber, country_code, address, status = 'active' } = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);
         const connection = await pool.getConnection();
         await connection.beginTransaction();
@@ -70,8 +70,8 @@ export const addAdminController = async (req, res, next) => {
             if (existingAdmin.length) throw new CustomError(400, 'Admin already exists');
 
             const [result] = await connection.query(
-                'INSERT INTO admin (name, emailid, password, phonenumber, country_code, address, role_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [name, emailid, hashedPassword, phonenumber, country_code, address, role_id]
+                'INSERT INTO admin (name, emailid, password, phonenumber, country_code, address, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [name, emailid, hashedPassword, phonenumber, country_code, address, status]
             );
             const adminId = result.insertId;
 
@@ -117,13 +117,33 @@ export const getAdminController = async (req, res, next) => {
     try {
         const adminId = req.user.adminId;
         const [rows] = await pool.query(`
-            SELECT a.id, a.name, a.emailid, a.role_id, r.role_name 
+            SELECT 
+                a.id, a.name, a.emailid, a.status, 
+                p.page_id, p.can_create, p.can_read, p.can_update, p.can_delete, p.can_export,
+                pg.page_name
             FROM admin a 
-            JOIN roles r ON a.role_id = r.id 
+            LEFT JOIN permissions p ON a.id = p.admin_id 
+            LEFT JOIN pages pg ON p.page_id = pg.id
             WHERE a.id = ?`, [adminId]);
         if (!rows.length) throw new CustomError(404, 'Admin not found');
 
-        res.json(new ApiResponse(200, rows[0], 'Admin data retrieved successfully'));
+        const admin = {
+            id: rows[0].id,
+            name: rows[0].name,
+            emailid: rows[0].emailid,
+            status: rows[0].status,
+            permissions: rows.map(row => ({
+                page_id: row.page_id,
+                page_name: row.page_name,
+                can_create: row.can_create,
+                can_read: row.can_read,
+                can_update: row.can_update,
+                can_delete: row.can_delete,
+                can_export: row.can_export
+            }))
+        };
+
+        res.json(new ApiResponse(200, admin, 'Admin data retrieved successfully'));
     } catch (error) {
         console.log('getAdminController error:', error);
         handleError(error, next);

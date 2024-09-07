@@ -41,6 +41,7 @@ import customerEnquiryRoutes from "./routes/Admin/Customer/CustomerEnquiryRoutes
 import subscriptionAdminRoutes from "./routes/Admin/Customer/SubscriptionAdminRoutes.js"
 import PermissionAdminRoutes from "./routes/Admin/Staff/PermissionAdminRoutes.js"
 import PageAdminRoutes from "./routes/Admin/Staff/PageAdminRoutes.js"
+import StaffAdminRoutes from "./routes/Admin/Staff/StaffAdminRoutes.js"
 
 import authMiddleware from './middlewares/authMiddleware.js';
 
@@ -121,6 +122,7 @@ customerRoutes.forEach(route => app.use('/api/admin/customer', route));
 const staffRoutes = [
     PermissionAdminRoutes,
     PageAdminRoutes,
+    StaffAdminRoutes
 ];
 
-staffRoutes.forEach(route => app.use('/api/admin/staff', route));
+staffRoutes.forEach(route => app.use('/api/admin/staff', authMiddleware, route));

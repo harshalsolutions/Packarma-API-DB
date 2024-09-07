@@ -4,7 +4,7 @@ import {
     addAdminController,
     deleteAdminController,
     updateAdminController,
-    getAdminController
+    getAdminController,
 } from "../../controllers/Admin/authController.js";
 import authMiddleware from "../../middlewares/authMiddleware.js";
 

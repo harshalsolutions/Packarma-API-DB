@@ -36,18 +36,27 @@ export const addPermissionController = async (req, res, next) => {
 export const updatePermissionController = async (req, res, next) => {
     try {
         const { permissionId } = req.params;
-        const { admin_id, page_id, can_create, can_read, can_update, can_delete, can_export } = req.body;
+        const updates = Object.entries(req.body)
+            .filter(([key, value]) => value !== undefined)
+            .map(([key, value]) => ({ key, value }));
+
         const connection = await pool.getConnection();
         await connection.beginTransaction();
-
+        console.log(req.body)
         try {
             const [existingPermission] = await connection.query('SELECT * FROM permissions WHERE id = ?', [permissionId]);
             if (!existingPermission.length) throw new CustomError(404, 'Permission not found');
 
-            await connection.query(
-                'UPDATE permissions SET admin_id = ?, page_id = ?, can_create = ?, can_read = ?, can_update = ?, can_delete = ?, can_export = ? WHERE id = ?',
-                [admin_id, page_id, can_create, can_read, can_update, can_delete, can_export, permissionId]
-            );
+            if (updates.length > 0) {
+                const updateFields = updates.map(({ key }) => `${key} = ?`).join(', ');
+                const updateValues = updates.map(({ value }) => value);
+                updateValues.push(permissionId);
+
+                await connection.query(
+                    `UPDATE permissions SET ${updateFields} WHERE id = ?`,
+                    updateValues
+                );
+            }
 
             await connection.commit();
             res.json(new ApiResponse(200, null, 'Permission updated successfully'));

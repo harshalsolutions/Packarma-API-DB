@@ -401,8 +401,8 @@ CREATE TABLE IF NOT EXISTS help_support (
 
 CREATE TABLE IF NOT EXISTS CustomerGeneralSettings (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    terms_and_conditions TEXT NOT NULL,
-    privacy_policy TEXT NOT NULL,
+    terms_and_conditions TEXT,
+    privacy_policy TEXT,
     about_us TEXT,
     instagram_link VARCHAR(511),
     facebook_link VARCHAR(511),
@@ -414,7 +414,11 @@ CREATE TABLE IF NOT EXISTS CustomerGeneralSettings (
     app_version_ios VARCHAR(100),
     credit_price DECIMAL(10, 2) DEFAULT 0.00,
     credit_percentage DECIMAL(10, 2) DEFAULT 0.00,
-    system_email VARCHAR(255) NOT NULL,
+    system_email VARCHAR(255),
+    system_phone_number VARCHAR(20),
+    meta_title VARCHAR(255),
+    meta_description TEXT,
+    meta_keywords TEXT,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -482,6 +486,21 @@ CREATE TABLE IF NOT EXISTS admin (
     country_code VARCHAR(10) NOT NULL,
     address TEXT,
     status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Invoice Details
+
+CREATE TABLE IF NOT EXISTS invoice_details (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    gst_number VARCHAR(255) NOT NULL,
+    address TEXT NOT NULL,
+    bank_name VARCHAR(255) NOT NULL,
+    account_number VARCHAR(255) NOT NULL,
+    ifsc_code VARCHAR(255) NOT NULL,
+    benificiary_number VARCHAR(255) NOT NULL,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

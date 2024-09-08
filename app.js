@@ -42,8 +42,15 @@ import subscriptionAdminRoutes from "./routes/Admin/Customer/SubscriptionAdminRo
 import PermissionAdminRoutes from "./routes/Admin/Staff/PermissionAdminRoutes.js"
 import PageAdminRoutes from "./routes/Admin/Staff/PageAdminRoutes.js"
 import StaffAdminRoutes from "./routes/Admin/Staff/StaffAdminRoutes.js"
-
+import SystemAdminRoutes from "./routes/Admin/ContactUs/SystemAdminRoutes.js"
+import MetaAdminRoutes from "./routes/Admin/Settings/MetaAdminRoutes.js"
+import PrivacyPolicyRoutes from "./routes/Admin/Settings/PrivacyPolicyRoutes.js"
+import TermsAndConditionsRoutes from "./routes/Admin/Settings/TermsandConditionRoutes.js"
+import AboutUsRoutes from "./routes/Admin/Settings/AboutUsAdminRoutes.js"
 import authMiddleware from './middlewares/authMiddleware.js';
+import SocialLinkAdminRoutes from "./routes/Admin/Settings/SocialLinkAdminRoutes.js"
+import AppDetailsAdminRoutes from "./routes/Admin/Settings/AppDetailsAdminRoutes.js"
+import InvoiceDetailsRoutes from "./routes/Admin/Settings/InvoiceDetailsRoutes.js"
 
 export const app = express();
 export const __filename = fileURLToPath(import.meta.url);
@@ -126,3 +133,22 @@ const staffRoutes = [
 ];
 
 staffRoutes.forEach(route => app.use('/api/admin/staff', authMiddleware, route));
+
+const contactUsRoutes = [
+    SystemAdminRoutes
+];
+
+contactUsRoutes.forEach(route => app.use('/api/admin/contact-us', route));
+
+const generalSettingsRoutes = [
+    MetaAdminRoutes,
+    PrivacyPolicyRoutes,
+    TermsAndConditionsRoutes,
+    AboutUsRoutes,
+    SocialLinkAdminRoutes,
+    AppDetailsAdminRoutes,
+    InvoiceDetailsRoutes
+];
+
+generalSettingsRoutes.forEach(route => app.use('/api/admin/general-settings', route));
+

@@ -18,7 +18,6 @@ export const logAdvertisementActivityController = async (req, res, next) => {
 
         res.status(201).json(new ApiResponse(201, null, 'Advertisement activity logged successfully'));
     } catch (error) {
-        console.log('logAdvertisementActivityController error:', error);
         next(new CustomError(500, error.message));
     }
 };

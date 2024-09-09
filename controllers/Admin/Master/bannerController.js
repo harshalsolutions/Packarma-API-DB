@@ -115,7 +115,6 @@ export const getBannerController = async (req, res, next) => {
             pagination
         }));
     } catch (error) {
-        console.log('getBannerController error:', error);
         next(error);
     }
 };
@@ -134,7 +133,6 @@ export const createBannerController = async (req, res, next) => {
 
         res.status(201).json(new ApiResponse(201, null, 'Banner created successfully'));
     } catch (error) {
-        console.log('createBannerController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -168,7 +166,6 @@ export const updateBannerController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, null, 'Banner updated successfully'));
     } catch (error) {
-        console.log('updateBannerController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -188,7 +185,6 @@ export const deleteBannerController = async (req, res, next) => {
         await pool.query('DELETE FROM banner WHERE id = ?', [bannerId]);
         res.json(new ApiResponse(200, null, 'Banner deleted successfully'));
     } catch (error) {
-        console.log('deleteBannerController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -251,7 +247,6 @@ export const getBannerActivityStatsController = async (req, res, next) => {
             userData
         }));
     } catch (error) {
-        console.log('getBannerActivityStatsController error:', error);
         next(new CustomError(500, error.message));
     }
 };

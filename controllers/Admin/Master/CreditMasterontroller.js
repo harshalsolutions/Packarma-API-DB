@@ -11,7 +11,6 @@ export const getCreditMasterController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, rows[0]));
     } catch (error) {
-        console.log('getCreditMasterController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -31,7 +30,6 @@ export const updateCreditMasterController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, null, 'Credit Master updated successfully'));
     } catch (error) {
-        console.log('updateCreditMasterController error:', error);
         next(new CustomError(500, error.message));
     }
 };

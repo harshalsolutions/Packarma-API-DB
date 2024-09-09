@@ -18,7 +18,6 @@ export const logBannerActivityController = async (req, res, next) => {
 
         res.status(201).json(new ApiResponse(201, null, 'Banner activity logged successfully'));
     } catch (error) {
-        console.log('logBannerActivityController error:', error);
         next(new CustomError(500, error.message));
     }
 };

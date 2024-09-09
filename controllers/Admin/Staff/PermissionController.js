@@ -28,7 +28,6 @@ export const addPermissionController = async (req, res, next) => {
             connection.release();
         }
     } catch (error) {
-        console.log('addP error:', error);
         handleError(error, next);
     }
 };
@@ -67,7 +66,6 @@ export const updatePermissionController = async (req, res, next) => {
             connection.release();
         }
     } catch (error) {
-        console.log('updatePermissionController error:', error);
         handleError(error, next);
     }
 };
@@ -91,7 +89,6 @@ export const deletePermissionController = async (req, res, next) => {
             connection.release();
         }
     } catch (error) {
-        console.log('deletePermissionController error:', error);
         handleError(error, next);
     }
 };
@@ -104,7 +101,6 @@ export const getPermissionByAdminIdController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, rows, 'Permission data retrieved successfully'));
     } catch (error) {
-        console.log('getPermissionController error:', error);
         handleError(error, next);
     }
 };
@@ -125,7 +121,6 @@ export const getAllPermissionsController = async (req, res, next) => {
             }
         }));
     } catch (error) {
-        console.log('getAllPermissionsController error:', error);
         handleError(error, next);
     }
 };

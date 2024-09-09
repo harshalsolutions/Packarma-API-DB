@@ -72,7 +72,6 @@ export const generateInvoiceController = async (req, res, next) => {
             });
         });
     } catch (error) {
-        console.log('generateInvoiceController error:', error);
         handleError(error, next);
     }
 };
@@ -100,7 +99,6 @@ export const getCreditInvoicesController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, rows, 'Credit invoices fetched successfully'));
     } catch (error) {
-        console.log('getCreditInvoicesController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -131,7 +129,6 @@ export const addCreditInvoiceController = async (req, res, next) => {
         res.json(new ApiResponse(200, {}, 'Credit invoice added successfully'));
     } catch (error) {
         await connection.rollback();
-        console.log('addCreditInvoiceController error:', error);
         next(new CustomError(500, error.message));
     } finally {
         connection.release();
@@ -160,7 +157,6 @@ export const getSubscriptionInvoicesController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, rows, 'Subscription invoices fetched successfully'));
     } catch (error) {
-        console.log('getSubscriptionInvoicesController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -191,7 +187,6 @@ export const addSubscriptionInvoiceController = async (req, res, next) => {
         res.json(new ApiResponse(200, {}, 'Subscription invoice added successfully'));
     } catch (error) {
         await connection.rollback();
-        console.log('addSubscriptionInvoiceController error:', error);
         next(new CustomError(500, error.message));
     } finally {
         connection.release();

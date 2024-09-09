@@ -63,7 +63,7 @@ export const getPackagingTreatmentsController = async (req, res, next) => {
     try {
         const { status, featured } = req.query;
 
-        let query = 'SELECT * FROM packing_treatment';
+        let query = 'SELECT * FROM packaging_treatment';
         const queryParams = [];
 
         const conditions = [];
@@ -88,7 +88,6 @@ export const getPackagingTreatmentsController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, rows, 'Packaging treatments fetched successfully'));
     } catch (error) {
-        console.log('getPackagingTreatmentsController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -111,8 +110,8 @@ export const getProductsController = async (req, res, next) => {
                 sc.name AS subcategory_name,
                 p.product_form_id,
                 pf.name AS product_form_name,
-                p.packing_treatment_id,
-                pt.name AS packing_treatment_name,
+                p.packaging_treatment_id,
+                pt.name AS packaging_treatment_name,
                 p.measurement_unit_id,
                 mu.name AS measurement_unit_name,
                 p.product_image,
@@ -123,7 +122,7 @@ export const getProductsController = async (req, res, next) => {
             JOIN categories c ON p.category_id = c.id
             JOIN subcategories sc ON p.sub_category_id = sc.id
             JOIN product_form pf ON p.product_form_id = pf.id
-            JOIN packing_treatment pt ON p.packing_treatment_id = pt.id
+            JOIN packaging_treatment pt ON p.packaging_treatment_id = pt.id
             JOIN measurement_unit mu ON p.measurement_unit_id = mu.id
             WHERE p.sub_category_id = ?
         `;
@@ -145,7 +144,6 @@ export const getProductsController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, rows, 'Products fetched successfully'));
     } catch (error) {
-        console.log('getProductsController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -171,11 +169,10 @@ export const searchProductSuggestionsController = async (req, res, next) => {
 
         const [rows] = await pool.query(searchQuery, [searchPattern, parseInt(limit)]);
 
-        if (!rows.length) throw new CustomError(404, 'No products found');
+        if (!rows.length) res.json(new ApiResponse(200, null, 'No product suggestions found'));
 
         res.json(new ApiResponse(200, rows, 'Product suggestions fetched successfully'));
     } catch (error) {
-        console.log('searchProductSuggestionsController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -205,7 +202,6 @@ export const getPackingTypesController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, rows, 'Packing types fetched successfully'));
     } catch (error) {
-        console.log('getPackingTypesController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -236,7 +232,6 @@ export const getShelfLifeOptionsController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, shelfLifeOptions, 'Shelf life options fetched successfully'));
     } catch (error) {
-        console.log('getShelfLifeOptionsController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -268,7 +263,6 @@ export const getProductWeightOptionsController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, weightOptions, 'Product weight options fetched successfully'));
     } catch (error) {
-        console.log('getProductWeightOptionsController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -336,7 +330,6 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, rows, 'Packaging solutions fetched successfully'));
     } catch (error) {
-        console.log('searchPackagingSolutionsController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -363,7 +356,6 @@ export const addSearchHistoryController = async (req, res, next) => {
         res.json(new ApiResponse(201, null, 'Search history added successfully'));
     } catch (error) {
         await connection.rollback();
-        console.log('addSearchHistoryController error:', error);
         next(new CustomError(500, error.message));
     } finally {
         connection.release();
@@ -394,7 +386,6 @@ export const getSearchHistoryController = async (req, res, next) => {
         res.json(new ApiResponse(200, rows, 'Search history fetched successfully'));
     } catch (error) {
         await connection.rollback();
-        console.log('getSearchHistoryController error:', error);
         next(new CustomError(500, error.message));
     } finally {
         connection.release();

@@ -28,7 +28,6 @@ export const addPageController = async (req, res, next) => {
             connection.release();
         }
     } catch (error) {
-        console.log('addPageController error:', error);
         handleError(error, next);
     }
 };
@@ -58,7 +57,6 @@ export const updatePageController = async (req, res, next) => {
             connection.release();
         }
     } catch (error) {
-        console.log('updatePageController error:', error);
         handleError(error, next);
     }
 };
@@ -82,7 +80,6 @@ export const deletePageController = async (req, res, next) => {
             connection.release();
         }
     } catch (error) {
-        console.log('deletePageController error:', error);
         handleError(error, next);
     }
 };
@@ -95,7 +92,6 @@ export const getPageController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, rows[0], 'Page data retrieved successfully'));
     } catch (error) {
-        console.log('getPageController error:', error);
         handleError(error, next);
     }
 };
@@ -116,7 +112,6 @@ export const getAllPagesController = async (req, res, next) => {
             }
         }));
     } catch (error) {
-        console.log('getAllPagesController error:', error);
         handleError(error, next);
     }
 };

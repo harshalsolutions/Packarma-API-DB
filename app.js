@@ -51,6 +51,7 @@ import authMiddleware from './middlewares/authMiddleware.js';
 import SocialLinkAdminRoutes from "./routes/Admin/Settings/SocialLinkAdminRoutes.js"
 import AppDetailsAdminRoutes from "./routes/Admin/Settings/AppDetailsAdminRoutes.js"
 import InvoiceDetailsRoutes from "./routes/Admin/Settings/InvoiceDetailsRoutes.js"
+import CustomerCareRoutes from "./routes/Admin/ContactUs/CustomerCareRoutes.js"
 
 export const app = express();
 export const __filename = fileURLToPath(import.meta.url);
@@ -135,7 +136,8 @@ const staffRoutes = [
 staffRoutes.forEach(route => app.use('/api/admin/staff', authMiddleware, route));
 
 const contactUsRoutes = [
-    SystemAdminRoutes
+    SystemAdminRoutes,
+    CustomerCareRoutes
 ];
 
 contactUsRoutes.forEach(route => app.use('/api/admin/contact-us', route));

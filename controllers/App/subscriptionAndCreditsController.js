@@ -29,7 +29,6 @@ export const modifyCredits = async (req, res, next) => {
             res.json(new ApiResponse(200, { credits: newCredits }, 'Credits updated successfully'));
         } catch (error) {
             await connection.rollback();
-            console.log('modifyCredits error:', error);
             handleError(error, next);
         } finally {
             connection.release();
@@ -54,7 +53,6 @@ export const getCreditHistory = async (req, res, next) => {
             }
             res.json(new ApiResponse(200, rows, 'Credit history retrieved successfully'));
         } catch (error) {
-            console.log('getCreditHistory error:', error);
             handleError(error, next);
         } finally {
             connection.release();
@@ -87,7 +85,6 @@ export const addUserSubscription = async (req, res, next) => {
             res.status(201).json(new ApiResponse(201, null, 'Subscription added successfully'));
         } catch (error) {
             await connection.rollback();
-            console.log('addUserSubscription error:', error);
             handleError(error, next);
         } finally {
             connection.release();
@@ -113,7 +110,6 @@ export const getSubscriptionsController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, rows, 'Subscriptions fetched successfully'));
     } catch (error) {
-        console.log('getSubscriptionsController error:', error);
         next(new CustomError(500, error.message));
     }
 }

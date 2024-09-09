@@ -54,7 +54,6 @@ export const getAllAdvertisementController = async (req, res, next) => {
             }
         }));
     } catch (error) {
-        console.log('getAllAdvertisementController error:', error);
         next(error);
     }
 };
@@ -87,7 +86,6 @@ export const getAdvertisementController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, rows[0]));
     } catch (error) {
-        console.log('getAdvertisementController error:', error);
         next(error);
     }
 };
@@ -106,7 +104,6 @@ export const createAdvertisementController = async (req, res, next) => {
 
         res.status(201).json(new ApiResponse(201, null, 'Advertisement created successfully'));
     } catch (error) {
-        console.log('createAdvertisementController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -141,7 +138,6 @@ export const updateAdvertisementController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, null, 'Advertisement updated successfully'));
     } catch (error) {
-        console.log('updateAdvertisementController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -166,7 +162,6 @@ export const deleteAdvertisementController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, null, 'Advertisement deleted successfully'));
     } catch (error) {
-        console.log('deleteAdvertisementController error:', error);
         next(new CustomError(500, error.message));
     }
 };
@@ -229,7 +224,6 @@ export const getAdvertisementActivityStatsController = async (req, res, next) =>
             userData
         }));
     } catch (error) {
-        console.log('getAdvertisementActivityStatsController error:', error);
         next(new CustomError(500, error.message));
     }
 };

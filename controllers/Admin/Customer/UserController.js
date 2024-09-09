@@ -6,7 +6,7 @@ import CustomError from "../../../utils/CustomError.js"
 export const getAllUsersController = async (req, res, next) => {
     try {
         const { page = 1, limit = 10 } = req.query;
-        const [users] = await pool.query('SELECT * FROM users');
+        const [users] = await pool.query('SELECT u.*, r.code FROM users as u LEFT JOIN referral_codes as r ON u.user_id = r.user_id');
         const [[{ totalCount }]] = await pool.query(`SELECT COUNT(*) as totalCount FROM users`);
 
         const totalPages = Math.ceil(totalCount / limit);

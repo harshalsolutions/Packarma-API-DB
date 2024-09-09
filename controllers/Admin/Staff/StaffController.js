@@ -37,7 +37,6 @@ export const getAllStaffController = async (req, res, next) => {
             }
         }, 'Admins retrieved successfully'));
     } catch (error) {
-        console.log('getAllAdminsController error:', error);
         handleError(error, next);
     }
 };
@@ -50,7 +49,6 @@ export const addStaffController = async (req, res, next) => {
         const staffId = result.insertId;
         res.status(201).json(new ApiResponse(201, { staffId }, 'Staff created successfully'));
     } catch (error) {
-        console.log('addStaffController error:', error);
         handleError(error, next);
     }
 };
@@ -61,7 +59,6 @@ export const deleteStaffController = async (req, res, next) => {
         await pool.query('DELETE FROM admin WHERE id = ?', [staffId]);
         res.json(new ApiResponse(200, {}, 'Staff deleted successfully'));
     } catch (error) {
-        console.log('deleteStaffController error:', error);
         handleError(error, next);
     }
 };
@@ -97,14 +94,12 @@ export const updateStaffController = async (req, res, next) => {
             await connection.commit();
             res.json(new ApiResponse(200, {}, 'Staff updated successfully'));
         } catch (error) {
-            console.log('updateStaffController error:', error);
             await connection.rollback();
             throw error;
         } finally {
             connection.release();
         }
     } catch (error) {
-        console.log('updateStaffController error:', error);
         handleError(error, next);
     }
 };

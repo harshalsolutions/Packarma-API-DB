@@ -1,7 +1,7 @@
 import express from 'express';
 
 import {
-    getPermissionController,
+    getPermissionByAdminIdController,
     updatePermissionController,
     deletePermissionController,
     addPermissionController,
@@ -13,7 +13,7 @@ const router = express.Router();
 
 router.post('/permissions', addPermissionController);
 router.get('/permissions', getAllPermissionsController);
-router.get('/permissions/:permissionId', getPermissionController);
+router.get('/permissions/:adminId', getPermissionByAdminIdController);
 router.put('/permissions/:permissionId', updatePermissionController);
 router.delete('/permissions/:permissionId', deletePermissionController);
 

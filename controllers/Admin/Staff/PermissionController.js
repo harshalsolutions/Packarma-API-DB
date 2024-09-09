@@ -96,13 +96,13 @@ export const deletePermissionController = async (req, res, next) => {
     }
 };
 
-export const getPermissionController = async (req, res, next) => {
+export const getPermissionByAdminIdController = async (req, res, next) => {
     try {
-        const { permissionId } = req.params;
-        const [rows] = await pool.query('SELECT * FROM permissions WHERE id = ?', [permissionId]);
+        const { adminId } = req.params;
+        const [rows] = await pool.query('SELECT p.*, pa.page_name FROM permissions p LEFT JOIN pages pa ON p.page_id = pa.id WHERE p.admin_id = ?', [adminId]);
         if (!rows.length) throw new CustomError(404, 'Permission not found');
 
-        res.json(new ApiResponse(200, rows[0], 'Permission data retrieved successfully'));
+        res.json(new ApiResponse(200, rows, 'Permission data retrieved successfully'));
     } catch (error) {
         console.log('getPermissionController error:', error);
         handleError(error, next);
@@ -112,7 +112,7 @@ export const getPermissionController = async (req, res, next) => {
 export const getAllPermissionsController = async (req, res, next) => {
     try {
         const { page, limit } = req.query;
-        const [rows] = await pool.query('SELECT * FROM permissions');
+        const [rows] = await pool.query('SELECT p.*, pa.page_name FROM permissions p LEFT JOIN pages pa ON p.page_id = pa.id');
         const totalCount = rows.length;
         const totalPages = Math.ceil(totalCount / limit);
         res.json(new ApiResponse(200, {

@@ -77,25 +77,61 @@ CREATE TABLE IF NOT EXISTS otp (
     INDEX (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Adding Foreign Keys
+-- -- Check existing constraints on `users` table for `referral_code_id`
+-- SELECT CONSTRAINT_NAME 
+-- FROM information_schema.KEY_COLUMN_USAGE 
+-- WHERE TABLE_NAME = 'users' 
+-- AND COLUMN_NAME = 'referral_code_id';
 
-ALTER TABLE users
-ADD CONSTRAINT fk_users_referral_code_id
-FOREIGN KEY (referral_code_id) REFERENCES referral_codes(id) ON DELETE SET NULL;
+-- -- Check existing constraints on `referral_codes` table for `user_id`
+-- SELECT CONSTRAINT_NAME 
+-- FROM information_schema.KEY_COLUMN_USAGE 
+-- WHERE TABLE_NAME = 'referral_codes' 
+-- AND COLUMN_NAME = 'user_id';
 
-ALTER TABLE referral_codes
-ADD CONSTRAINT fk_referral_codes_user_id
-FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE;
+-- -- Check existing constraints on `referrals` table for `referral_code_id` and `referred_user_id`
+-- SELECT CONSTRAINT_NAME 
+-- FROM information_schema.KEY_COLUMN_USAGE 
+-- WHERE TABLE_NAME = 'referrals' 
+-- AND COLUMN_NAME IN ('referral_code_id', 'referred_user_id');
 
-ALTER TABLE referrals
-ADD CONSTRAINT fk_referrals_referral_code_id
-FOREIGN KEY (referral_code_id) REFERENCES referral_codes(id) ON DELETE CASCADE,
-ADD CONSTRAINT fk_referrals_referred_user_id
-FOREIGN KEY (referred_user_id) REFERENCES users(user_id) ON DELETE CASCADE;
+-- -- Check existing constraints on `otp` table for `user_id`
+-- SELECT CONSTRAINT_NAME 
+-- FROM information_schema.KEY_COLUMN_USAGE 
+-- WHERE TABLE_NAME = 'otp' 
+-- AND COLUMN_NAME = 'user_id';
 
-ALTER TABLE otp
-ADD CONSTRAINT fk_otp_user_id
-FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE;
+
+-- -- Drop existing foreign key constraints if necessary
+-- ALTER TABLE users DROP FOREIGN KEY fk_users_referral_code_id;
+-- ALTER TABLE referral_codes DROP FOREIGN KEY fk_referral_codes_user_id;
+-- ALTER TABLE referrals DROP FOREIGN KEY fk_referrals_referral_code_id;
+-- ALTER TABLE referrals DROP FOREIGN KEY fk_referrals_referred_user_id;
+-- ALTER TABLE otp DROP FOREIGN KEY fk_otp_user_id;
+
+
+-- -- Add foreign key constraint on `users` table for `referral_code_id`
+-- ALTER TABLE users
+-- ADD CONSTRAINT fk_users_referral_code_id
+-- FOREIGN KEY (referral_code_id) REFERENCES referral_codes(id) ON DELETE SET NULL;
+
+-- -- Add foreign key constraint on `referral_codes` table for `user_id`
+-- ALTER TABLE referral_codes
+-- ADD CONSTRAINT fk_referral_codes_user_id
+-- FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE;
+
+-- -- Add foreign key constraints on `referrals` table for `referral_code_id` and `referred_user_id`
+-- ALTER TABLE referrals
+-- ADD CONSTRAINT fk_referrals_referral_code_id
+-- FOREIGN KEY (referral_code_id) REFERENCES referral_codes(id) ON DELETE CASCADE,
+-- ADD CONSTRAINT fk_referrals_referred_user_id
+-- FOREIGN KEY (referred_user_id) REFERENCES users(user_id) ON DELETE CASCADE;
+
+-- -- Add foreign key constraint on `otp` table for `user_id`
+-- ALTER TABLE otp
+-- ADD CONSTRAINT fk_otp_user_id
+-- FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE;
+
 
 -- Subscription Table
 
@@ -278,7 +314,7 @@ CREATE TABLE IF NOT EXISTS packaging_solution (
     product_max_weight DECIMAL(10,2) NOT NULL,
     min_order_quantity INT NOT NULL,
     min_order_quantity_unit_id BIGINT UNSIGNED NOT NULL,
-    status   NOT NULL DEFAULT 'active',
+    status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (storage_condition_id) REFERENCES storage_condition(id) ON DELETE CASCADE,
@@ -452,6 +488,28 @@ CREATE TABLE IF NOT EXISTS subscription_invoice (
 
 -- Admin
 
+CREATE TABLE IF NOT EXISTS admin (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    emailid VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    phonenumber VARCHAR(20) NOT NULL,
+    country_code VARCHAR(10) NOT NULL,
+    address TEXT,
+    status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS pages (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    page_name VARCHAR(255) NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE (page_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
 CREATE TABLE IF NOT EXISTS permissions (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     admin_id BIGINT UNSIGNED NOT NULL,
@@ -469,26 +527,8 @@ CREATE TABLE IF NOT EXISTS permissions (
     INDEX (page_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS pages (
-    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    page_name VARCHAR(255) NOT NULL,
-    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE (page_name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS admin (
-    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    emailid VARCHAR(255) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    phonenumber VARCHAR(20) NOT NULL,
-    country_code VARCHAR(10) NOT NULL,
-    address TEXT,
-    status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
-    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 -- Invoice Details
 

@@ -14,12 +14,7 @@ export const getAllStaffController = async (req, res, next) => {
 
         const [rows] = await pool.query(`
             SELECT 
-                a.id, a.name, a.emailid, a.status, a.address, a.phonenumber, a.country_code,
-                p.page_id, p.can_create, p.can_read, p.can_update, p.can_delete, p.can_export, p.id as permission_id,
-                pg.page_name
-            FROM admin a 
-            LEFT JOIN permissions p ON a.id = p.admin_id 
-            LEFT JOIN pages pg ON p.page_id = pg.id
+                * from admin
             LIMIT ? OFFSET ?
         `, [Number(limit), Number(offset)]);
 

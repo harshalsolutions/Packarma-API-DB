@@ -92,8 +92,7 @@ appRoutes.forEach(({ path, route }) => app.use(path, route));
 
 app.use('/api/admin/auth', AuthAdminRoutes);
 
-const masterRoutes = [
-    SubscriptionAdminRoutes,
+const masterRoutes = [SubscriptionAdminRoutes,
     CreditMasterAdminRoutes,
     bannerAdminRoutes,
     advertisementAdminRoutes,

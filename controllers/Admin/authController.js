@@ -5,6 +5,8 @@ import CustomError from '../../utils/CustomError.js';
 import dotenv from 'dotenv';
 import jwt from "jsonwebtoken";
 import { handleError } from "../../utils/ErrorHandler.js"
+import generateOTP from "../../utils/otpGenerator.js";
+import sendOtpEmail from '../../utils/emailSender.js';
 
 dotenv.config();
 
@@ -17,7 +19,7 @@ export const loginAdminController = async (req, res, next) => {
         if (!rows.length) throw new CustomError(404, 'Admin not found');
 
         const admin = rows[0];
-        if (!(await bcrypt.compare(password, admin.password))) throw new CustomError(401, 'Invalid credentials');
+        if (!(await bcrypt.compare(password, admin.password))) res.json(new ApiResponse(401, null, 'Invalid password'));
 
         const token = generateToken(admin.id);
         const { password: _, ...adminWithoutPassword } = admin;
@@ -145,3 +147,77 @@ export const getAdminController = async (req, res, next) => {
     }
 };
 
+export const forgetOtpController = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+        const [rows] = await pool.query('SELECT id, emailid FROM admin WHERE emailid = ?', [email]);
+
+        if (!rows.length) throw new CustomError(404, 'Admin not found');
+
+        const admin = rows[0];
+        const otpType = 'reset_password';
+
+        await pool.query('DELETE FROM otp WHERE user_id = ? AND otp_type = ?', [admin.id, otpType]);
+
+        const otp = generateOTP();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+        await pool.query(
+            'INSERT INTO otp (user_id, otp_type, otp, expiresAt) VALUES (?, ?, ?, ?)',
+            [admin.id, otpType, otp, expiresAt]
+        );
+
+        await sendOtpEmail(admin.emailid, otp, "admin");
+
+        res.json(new ApiResponse(200, null, 'OTP sent successfully for password reset'));
+    } catch (error) {
+        next(new CustomError(500, error.message));
+    }
+};
+
+
+
+
+export const resetPasswordController = async (req, res, next) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+
+        const connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        try {
+            const [rows] = await connection.query(
+                'SELECT otp, expiresAt FROM otp WHERE user_id = (SELECT id FROM admin WHERE emailid = ?) AND otp_type = "reset_password"',
+                [email]
+            );
+
+            if (!rows.length) throw new CustomError(404, 'Admin not found or OTP expired');
+
+            const { otp: savedOtp, expiresAt } = rows[0];
+            if (savedOtp !== otp || Date.now() > new Date(expiresAt).getTime()) {
+                throw new CustomError(400, 'Invalid or expired OTP');
+            }
+
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+            await connection.query(
+                'UPDATE admin SET password = ?, updatedAt = CURRENT_TIMESTAMP WHERE emailid = ?',
+                [hashedPassword, email]
+            );
+
+            await connection.query(
+                'DELETE FROM otp WHERE user_id = (SELECT id FROM admin WHERE emailid = ?) AND otp_type = "reset_password"',
+                [email]
+            );
+
+            await connection.commit();
+            res.json(new ApiResponse(200, null, 'Password updated successfully'));
+        } catch (error) {
+            await connection.rollback();
+            handleError(error, next);
+        } finally {
+            connection.release();
+        }
+    } catch (error) {
+        handleError(error, next);
+    }
+};

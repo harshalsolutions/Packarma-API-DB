@@ -23,17 +23,17 @@ export const getAddressController = async (req, res, next) => {
 
 export const addAddressController = async (req, res, next) => {
     try {
-        const { address_name, building, area } = req.body;
+        const { address_name, building, area, phone_number } = req.body;
         const userId = req.user.userId
         const connection = await pool.getConnection();
         await connection.beginTransaction();
 
         try {
             const insertQuery = `
-                INSERT INTO addresses (user_id, address_name, building, area)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO addresses (user_id, address_name, building, area, phone_number)
+                VALUES (?, ?, ?, ?, ?)
             `;
-            await connection.query(insertQuery, [userId, address_name, building, area]);
+            await connection.query(insertQuery, [userId, address_name, building, area, phone_number]);
             await connection.commit();
             res.status(201).json(new ApiResponse(201, null, 'Address added successfully'));
         } catch (error) {
@@ -49,11 +49,20 @@ export const addAddressController = async (req, res, next) => {
 
 export const updateAddressController = async (req, res, next) => {
     try {
-        const { address_id } = req.params
-        const { address_name, building, area } = req.body;
+        const { address_id } = req.params;
         const userId = req.user.userId;
 
         if (!address_id) throw new CustomError(400, 'Address ID is required');
+
+        const fieldsToUpdate = req.body;
+        const setClause = Object.keys(fieldsToUpdate)
+            .map(key => `${key} = ?`)
+            .join(', ');
+
+        if (!setClause) throw new CustomError(400, 'No fields to update');
+
+        const values = Object.values(fieldsToUpdate);
+        values.push(address_id, userId);
 
         const connection = await pool.getConnection();
         await connection.beginTransaction();
@@ -61,10 +70,10 @@ export const updateAddressController = async (req, res, next) => {
         try {
             const updateQuery = `
                 UPDATE addresses
-                SET address_name = ?, building = ?, area = ?
+                SET ${setClause}
                 WHERE id = ? AND user_id = ?
             `;
-            const [result] = await connection.query(updateQuery, [address_name, building, area, address_id, userId]);
+            const [result] = await connection.query(updateQuery, values);
 
             if (result.affectedRows === 0) throw new CustomError(404, 'Address not found or not owned by user');
 

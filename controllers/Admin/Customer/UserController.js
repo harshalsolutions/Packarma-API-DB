@@ -29,6 +29,32 @@ export const getAllUsersController = async (req, res, next) => {
     }
 };
 
+export const getUserWithAddressController = async (req, res, next) => {
+    try {
+        const { user_id } = req.params;
+        const { page = 1, limit = 10 } = req.query;
+        const [addresses] = await pool.query('SELECT * FROM addresses WHERE user_id = ?', [user_id]);
+        const [[{ totalCount }]] = await pool.query(`SELECT COUNT(*) as totalCount FROM addresses WHERE user_id = ?`, [user_id]);
+        const totalPages = Math.ceil(totalCount / limit);
+
+        if (!addresses.length) {
+            return res.json(new ApiResponse(200, { addresses: [], pagination: { currentPage: page, totalPages, totalItems: totalCount, itemsPerPage: limit } }, 'No addresses found'));
+        }
+        delete addresses.password;
+        res.json(new ApiResponse(200, {
+            addresses: addresses,
+            pagination: {
+                currentPage: Number(page),
+                totalPages,
+                totalItems: totalCount,
+                itemsPerPage: Number(limit)
+            }
+        }));
+    } catch (error) {
+        next(new CustomError(500, error.message));
+    }
+}
+
 export const getAllUserAddressesController = async (req, res, next) => {
     try {
         const { page = 1, limit = 10 } = req.query;
@@ -53,3 +79,25 @@ export const getAllUserAddressesController = async (req, res, next) => {
         next(new CustomError(500, error.message));
     }
 };
+
+export const AddCreditController = async (req, res, next) => {
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
+        const { user_id } = req.params;
+        const { credits } = req.body;
+        const [user] = await connection.query('UPDATE users SET credits = credits + ? WHERE user_id = ?', [credits, user_id]);
+        await connection.query('INSERT INTO credit_history (user_id, change_amount, description) VALUES (?, ?, ?)', [user_id, credits, "Credit added by admin"]);
+        if (!user.affectedRows) {
+            await connection.rollback();
+            return res.json(new ApiResponse(404, {}, 'User not found'));
+        }
+        await connection.commit();
+        res.json(new ApiResponse(200, user, 'Credit added successfully by admin'));
+    } catch (error) {
+        await connection.rollback();
+        next(new CustomError(500, error.message));
+    } finally {
+        connection.release();
+    }
+}   

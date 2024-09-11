@@ -15,7 +15,8 @@ export const getAllStaffController = async (req, res, next) => {
         const [rows] = await pool.query(`
             SELECT 
                 * from admin
-            LIMIT ? OFFSET ?
+            ORDER BY createdAt
+            LIMIT ? OFFSET ? 
         `, [Number(limit), Number(offset)]);
 
         const admins = rows.reduce((acc, row) => {

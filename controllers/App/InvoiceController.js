@@ -1,14 +1,23 @@
 import { handleError } from '../../utils/ErrorHandler.js';
 import CustomError from '../../utils/CustomError.js';
-import pdf from 'html-pdf';
 import fs from 'fs';
 import path from 'path';
 import { totalInWords } from '../../utils/InvoiceUtils.js';
 import pool from '../../config/database.js';
+import puppeteer from 'puppeteer';
 
 export const generateInvoiceController = async (req, res, next) => {
     try {
-        const { invoice_no, invoice_date, customer_name, customer_gstin, state, products, customer_address } = req.body;
+        const { invoice_date, customer_name, customer_gstin, state, products, customer_address } = req.body;
+
+        const [invoiceDetails] = await pool.query('SELECT * FROM invoice_details LIMIT 1');
+        if (!invoiceDetails.length) {
+            throw new CustomError(500, 'Invoice details not found');
+        }
+        const details = invoiceDetails[0];
+
+        const [result] = await pool.query('SELECT MAX(id) as maxId FROM credit_invoice');
+        const invoice_no = result[0].maxId ? result[0].maxId + 1 : 1;
 
         const htmlPath = path.join(process.cwd(), 'utils/invoice.html');
         const htmlTemplate = fs.readFileSync(htmlPath, 'utf8');
@@ -46,7 +55,14 @@ export const generateInvoiceController = async (req, res, next) => {
             .replace(/{{state}}/g, state)
             .replace(/{{grand_total}}/g, parsedTotal)
             .replace(/{{total_in_words}}/g, totalInWords(parsedTotal))
-            .replace('{{PRODUCT_ROWS}}', productRows);
+            .replace('{{PRODUCT_ROWS}}', productRows)
+            .replace(/{{name}}/g, details.name)
+            .replace(/{{gst_number}}/g, details.gst_number)
+            .replace(/{{address}}/g, details.address)
+            .replace(/{{bank_name}}/g, details.bank_name)
+            .replace(/{{account_number}}/g, details.account_number)
+            .replace(/{{ifsc_code}}/g, details.ifsc_code)
+            .replace(/{{benificiary_number}}/g, details.benificiary_number);
 
         const pdfFolder = path.join(process.cwd(), 'invoices');
 
@@ -56,20 +72,24 @@ export const generateInvoiceController = async (req, res, next) => {
 
         const pdfFilePath = path.join(pdfFolder, `invoice_${invoice_no}.pdf`);
 
+        const browser = await puppeteer.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+        const page = await browser.newPage();
+        await page.setContent(populatedHtml, { waitUntil: 'networkidle0' });
+        const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
 
-        pdf.create(populatedHtml, { format: "Letter" }).toFile(pdfFilePath, (err, result) => {
-            if (err) {
-                console.log('generateInvoiceController during pdf creation error:', err);
-                return next(new CustomError(500, 'Failed to generate PDF'));
-            }
+        await browser.close();
 
-            const pdfDownloadLink = `/invoices/${path.basename(pdfFilePath)}`;
+        fs.writeFileSync(pdfFilePath, pdfBuffer);
 
-            res.json({
-                success: true,
-                message: 'Invoice generated successfully',
-                downloadLink: pdfDownloadLink
-            });
+        const pdfDownloadLink = `/invoices/${path.basename(pdfFilePath)}`;
+
+        res.json({
+            success: true,
+            message: 'Invoice generated successfully',
+            downloadLink: pdfDownloadLink
         });
     } catch (error) {
         handleError(error, next);

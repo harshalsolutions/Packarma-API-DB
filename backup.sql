@@ -70,12 +70,14 @@ CREATE TABLE IF NOT EXISTS referrals (
 
 CREATE TABLE IF NOT EXISTS otp (
     otp_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    user_id INT UNSIGNED NOT NULL,
+    user_id INT UNSIGNED NULL,
+    admin_id INT UNSIGNED NULL, 
     otp_type ENUM('reset_password', 'verify_email') NOT NULL,
     otp VARCHAR(6) NOT NULL,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     expiresAt TIMESTAMP NOT NULL,
-    INDEX (user_id)
+    INDEX (user_id),
+    INDEX (admin_id)  
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -- Check existing constraints on `users` table for `referral_code_id`

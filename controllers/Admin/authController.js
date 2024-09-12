@@ -157,13 +157,13 @@ export const forgetOtpController = async (req, res, next) => {
         const admin = rows[0];
         const otpType = 'reset_password';
 
-        await pool.query('DELETE FROM otp WHERE user_id = ? AND otp_type = ?', [admin.id, otpType]);
+        await pool.query('DELETE FROM otp WHERE admin_id = ? AND otp_type = ?', [admin.id, otpType]);
 
         const otp = generateOTP();
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
         await pool.query(
-            'INSERT INTO otp (user_id, otp_type, otp, expiresAt) VALUES (?, ?, ?, ?)',
+            'INSERT INTO otp (admin_id, otp_type, otp, expiresAt) VALUES (?, ?, ?, ?)',
             [admin.id, otpType, otp, expiresAt]
         );
 
@@ -174,9 +174,6 @@ export const forgetOtpController = async (req, res, next) => {
         next(new CustomError(500, error.message));
     }
 };
-
-
-
 
 export const resetPasswordController = async (req, res, next) => {
     try {

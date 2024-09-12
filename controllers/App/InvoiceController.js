@@ -6,21 +6,35 @@ import { totalInWords } from '../../utils/InvoiceUtils.js';
 import pool from '../../config/database.js';
 import puppeteer from 'puppeteer';
 
+const htmlPath = path.join(process.cwd(), 'utils/invoice.html');
+const htmlTemplate = fs.readFileSync(htmlPath, 'utf8');
+
+let browser;
+
+const getBrowserInstance = async () => {
+    if (!browser) {
+        browser = await puppeteer.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+    }
+    return browser;
+};
+
 export const generateInvoiceController = async (req, res, next) => {
     try {
         const { invoice_date, customer_name, customer_gstin, state, products, customer_address } = req.body;
 
-        const [invoiceDetails] = await pool.query('SELECT * FROM invoice_details LIMIT 1');
+        const [[invoiceDetails], [result]] = await Promise.all([
+            pool.query('SELECT * FROM invoice_details LIMIT 1'),
+            pool.query('SELECT MAX(id) as maxId FROM credit_invoice')
+        ]);
+
         if (!invoiceDetails.length) {
             throw new CustomError(500, 'Invoice details not found');
         }
         const details = invoiceDetails[0];
-
-        const [result] = await pool.query('SELECT MAX(id) as maxId FROM credit_invoice');
         const invoice_no = result[0].maxId ? result[0].maxId + 1 : 1;
-
-        const htmlPath = path.join(process.cwd(), 'utils/invoice.html');
-        const htmlTemplate = fs.readFileSync(htmlPath, 'utf8');
 
         let productRows = '';
         let grand_total = 0;
@@ -72,15 +86,11 @@ export const generateInvoiceController = async (req, res, next) => {
 
         const pdfFilePath = path.join(pdfFolder, `invoice_${invoice_no}.pdf`);
 
-        const browser = await puppeteer.launch({
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
-        });
+        const browser = await getBrowserInstance();
         const page = await browser.newPage();
         await page.setContent(populatedHtml, { waitUntil: 'networkidle0' });
         const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
-
-        await browser.close();
+        await page.close();
 
         fs.writeFileSync(pdfFilePath, pdfBuffer);
 

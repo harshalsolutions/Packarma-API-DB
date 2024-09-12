@@ -4,15 +4,15 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const transporter = createTransport({
-    service: 'Gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
+  service: 'Gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
 });
 
-const templateHandler = (name, otp) => {
-    return `
+const templateHandler = (name, otp, link = '') => {
+  return `
     <html>
     <head>
       <style type="text/css" rel="stylesheet" media="all">
@@ -142,9 +142,10 @@ const templateHandler = (name, otp) => {
                     <tr>
                       <td class="content-cell">
                         <h1>Hi ${name},</h1>
+                        ${link ? `<p>Click <a href="${link}">here</a> to reset your password.</p>` : ''}
                         <p>Your OTP code is <strong>${otp}</strong>. It is valid for 10 minutes.</p>
                         <p>If you did not request this, please ignore this email.</p>
-                        <p>Thanks,<br>The Packarma team
+                        <p>Thanks,<br>The Packarma team</p>
                       </td>
                     </tr>
                   </table>
@@ -160,32 +161,32 @@ const templateHandler = (name, otp) => {
 };
 
 const sendOtpEmail = async (to, otp, type = "basic") => {
-    let mailOptions;
+  let mailOptions;
 
-    if (type === 'admin') {
-        const resetLink = `${process.env.ADMIN_FRONTEND_URL}/update-password?email=${to}&otp=${otp}`;
-        mailOptions = {
-            from: `Packarma ${process.env.EMAIL_USER}`,
-            to: to,
-            subject: 'Admin OTP Code',
-            html: templateHandler('Admin', otp)
-        };
-    } else {
-        mailOptions = {
-            from: `Packarma ${process.env.EMAIL_USER}`,
-            to: to,
-            subject: 'Your OTP Code',
-            html: templateHandler('User', otp)
-        };
-    }
+  if (type === 'admin') {
+    const link = `${process.env.ADMIN_FRONTEND_URL}/update-password?email=${to}&otp=${otp}`;
+    mailOptions = {
+      from: `Packarma ${process.env.EMAIL_USER}`,
+      to: to,
+      subject: 'Admin OTP Code',
+      html: templateHandler('Admin', otp, link)
+    };
+  } else {
+    mailOptions = {
+      from: `Packarma ${process.env.EMAIL_USER}`,
+      to: to,
+      subject: 'Your OTP Code',
+      html: templateHandler('User', otp)
+    };
+  }
 
-    try {
-        await transporter.sendMail(mailOptions);
-        console.log(`OTP sent to ${to}`);
-    } catch (error) {
-        console.error('Error sending OTP email:', error);
-        throw new Error('Could not send OTP email');
-    }
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`OTP sent to ${to}`);
+  } catch (error) {
+    console.error('Error sending OTP email:', error);
+    throw new Error('Could not send OTP email');
+  }
 }
 
 export default sendOtpEmail

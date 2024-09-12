@@ -1,7 +1,7 @@
 import ApiResponse from '../../utils/ApiResponse.js';
 import pool from '../../config/database.js';
 import bcrypt from 'bcryptjs';
-import otpGenerator from '../../utils/otpGenerator.js';
+import generateOTP from "../../utils/otpGenerator.js";
 import sendOtpEmail from "../../utils/emailSender.js";
 import CustomError from '../../utils/CustomError.js';
 import dotenv from 'dotenv';
@@ -140,7 +140,7 @@ export const requestOtpController = async (req, res, next) => {
 
         await pool.query('DELETE FROM otp WHERE user_id = ? AND otp_type = ?', [userId, otpType]);
 
-        const otp = otpGenerator();
+        const otp = generateOTP();
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
         await pool.query(

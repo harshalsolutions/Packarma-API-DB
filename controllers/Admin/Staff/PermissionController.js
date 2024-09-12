@@ -41,7 +41,6 @@ export const updatePermissionController = async (req, res, next) => {
 
         const connection = await pool.getConnection();
         await connection.beginTransaction();
-        console.log(req.body)
         try {
             const [existingPermission] = await connection.query('SELECT * FROM permissions WHERE id = ?', [permissionId]);
             if (!existingPermission.length) throw new CustomError(404, 'Permission not found');

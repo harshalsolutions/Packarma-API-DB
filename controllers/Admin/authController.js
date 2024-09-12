@@ -184,7 +184,7 @@ export const resetPasswordController = async (req, res, next) => {
 
         try {
             const [rows] = await connection.query(
-                'SELECT otp, expiresAt FROM otp WHERE user_id = (SELECT id FROM admin WHERE emailid = ?) AND otp_type = "reset_password"',
+                'SELECT otp, expiresAt FROM otp WHERE admin_id = (SELECT id FROM admin WHERE emailid = ?) AND otp_type = "reset_password"',
                 [email]
             );
 
@@ -202,7 +202,7 @@ export const resetPasswordController = async (req, res, next) => {
             );
 
             await connection.query(
-                'DELETE FROM otp WHERE user_id = (SELECT id FROM admin WHERE emailid = ?) AND otp_type = "reset_password"',
+                'DELETE FROM otp WHERE admin_id = (SELECT id FROM admin WHERE emailid = ?) AND otp_type = "reset_password"',
                 [email]
             );
 

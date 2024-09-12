@@ -27,7 +27,7 @@ const templateHandler = (name, otp, link = '') => {
           color: #51545E;
         }
         a {
-          color: #ffffff !important;
+          color: #84cc16 !important;
           text-decoration: none;
         }
         .preheader {
@@ -51,15 +51,15 @@ const templateHandler = (name, otp, link = '') => {
           color: #51545E;
         }
         .button {
-          background-color: #84cc16;
-          color: #FFF;
-          text-decoration: none;
-          border-radius: 3px;
-          box-shadow: 0 2px 3px rgba(0, 0, 0, 0.16);
-          -webkit-text-size-adjust: none;
+          background-color: #84cc16 !important;
+          color: black !important;
+          text-decoration: none !important;
+          border-radius: 3px !important;
+          box-shadow: 0 2px 3px rgba(0, 0, 0, 0.16) !important;
+          -webkit-text-size-adjust: none !important;
           box-sizing: border-box;
-          display: inline-block;
-          padding: 10px 18px;
+          display: inline-block !important;
+          padding: 10px 18px !important;
         }
         .email-wrapper {
           width: 100%;
@@ -142,7 +142,8 @@ const templateHandler = (name, otp, link = '') => {
                     <tr>
                       <td class="content-cell">
                         <h1>Hi ${name},</h1>
-                        ${link ? `<p>Click <a href="${link}">here</a> to reset your password.</p>` : ''}
+                        ${link ? `<p>Click the button below to reset your password:</p>
+                        <p><a href="${link}" class="button">Reset Password</a></p>` : ''}
                         <p>Your OTP code is <strong>${otp}</strong>. It is valid for 10 minutes.</p>
                         <p>If you did not request this, please ignore this email.</p>
                         <p>Thanks,<br>The Packarma team</p>

@@ -3,10 +3,11 @@ import pool from '../../../config/database.js';
 import CustomError from '../../../utils/CustomError.js';
 import { unlink } from 'fs';
 import path from 'path';
+import ExcelJS from 'exceljs';
 
 export const getAllAdvertisementController = async (req, res, next) => {
     try {
-        const { status, page = 1, limit = 10 } = req.query;
+        const { status, page = 1, limit = 10, search } = req.query;
 
         let query = `
             SELECT 
@@ -28,6 +29,11 @@ export const getAllAdvertisementController = async (req, res, next) => {
         if (status) {
             query += ' WHERE a.status = ?';
             queryParams.push(status);
+        }
+        if (search) {
+            query += status ? ' AND' : ' WHERE';
+            query += ' a.title LIKE ?';
+            queryParams.push(`%${search}%`);
         }
 
         query += ' GROUP BY a.id';
@@ -58,33 +64,98 @@ export const getAllAdvertisementController = async (req, res, next) => {
     }
 };
 
-export const getAdvertisementController = async (req, res, next) => {
+export const exportAdvertisementControllerById = async (req, res, next) => {
     try {
         const advertisementId = req.params.id;
 
-        let query = `
+        const [advertisementRows] = await pool.query(`
             SELECT 
-                a.*,
-                IFNULL(SUM(aa.activity_type = 'view'), 0) as total_views,
-                IFNULL(SUM(aa.activity_type = 'click'), 0) as total_clicks,
-                JSON_ARRAYAGG(JSON_OBJECT(
-                    'product_id', p.id,
-                    'product_name', p.product_name,
-                    'product_image', p.product_image
-                )) as products
-            FROM advertisement a
-            LEFT JOIN advertisement_activity aa ON a.id = aa.advertisement_id
-            LEFT JOIN advertisement_product ap ON a.id = ap.advertisement_id
-            LEFT JOIN product p ON ap.product_id = p.id
-            WHERE a.id = ?
-            GROUP BY a.id
-        `;
+                a.title,
+                a.description,
+                a.createdAt,
+                a.updatedAt,
+                COALESCE(activity.total_views, 0) AS total_views,
+                COALESCE(activity.total_clicks, 0) AS total_clicks
+            FROM 
+                advertisement a
+            LEFT JOIN 
+                (
+                    SELECT 
+                        advertisement_id,
+                        COUNT(CASE WHEN activity_type = 'view' THEN 1 END) AS total_views,
+                        COUNT(CASE WHEN activity_type = 'click' THEN 1 END) AS total_clicks
+                    FROM 
+                        advertisement_activity
+                    WHERE 
+                        advertisement_id = ?
+                    GROUP BY 
+                        advertisement_id
+                ) AS activity ON a.id = activity.advertisement_id
+            WHERE 
+                a.id = ?
+        `, [advertisementId, advertisementId]);
 
-        const [rows] = await pool.query(query, [advertisementId]);
+        if (!advertisementRows.length) throw new CustomError(404, 'Advertisement not found');
 
-        if (!rows.length) throw new CustomError(404, 'Advertisement not found');
+        const advertisement = advertisementRows[0];
 
-        res.json(new ApiResponse(200, rows[0]));
+        const [userActivity] = await pool.query(`
+            SELECT 
+                u.user_id,
+                u.firstname,
+                u.lastname,
+                u.email,
+                aa.activity_type,
+                aa.activity_timestamp
+            FROM 
+                advertisement_activity aa
+            JOIN 
+                users u ON aa.user_id = u.user_id
+            WHERE 
+                aa.advertisement_id = ?
+        `, [advertisementId]);
+
+        const csvData = userActivity.map(activity => ({
+            title: advertisement.title,
+            description: advertisement.description,
+            createdAt: advertisement.createdAt,
+            updatedAt: advertisement.updatedAt,
+            user_id: activity.user_id,
+            firstname: activity.firstname,
+            lastname: activity.lastname,
+            email: activity.email,
+            activity_type: activity.activity_type,
+            activity_timestamp: activity.activity_timestamp
+        }));
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Advertisement Clicks and Views');
+
+        worksheet.columns = [
+            { header: 'Title', key: 'title', width: 30 },
+            { header: 'Description', key: 'description', width: 30 },
+            { header: 'Total Views', key: 'total_views', width: 15 },
+            { header: 'Total Clicks', key: 'total_clicks', width: 15 },
+            {
+                header: 'Created At', key: 'createdAt', width: 20, style: { numFmt: 'dd/mm/yyyy hh:mm:ss' }
+            },
+            {
+                header: 'Updated At', key: 'updatedAt', width: 20, style: { numFmt: 'dd/mm/yyyy hh:mm:ss' }
+            },
+            { header: 'User ID', key: 'user_id', width: 15 },
+            { header: 'First Name', key: 'firstname', width: 15 },
+            { header: 'Last Name', key: 'lastname', width: 15 },
+            { header: 'Email', key: 'email', width: 30 },
+            { header: 'Activity Type', key: 'activity_type', width: 30 },
+            { header: 'Activity Timestamp', key: 'activity_timestamp', width: 20, style: { numFmt: 'dd/mm/yyyy hh:mm:ss' } }
+        ];
+
+        worksheet.addRows(csvData);
+
+        res.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.attachment(`advertisement_${advertisementId}_${new Date()}.xlsx`);
+        await workbook.xlsx.write(res);
+        res.end();
     } catch (error) {
         next(error);
     }

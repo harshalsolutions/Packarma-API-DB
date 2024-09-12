@@ -3,13 +3,13 @@ import pool from '../../../config/database.js';
 import CustomError from '../../../utils/CustomError.js';
 import { unlink } from 'fs';
 import path from 'path';
+import ExcelJS from 'exceljs';
 
 export const getAllBannerController = async (req, res, next) => {
     try {
-        const { status } = req.query;
+        const { status, search } = req.query;
         const { page = 1, limit = 10 } = req.query;
         const offset = (page - 1) * limit;
-
         let query = `
             SELECT 
                 b.*,
@@ -37,6 +37,13 @@ export const getAllBannerController = async (req, res, next) => {
             queryParams.push(status);
         }
 
+        if (search) {
+            query += status ? ' AND' : ' WHERE';
+            query += ' b.title LIKE ?';
+            queryParams.push(`%${search}%`);
+        }
+
+        query += ' GROUP BY b.id';
         query += ' LIMIT ? OFFSET ?';
         queryParams.push(Number(limit), Number(offset));
 
@@ -66,54 +73,98 @@ export const getAllBannerController = async (req, res, next) => {
     }
 };
 
-export const getBannerController = async (req, res, next) => {
+export const exportBannerControllerById = async (req, res, next) => {
     try {
         const bannerId = req.params.id;
-        const { page = 1, limit = 10 } = req.query;
-        const offset = (page - 1) * limit;
 
-        let query = `
-        SELECT 
-            b.*,
-            COALESCE(activity.total_views, 0) AS total_views,
-            COALESCE(activity.total_clicks, 0) AS total_clicks
-        FROM 
-            banner b
-        LEFT JOIN 
-            (
-                SELECT 
-                    banner_id,
-                    COUNT(CASE WHEN activity_type = 'view' THEN 1 END) AS total_views,
-                    COUNT(CASE WHEN activity_type = 'click' THEN 1 END) AS total_clicks
-                FROM 
-                    banner_activity
-                WHERE 
-                    banner_id = ?
-                GROUP BY 
-                    banner_id
-            ) AS activity ON b.id = activity.banner_id
-        WHERE 
-            b.id = ?
-        LIMIT ? OFFSET ?`;
+        const [bannerRows] = await pool.query(`
+            SELECT 
+                b.title,
+                b.description,
+                b.createdAt,
+                b.updatedAt,
+                COALESCE(activity.total_views, 0) AS total_views,
+                COALESCE(activity.total_clicks, 0) AS total_clicks
+            FROM 
+                banner b
+            LEFT JOIN 
+                (
+                    SELECT 
+                        banner_id,
+                        COUNT(CASE WHEN activity_type = 'view' THEN 1 END) AS total_views,
+                        COUNT(CASE WHEN activity_type = 'click' THEN 1 END) AS total_clicks
+                    FROM 
+                        banner_activity
+                    WHERE 
+                        banner_id = ?
+                    GROUP BY 
+                        banner_id
+                ) AS activity ON b.id = activity.banner_id
+            WHERE 
+                b.id = ?
+        `, [bannerId, bannerId]);
 
-        const [rows] = await pool.query(query, [bannerId, bannerId, limit, offset]);
-        const [totalCount] = await pool.query('SELECT COUNT(*) as count FROM banner');
+        if (!bannerRows.length) throw new CustomError(404, 'Banner not found');
 
-        if (!rows.length) throw new CustomError(404, 'Banner not found');
+        const banner = bannerRows[0];
 
-        const total = totalCount[0].count;
-        const totalPages = Math.ceil(total / limit);
-        const pagination = {
-            currentPage: Number(page),
-            totalPages: totalPages,
-            totalItems: total,
-            itemsPerPage: Number(limit)
-        };
+        const [userActivity] = await pool.query(`
+            SELECT 
+                u.user_id,
+                u.firstname,
+                u.lastname,
+                u.email,
+                ba.activity_type,
+                ba.activity_timestamp
+            FROM 
+                banner_activity ba
+            JOIN 
+                users u ON ba.user_id = u.user_id
+            WHERE 
+                ba.banner_id = ?
+        `, [bannerId]);
 
-        res.json(new ApiResponse(200, {
-            banners: rows,
-            pagination
+        const csvData = userActivity.map(activity => ({
+            title: banner.title,
+            description: banner.description,
+            createdAt: banner.createdAt,
+            updatedAt: banner.updatedAt,
+            user_id: activity.user_id,
+            firstname: activity.firstname,
+            lastname: activity.lastname,
+            email: activity.email,
+            activity_type: activity.activity_type,
+            activity_timestamp: activity.activity_timestamp
         }));
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Banner Clicks and Views');
+
+        worksheet.columns = [
+            { header: 'Title', key: 'title', width: 30 },
+            { header: 'Description', key: 'description', width: 30 },
+            { header: 'Total Views', key: 'total_views', width: 15 },
+            { header: 'Total Clicks', key: 'total_clicks', width: 15 },
+            {
+                header: 'Created At', key: 'createdAt', width: 20, style: { numFmt: 'dd/mm/yyyy hh:mm:ss' }
+            },
+            {
+                header: 'Updated At', key: 'updatedAt', width: 20, style: { numFmt: 'dd/mm/yyyy hh:mm:ss' }
+            },
+            { header: 'User ID', key: 'user_id', width: 15 },
+            { header: 'First Name', key: 'firstname', width: 15 },
+            { header: 'Last Name', key: 'lastname', width: 15 },
+            { header: 'Email', key: 'email', width: 30 },
+            { header: 'Activity Type', key: 'activity_type', width: 30 },
+            { header: 'Activity Timestamp', key: 'activity_timestamp', width: 20, style: { numFmt: 'dd/mm/yyyy hh:mm:ss' } }
+        ];
+
+        worksheet.addRows(csvData);
+
+        res.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.attachment(`banner_${bannerId}_${new Date()}.xlsx`);
+        await workbook.xlsx.write(res);
+        res.end();
     } catch (error) {
         next(error);
     }

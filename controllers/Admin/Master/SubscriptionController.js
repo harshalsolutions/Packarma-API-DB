@@ -8,17 +8,25 @@ export const getAllSubscriptionsController = async (req, res, next) => {
         const offset = (page - 1) * limit;
 
         const query = `
-           SELECT 
-                s.*, 
-                IFNULL(s.benefits, '') AS benefits
-            FROM 
-                subscriptions s
-            WHERE
-                s.deleted_at IS NULL
+            SELECT s.id, s.type, s.credit_amount, s.duration, s.benefits, s.sequence, s.deleted_at, s.createdAt, s.updatedAt,
+            GROUP_CONCAT(CONCAT(ps.price, ':', ps.currency, ':', ps.status) SEPARATOR '|') AS prices
+            FROM subscriptions s
+            JOIN subscriptions_prices ps ON s.id = ps.subscription_id
+            GROUP BY s.id
+            ORDER BY s.sequence DESC
             LIMIT ? OFFSET ?;
         `;
 
         const [rows] = await pool.query(query, [Number(limit), Number(offset)]);
+
+        rows.map((row) => {
+            row.prices = row.prices.split('|').map((price) => {
+                const [priceValue, currency, status] = price.split(':');
+                return { price: priceValue, currency, status };
+            });
+
+            row.benefits = row.benefits ? row.benefits.split("#") : [];
+        });
 
         const [totalCount] = await pool.query('SELECT COUNT(*) as count FROM subscriptions WHERE deleted_at IS NULL');
 

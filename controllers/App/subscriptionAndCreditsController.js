@@ -96,19 +96,44 @@ export const addUserSubscription = async (req, res, next) => {
 
 export const getSubscriptionsController = async (req, res, next) => {
     try {
-        let query = `
-            SELECT * FROM subscriptions;
+        const query = `
+            SELECT s.id, s.type, s.credit_amount, s.duration, s.benefits, s.sequence, s.deleted_at, s.createdAt, s.updatedAt,
+                   ps.price, ps.currency, ps.status
+            FROM subscriptions s
+            JOIN subscriptions_prices ps ON s.id = ps.subscription_id
+            ORDER BY s.sequence DESC;
         `;
 
         const [rows] = await pool.query(query);
 
+        if (!rows.length) throw new CustomError(404, 'No subscriptions found');
+        console.log(rows.length)
+        const subscriptions = {};
+
         rows.forEach(row => {
-            row.benefits = row.benefits ? row.benefits.split('#') : [];
+            if (!subscriptions[row.id]) {
+                subscriptions[row.id] = {
+                    id: row.id,
+                    type: row.type,
+                    credit_amount: row.credit_amount,
+                    duration: row.duration,
+                    benefits: row.benefits ? row.benefits.split('#') : [],
+                    sequence: row.sequence,
+                    deleted_at: row.deleted_at,
+                    createdAt: row.createdAt,
+                    updatedAt: row.updatedAt,
+                    prices: []
+                };
+            }
+            subscriptions[row.id].prices.push({
+                price: row.price,
+                currency: row.currency,
+                status: row.status
+            });
         });
 
-        if (!rows.length) throw new CustomError(404, 'No subscriptions found');
 
-        res.json(new ApiResponse(200, rows, 'Subscriptions fetched successfully'));
+        res.json(new ApiResponse(200, Object.values(subscriptions), 'Subscriptions fetched successfully'));
     } catch (error) {
         next(new CustomError(500, error.message));
     }

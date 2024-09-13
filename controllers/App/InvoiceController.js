@@ -5,6 +5,7 @@ import path from 'path';
 import { totalInWords } from '../../utils/InvoiceUtils.js';
 import pool from '../../config/database.js';
 import puppeteer from 'puppeteer';
+import ApiResponse from '../../utils/ApiResponse.js';
 
 const htmlPath = path.join(process.cwd(), 'utils/invoice.html');
 const htmlTemplate = fs.readFileSync(htmlPath, 'utf8');

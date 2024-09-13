@@ -115,9 +115,13 @@ export const updateUserController = async (req, res, next) => {
 export const getUserController = async (req, res, next) => {
     try {
         const userId = req.user.userId;
-        const [rows] = await pool.query('SELECT * FROM users WHERE user_id = ?', [userId]);
+        const [rows] = await pool.query(
+            'SELECT u.*, r.code as referral_code FROM users u ' +
+            'LEFT JOIN referral_codes r ON u.user_id = r.user_id ' +
+            'WHERE u.user_id = ?',
+            [userId]
+        );
         if (!rows.length) throw new CustomError(404, 'User not found');
-
         const user = rows[0];
         const { password: _, ...userWithoutPassword } = user;
         res.json(new ApiResponse(200, userWithoutPassword));

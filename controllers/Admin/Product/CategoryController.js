@@ -19,7 +19,7 @@ export const getCategoryController = async (req, res, next) => {
 
 export const getAllCategoriesController = async (req, res, next) => {
     try {
-        const { status, page = 1, limit = 10 } = req.query;
+        const { status, page = 1, limit = 10, search } = req.query;
         const offset = (page - 1) * limit;
 
         let query = 'SELECT * FROM categories';
@@ -28,6 +28,11 @@ export const getAllCategoriesController = async (req, res, next) => {
         if (status) {
             query += ' WHERE status = ?';
             queryParams.push(status);
+        }
+
+        if (search) {
+            query += ' WHERE name LIKE ?';
+            queryParams.push(`%${search}%`);
         }
 
         query += ' ORDER BY createdAt DESC';

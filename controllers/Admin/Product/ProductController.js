@@ -6,25 +6,55 @@ import path from 'path';
 
 export const getAllProductsController = async (req, res, next) => {
     try {
-        const { status, page = 1, limit = 10 } = req.query;
+        const { status, category_id, sub_category_id, product_form_id, packaging_treatment_id, productName, page = 1, limit = 10 } = req.query;
         const offset = (page - 1) * limit;
 
         let query = 'SELECT * FROM product';
         const queryParams = [];
 
+        const conditions = [];
+
+        if (category_id) {
+            conditions.push('category_id = ?');
+            queryParams.push(category_id);
+        }
+        if (sub_category_id) {
+            conditions.push('sub_category_id = ?');
+            queryParams.push(sub_category_id);
+        }
+        if (product_form_id) {
+            conditions.push('product_form_id = ?');
+            queryParams.push(product_form_id);
+        }
+        if (packaging_treatment_id) {
+            conditions.push('packaging_treatment_id = ?');
+            queryParams.push(packaging_treatment_id);
+        }
+        if (productName) {
+            conditions.push('product_name LIKE ?');
+            queryParams.push(`%${productName}%`);
+        }
         if (status) {
-            query += ' WHERE status = ?';
+            conditions.push('status = ?');
             queryParams.push(status);
+        }
+
+        if (conditions.length > 0) {
+            query += ` WHERE ${conditions.join(' AND ')}`;
         }
 
         query += ' ORDER BY createdAt DESC LIMIT ? OFFSET ?';
         queryParams.push(parseInt(limit), offset);
 
         const [rows] = await pool.query(query, queryParams);
-        const [totalCount] = await pool.query('SELECT COUNT(*) as count FROM product' + (status ? ' WHERE status = ?' : ''), status ? [status] : []);
+        let countQuery = 'SELECT COUNT(*) as count FROM product';
+        const countParams = [];
+        if (conditions.length > 0) {
+            countQuery += ` WHERE ${conditions.join(' AND ')}`;
+            countParams.push(...queryParams.slice(0, queryParams.length - 2)); // Avoid limit and offset
+        }
 
-        if (!rows.length) res.json(new ApiResponse(200, { product: [] }, 'No Product found'));
-
+        const [totalCount] = await pool.query(countQuery, countParams);
         const total = totalCount[0].count;
         const totalPages = Math.ceil(total / limit);
         const pagination = {

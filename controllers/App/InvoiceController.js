@@ -112,7 +112,7 @@ export const getCreditInvoicesController = async (req, res, next) => {
         const userId = req.user.userId;
 
         let query = `
-            SELECT id, user_id, plan_type, number_of_credits, total, invoice_date, createdAt, updatedAt 
+            SELECT *
             FROM credit_invoice 
         `;
         const queryParams = [];
@@ -172,7 +172,7 @@ export const getSubscriptionInvoicesController = async (req, res, next) => {
         const userId = req.user.userId;
 
         let query = `
-            SELECT id, user_id, plan_type, total, invoice_date, createdAt, updatedAt 
+            SELECT * 
             FROM subscription_invoice 
         `;
         const queryParams = [];

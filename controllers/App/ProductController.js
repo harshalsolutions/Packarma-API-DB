@@ -391,3 +391,30 @@ export const getSearchHistoryController = async (req, res, next) => {
         connection.release();
     }
 };
+
+
+export const getCategoryByPackagingTreatmentController = async (req, res, next) => {
+    const connection = await pool.getConnection();
+    const { id } = req.params;
+
+    try {
+        const selectQuery = `
+            SELECT DISTINCT c.*
+            FROM categories c
+            JOIN product p ON c.id = p.category_id
+            WHERE p.packaging_treatment_id = ?;
+        `;
+
+        const [rows] = await connection.query(selectQuery, [id]);
+
+        if (!rows.length) {
+            return res.status(404).json(new ApiResponse(404, [], 'No categories found for the specified packaging treatment'));
+        }
+
+        res.json(new ApiResponse(200, rows, 'Categories fetched successfully'));
+    } catch (error) {
+        next(new CustomError(500, error.message));
+    } finally {
+        connection.release();
+    }
+};

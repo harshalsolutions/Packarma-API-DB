@@ -196,20 +196,18 @@ export const getSubscriptionInvoicesController = async (req, res, next) => {
 export const addSubscriptionInvoiceController = async (req, res, next) => {
     const connection = await pool.getConnection();
     const userId = req.user.userId;
-    try {
-        const { plan_type, total, invoice_date } = req.body;
 
-        if (!userId || !plan_type || !total || !invoice_date) {
+    try {
+        const { subscription_id, total, invoice_date } = req.body;
+        if (!userId || !subscription_id || !total || !invoice_date) {
             throw new CustomError(400, 'All fields are required');
         }
-
         await connection.beginTransaction();
-
         const query = `
-            INSERT INTO subscription_invoice (user_id, plan_type, total, invoice_date)
+            INSERT INTO subscription_invoice (user_id, subscription_id, total, invoice_date)
             VALUES (?, ?, ?, ?)
         `;
-        const queryParams = [userId, plan_type, total, invoice_date];
+        const queryParams = [userId, subscription_id, total, invoice_date];
 
         await connection.query(query, queryParams);
 
@@ -223,3 +221,4 @@ export const addSubscriptionInvoiceController = async (req, res, next) => {
         connection.release();
     }
 };
+

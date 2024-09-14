@@ -87,9 +87,51 @@ export const getAllPackagingSolutionsController = async (req, res, next) => {
 
 export const createPackagingSolutionController = async (req, res, next) => {
     try {
-        const { name, structure_type, sequence, storage_condition_id, display_shelf_life_days, product_id, product_category_id, product_form_id, packaging_treatment_id, packing_type_id, packaging_machine_id, packaging_material_id, product_min_weight, product_max_weight, min_order_quantity, min_order_quantity_unit_id } = req.body;
-        const query = 'INSERT INTO packaging_solution (name, structure_type, sequence, storage_condition_id, display_shelf_life_days, product_id, product_category_id, product_form_id, packaging_treatment_id, packing_type_id, packaging_machine_id, packaging_material_id, product_min_weight, product_max_weight, min_order_quantity, min_order_quantity_unit_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await pool.query(query, [name, structure_type, sequence, storage_condition_id, display_shelf_life_days, product_id, product_category_id, product_form_id, packaging_treatment_id, packing_type_id, packaging_machine_id, packaging_material_id, product_min_weight, product_max_weight, min_order_quantity, min_order_quantity_unit_id]);
+        const {
+            name,
+            structure_type,
+            sequence,
+            storage_condition_id,
+            display_shelf_life_days,
+            product_id,
+            product_category_id,
+            product_form_id,
+            packaging_treatment_id,
+            packing_type_id,
+            packaging_machine_id,
+            packaging_material_id,
+            product_min_weight,
+            product_max_weight,
+            min_order_quantity,
+            min_order_quantity_unit_id
+        } = req.body;
+
+        let image = null;
+
+        if (req.file) {
+            image = `/media/packagingsolution/${req.file.filename}`;
+        }
+
+        const query = `
+            INSERT INTO packaging_solution (
+                name, structure_type, sequence, storage_condition_id, 
+                display_shelf_life_days, product_id, product_category_id, 
+                product_form_id, packaging_treatment_id, packing_type_id, 
+                packaging_machine_id, packaging_material_id, product_min_weight, 
+                product_max_weight, min_order_quantity, min_order_quantity_unit_id, 
+                image
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        await pool.query(query, [
+            name, structure_type, sequence, storage_condition_id,
+            display_shelf_life_days, product_id, product_category_id,
+            product_form_id, packaging_treatment_id, packing_type_id,
+            packaging_machine_id, packaging_material_id, product_min_weight,
+            product_max_weight, min_order_quantity, min_order_quantity_unit_id,
+            image
+        ]);
+
         res.status(201).json(new ApiResponse(201, null, 'Packaging Solution created successfully'));
     } catch (error) {
         next(new CustomError(500, error.message));
@@ -100,12 +142,34 @@ export const updatePackagingSolutionController = async (req, res, next) => {
     try {
         const { id } = req.params;
         const updateData = req.body;
+        delete updateData.type;
+
+        console.log(updateData)
+
+        if (req.file) {
+            const [existingPackagingSolutionRows] = await pool.query('SELECT image FROM packaging_solution WHERE id = ?', [id]);
+            if (!existingPackagingSolutionRows.length) throw new CustomError(404, 'Packaging Solution not found');
+
+            const oldFilePath = existingPackagingSolutionRows[0].image;
+            if (oldFilePath) {
+                const absolutePath = path.join(process.cwd(), oldFilePath);
+                unlink(absolutePath, (err) => {
+                    if (err) console.error(`Error deleting file: ${err.message}`);
+                });
+            }
+
+            updateData.image = `/media/packagingsolution/${req.file.filename}`;
+        }
+
         const fields = Object.keys(updateData).map(field => `${field} = ?`).join(', ');
         const values = [...Object.values(updateData), id];
+
         const query = `UPDATE packaging_solution SET ${fields}, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`;
         await pool.query(query, values);
+
         res.json(new ApiResponse(200, null, 'Packaging Solution updated successfully'));
     } catch (error) {
+        console.log(error);
         next(new CustomError(500, error.message));
     }
 };
@@ -113,6 +177,17 @@ export const updatePackagingSolutionController = async (req, res, next) => {
 export const deletePackagingSolutionController = async (req, res, next) => {
     try {
         const { id } = req.params;
+        const [existingPackagingSolutionRows] = await pool.query('SELECT image FROM packaging_solution WHERE id = ?', [id]);
+        if (!existingPackagingSolutionRows.length) throw new CustomError(404, 'Packaging Solution not found');
+
+        const oldFilePath = existingPackagingSolutionRows[0].image;
+        if (oldFilePath) {
+            const absolutePath = path.join(process.cwd(), oldFilePath);
+            unlink(absolutePath, (err) => {
+                if (err) console.error(`Error deleting file: ${err.message}`);
+            });
+        }
+
         await pool.query('DELETE FROM packaging_solution WHERE id = ?', [id]);
         res.json(new ApiResponse(200, null, 'Packaging Solution deleted successfully'));
     } catch (error) {

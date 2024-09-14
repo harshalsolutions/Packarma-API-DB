@@ -62,10 +62,23 @@ CREATE TABLE IF NOT EXISTS referrals (
     referred_user_id INT UNSIGNED NOT NULL,
     account_created BOOLEAN DEFAULT 0,
     subscription_completed BOOLEAN DEFAULT 0,
+    redeem_status BOOLEAN DEFAULT 0,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX (referral_code_id),
     INDEX (referred_user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS redeem_requests (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    referral_id INT UNSIGNED NOT NULL,
+    description VARCHAR(255),
+    redeem_status BOOLEAN DEFAULT 0,
+    redeem_requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX (referral_id),
+    FOREIGN KEY (referral_id) REFERENCES referrals(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS otp (

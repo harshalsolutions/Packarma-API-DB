@@ -172,8 +172,9 @@ export const getSubscriptionInvoicesController = async (req, res, next) => {
         const userId = req.user.userId;
 
         let query = `
-            SELECT * 
-            FROM subscription_invoice 
+            SELECT si.*, s.* 
+            FROM subscription_invoice AS si 
+            JOIN subscriptions AS s ON si.subscription_id = s.id;
         `;
         const queryParams = [];
 

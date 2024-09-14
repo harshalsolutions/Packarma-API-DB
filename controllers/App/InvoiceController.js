@@ -174,7 +174,7 @@ export const getSubscriptionInvoicesController = async (req, res, next) => {
         let query = `
             SELECT si.*, s.* 
             FROM subscription_invoice AS si 
-            JOIN subscriptions AS s ON si.subscription_id = s.id;
+            JOIN subscriptions AS s ON si.subscription_id = s.id
         `;
         const queryParams = [];
 

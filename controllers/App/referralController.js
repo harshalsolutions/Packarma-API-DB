@@ -78,7 +78,7 @@ export const getUsersByReferralCodeController = async (req, res, next) => {
         const { referralCode } = req.params;
         const query = `
             SELECT 
-                u.user_id, u.firstname, u.lastname, u.email, r.id as referral_id, r.account_created, r.subscription_completed
+                u.user_id, u.firstname, u.lastname, u.email, r.id as referral_id, r.account_created, r.subscription_completed, r.redeem_status
             FROM 
                 referrals r
             JOIN 

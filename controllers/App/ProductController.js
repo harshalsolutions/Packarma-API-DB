@@ -314,7 +314,7 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
 
         if (min_order_quantity_unit_id) {
             query += ' AND ps.min_order_quantity_unit_id = ?';
-            queryParams.push(grams);
+            queryParams.push(min_order_quantity_unit_id);
         }
 
 

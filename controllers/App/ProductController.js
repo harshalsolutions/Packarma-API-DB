@@ -271,11 +271,12 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
     try {
         const {
             category_id,
+            subcategory_id,
             product_id,
             packing_type_id,
             shelf_life_days,
             product_weight,
-            grams
+            min_order_quantity_unit_id
         } = req.body;
 
         const { limit = 10 } = req.query;
@@ -296,6 +297,11 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
             queryParams.push(category_id);
         }
 
+        if (subcategory_id) {
+            query += ' AND ps.product_subcategory_id = ?';
+            queryParams.push(subcategory_id);
+        }
+
         if (product_id) {
             query += ' AND ps.product_id = ?';
             queryParams.push(product_id);
@@ -306,6 +312,12 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
             queryParams.push(packing_type_id);
         }
 
+        if (min_order_quantity_unit_id) {
+            query += ' AND ps.min_order_quantity_unit_id = ?';
+            queryParams.push(grams);
+        }
+
+
         if (shelf_life_days) {
             query += ' AND ps.display_shelf_life_days >= ?';
             queryParams.push(shelf_life_days);
@@ -314,11 +326,6 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
         if (product_weight) {
             query += ' AND ps.product_min_weight <= ? AND ps.product_max_weight >= ?';
             queryParams.push(product_weight, product_weight);
-        }
-
-        if (grams) {
-            query += ' AND pm.gsm >= ?';
-            queryParams.push(grams);
         }
 
         query += ' ORDER BY ps.id LIMIT ?';

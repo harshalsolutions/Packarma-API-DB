@@ -11,7 +11,9 @@ export const getAllReferralsController = async (req, res, next) => {
             JOIN referral_codes AS rc ON r.referral_code_id = rc.id 
             JOIN users AS u ON r.referred_user_id = u.user_id
             JOIN users AS u2 ON rc.user_id = u2.user_id
-        `);
+            ORDER BY r.createdAt DESC
+            LIMIT ? OFFSET ?
+        `, [Number(limit), (Number(page) - 1) * Number(limit)]);
         const [[{ totalCount }]] = await pool.query(`SELECT COUNT(*) as totalCount FROM referrals`);
 
         const totalPages = Math.ceil(totalCount / limit);

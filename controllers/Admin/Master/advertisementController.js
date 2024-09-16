@@ -36,7 +36,7 @@ export const getAllAdvertisementController = async (req, res, next) => {
             queryParams.push(`%${search}%`);
         }
 
-        query += ' GROUP BY a.id';
+        query += ' GROUP BY a.id ORDER BY a.id DESC';
         query += ' LIMIT ? OFFSET ?';
         queryParams.push(Number(limit), (Number(page) - 1) * Number(limit));
 

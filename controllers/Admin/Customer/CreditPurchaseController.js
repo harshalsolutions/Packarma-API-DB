@@ -7,8 +7,8 @@ export const getAllCreditPurchaseController = async (req, res, next) => {
         const { page = 1, limit = 10 } = req.query;
         const limitValue = parseInt(limit, 10);
         const [invoices] = await pool.query(`
-                SELECT c.*, u.firstname, u.lastname, u.email FROM credit_invoice AS c JOIN users AS u ON c.user_id = u.user_id ORDER BY c.createdAt DESC LIMIT ?
-            `, [limitValue]);
+                SELECT c.*, u.firstname, u.lastname, u.email FROM credit_invoice AS c JOIN users AS u ON c.user_id = u.user_id ORDER BY c.createdAt DESC LIMIT ? OFFSET ?
+            `, [limitValue, limitValue * (page - 1)]);
 
         const [[{ totalCount }]] = await pool.query(`SELECT COUNT(*) as totalCount FROM credit_invoice`, []);
 

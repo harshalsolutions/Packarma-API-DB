@@ -15,6 +15,7 @@ export const getAllUserSubscriptionsController = async (req, res, next) => {
             FROM user_subscriptions AS us
             JOIN users AS u ON us.user_id = u.user_id
             JOIN subscriptions AS s ON us.subscription_id = s.id
+            ORDER BY us.createdAt DESC
             LIMIT ? OFFSET ?
         `, [parseInt(limit), offset]);
 

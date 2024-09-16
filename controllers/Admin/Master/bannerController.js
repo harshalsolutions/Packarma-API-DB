@@ -43,7 +43,7 @@ export const getAllBannerController = async (req, res, next) => {
             queryParams.push(`%${search}%`);
         }
 
-        query += ' GROUP BY b.id';
+        query += ' GROUP BY b.id ORDER BY b.id DESC';
         query += ' LIMIT ? OFFSET ?';
         queryParams.push(Number(limit), Number(offset));
 

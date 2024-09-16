@@ -6,13 +6,12 @@ export const createPackagingMaterialController = async (req, res, next) => {
     try {
         const { material_name, material_description, wvtr, otr, cof, sit, gsm, special_feature } = req.body;
         const query = 'INSERT INTO packaging_material (material_name, material_description, wvtr, otr, cof, sit, gsm, special_feature) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-        await pool.query(query, [material_name, material_description, wvtr, otr, cof, sit, gsm, special_feature]);
+        await pool.query(query, [material_name, material_description, wvtr, otr, cof, sit, gsm, special_feature ?? null]);
         res.status(201).json(new ApiResponse(201, null, 'Packaging Material created successfully'));
     } catch (error) {
         next(new CustomError(500, error.message));
     }
 };
-
 export const getPackagingMaterialController = async (req, res, next) => {
     try {
         const { id } = req.params;

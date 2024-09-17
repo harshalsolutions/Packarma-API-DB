@@ -24,12 +24,21 @@ const getBrowserInstance = async () => {
 
 export const generateInvoiceController = async (req, res, next) => {
     try {
-        const { invoice_date, customer_name, customer_gstin, state, products, customer_address } = req.body;
+        const { customer_name, customer_gstin, state, products, customer_address, transaction_id } = req.body;
 
-        const [[invoiceDetails], [result]] = await Promise.all([
+
+        let today = new Date();
+        let day = today.getDate().toString().padStart(2, '0');
+        let month = (today.getMonth() + 1).toString().padStart(2, '0');
+        let year = today.getFullYear();
+        let invoice_date = `${day}/${month}/${year}`;
+
+        const [[invoiceDetails], [result], [address]] = await Promise.all([
             pool.query('SELECT * FROM invoice_details LIMIT 1'),
-            pool.query('SELECT MAX(id) as maxId FROM credit_invoice')
+            pool.query('SELECT MAX(id) as maxId FROM credit_invoice'),
+            pool.query(`SELECT * FROM addresses WHERE id = ? LIMIT 1`, [customer_address])
         ]);
+
 
         if (!invoiceDetails.length) {
             throw new CustomError(500, 'Invoice details not found');
@@ -48,12 +57,12 @@ export const generateInvoiceController = async (req, res, next) => {
                     <td class="table-data">${product.amount}</td>
                     <td class="table-data">${product.discount}</td>
                     <td class="table-data">${product.taxable_value}</td>
-                    <td class="table-data">${product.cgst_rate}</td>
-                    <td class="table-data">${product.cgst_amount}</td>
-                    <td class="table-data">${product.sgst_rate}</td>
-                    <td class="table-data">${product.sgst_amount}</td>
-                    <td class="table-data">${product.igst_rate}</td>
-                    <td class="table-data">${product.igst_amount}</td>
+                    <td class="table-data">${state === "Maharashtra" ? product.cgst_rate : ""}</td>
+                    <td class="table-data">${state === "Maharashtra" ? product.cgst_amount : ""}</td>
+                    <td class="table-data">${state === "Maharashtra" ? product.sgst_rate : ""}</td>
+                    <td class="table-data">${state === "Maharashtra" ? product.sgst_amount : ""}</td>
+                    <td class="table-data">${state !== "Maharashtra" ? product.igst_rate : ""}</td>
+                    <td class="table-data">${state !== "Maharashtra" ? product.igst_amount : ""}</td>
                     <td class="table-data"><strong>${product.total}</strong></td>
                 </tr>
             `;
@@ -65,9 +74,9 @@ export const generateInvoiceController = async (req, res, next) => {
             .replace(/{{invoice_no}}/g, invoice_no)
             .replace(/{{invoice_date}}/g, invoice_date)
             .replace(/{{customer_name}}/g, customer_name)
-            .replace(/{{customer_address}}/g, customer_address)
+            .replace(/{{customer_address}}/g, address[0].building + ", " + address[0].area)
             .replace(/{{customer_gstin}}/g, customer_gstin)
-            .replace(/{{state}}/g, state)
+            .replaceAll(/{{state}}/g, state)
             .replace(/{{grand_total}}/g, parsedTotal)
             .replace(/{{total_in_words}}/g, totalInWords(parsedTotal))
             .replace('{{PRODUCT_ROWS}}', productRows)
@@ -77,7 +86,8 @@ export const generateInvoiceController = async (req, res, next) => {
             .replace(/{{bank_name}}/g, details.bank_name)
             .replace(/{{account_number}}/g, details.account_number)
             .replace(/{{ifsc_code}}/g, details.ifsc_code)
-            .replace(/{{benificiary_number}}/g, details.benificiary_number);
+            .replace(/{{benificiary_number}}/g, details.benificiary_number)
+            .replace(/{{transaction_id}}/g, transaction_id);
 
         const pdfFolder = path.join(process.cwd(), 'invoices');
 

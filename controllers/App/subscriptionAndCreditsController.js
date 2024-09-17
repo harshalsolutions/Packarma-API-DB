@@ -102,7 +102,7 @@ export const getSubscriptionsController = async (req, res, next) => {
         FROM subscriptions s
         JOIN subscriptions_prices ps ON s.id = ps.subscription_id
         GROUP BY s.id
-        ORDER BY s.sequence DESC;
+        ORDER BY s.sequence;
     `;
 
         const [rows] = await pool.query(query);

@@ -77,10 +77,8 @@
           </td>
 
           <td colspan="12" style="padding: 1rem">
-            <strong> Packult Studio Pvt. Ltd. </strong>
-            <p style="margin: 6px 0">
-              230, Udyog Bhavan, Sonawala Rd, Jay Prakash
-            </p>
+            <strong> {{name}} </strong>
+            <p style="margin: 6px 0">{{address}}</p>
             <p style="margin: 6px 0">Nagar, Goregaon, Mumbai, Maharashtra</p>
             <p>400063</p>
           </td>
@@ -89,7 +87,7 @@
         <tr>
           <td colspan="5" class="table-data">
             <span style="font-weight: 700"> GSTIN: </span>
-            27AAMCP2500K1ZD
+            {{gst_number}}
           </td>
           <td colspan="6" class="table-data">
             <span style="font-weight: 700"> CIN No.: </span>
@@ -237,7 +235,7 @@
           </th>
           <th colspan="6">&nbsp;</th>
           <th colspan="5" class="table-data">
-            <span style="font-weight: 700"> State : </span> Maharastra
+            <span style="font-weight: 700"> State : </span> {{state}}
           </th>
         </tr>
 
@@ -247,9 +245,11 @@
             class="table-data"
             style="text-align: start; padding: 6px"
           >
-            Bank Name: HDFC Bank
+            Bank Name: {{bank_name}}
           </td>
-          <td colspan="6" class="table-data">Transaction ID: 0000015486</td>
+          <td colspan="6" class="table-data">
+            Transaction ID: {{transaction_id}}
+          </td>
           <td
             colspan="5"
             rowspan="2"
@@ -266,7 +266,7 @@
             class="table-data"
             style="text-align: start; padding: 6px"
           >
-            Bank A/C No. : 50200064942088
+            Bank A/C No. : {{account_number}}
           </td>
           <td rowspan="2" colspan="6" class="table-data">Common Seal</td>
         </tr>
@@ -277,7 +277,7 @@
             class="table-data"
             style="text-align: start; padding: 6px"
           >
-            Bank IFSC. : HDFC0000227
+            Bank IFSC. : {{ifsc_code}}
           </td>
           <td
             colspan="5"

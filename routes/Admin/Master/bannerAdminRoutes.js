@@ -11,7 +11,7 @@ import upload from "../../../middlewares/multerMiddleware.js"
 const router = express.Router();
 
 router.get('/get-banners', getAllBannerController);
-router.get('/export-banner/:id', exportBannerControllerById);
+router.post('/export-banner/:id', exportBannerControllerById);
 router.post('/add-banner', upload.single("banner"), createBannerController);
 router.put('/update-banner/:id', upload.single("banner"), updateBannerController);
 router.delete('/delete-banner/:id', deleteBannerController);

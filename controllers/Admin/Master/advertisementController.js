@@ -67,13 +67,14 @@ export const getAllAdvertisementController = async (req, res, next) => {
 export const exportAdvertisementControllerById = async (req, res, next) => {
     try {
         const advertisementId = req.params.id;
-
+        const { link } = req.body
         const [advertisementRows] = await pool.query(`
             SELECT 
                 a.title,
                 a.description,
                 a.createdAt,
                 a.updatedAt,
+                a.image,
                 COALESCE(activity.total_views, 0) AS total_views,
                 COALESCE(activity.total_clicks, 0) AS total_clicks
             FROM 
@@ -125,7 +126,10 @@ export const exportAdvertisementControllerById = async (req, res, next) => {
             lastname: activity.lastname,
             email: activity.email,
             activity_type: activity.activity_type,
-            activity_timestamp: activity.activity_timestamp
+            activity_timestamp: activity.activity_timestamp,
+            total_views: advertisement.total_views,
+            total_clicks: advertisement.total_clicks,
+            image: (link ? link : "") + advertisement.image
         }));
 
         const workbook = new ExcelJS.Workbook();
@@ -134,6 +138,7 @@ export const exportAdvertisementControllerById = async (req, res, next) => {
         worksheet.columns = [
             { header: 'Title', key: 'title', width: 30 },
             { header: 'Description', key: 'description', width: 30 },
+            { header: 'Image', key: 'image', width: 30 },
             { header: 'Total Views', key: 'total_views', width: 15 },
             { header: 'Total Clicks', key: 'total_clicks', width: 15 },
             {

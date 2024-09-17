@@ -76,13 +76,14 @@ export const getAllBannerController = async (req, res, next) => {
 export const exportBannerControllerById = async (req, res, next) => {
     try {
         const bannerId = req.params.id;
-
+        const { link } = req.body
         const [bannerRows] = await pool.query(`
             SELECT 
                 b.title,
                 b.description,
                 b.createdAt,
                 b.updatedAt,
+                b.banner_image,
                 COALESCE(activity.total_views, 0) AS total_views,
                 COALESCE(activity.total_clicks, 0) AS total_clicks
             FROM 
@@ -124,6 +125,8 @@ export const exportBannerControllerById = async (req, res, next) => {
                 ba.banner_id = ?
         `, [bannerId]);
 
+        console.log(banner)
+
         const csvData = userActivity.map(activity => ({
             title: banner.title,
             description: banner.description,
@@ -134,7 +137,10 @@ export const exportBannerControllerById = async (req, res, next) => {
             lastname: activity.lastname,
             email: activity.email,
             activity_type: activity.activity_type,
-            activity_timestamp: activity.activity_timestamp
+            activity_timestamp: activity.activity_timestamp,
+            total_views: banner.total_views,
+            total_clicks: banner.total_clicks,
+            image: (link ? link : "") + banner.banner_image
         }));
 
         const workbook = new ExcelJS.Workbook();
@@ -143,6 +149,7 @@ export const exportBannerControllerById = async (req, res, next) => {
         worksheet.columns = [
             { header: 'Title', key: 'title', width: 30 },
             { header: 'Description', key: 'description', width: 30 },
+            { header: 'Image', key: 'image', width: 30 },
             { header: 'Total Views', key: 'total_views', width: 15 },
             { header: 'Total Clicks', key: 'total_clicks', width: 15 },
             {

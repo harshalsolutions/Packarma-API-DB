@@ -52,12 +52,15 @@ import SocialLinkAdminRoutes from "./routes/Admin/Settings/SocialLinkAdminRoutes
 import AppDetailsAdminRoutes from "./routes/Admin/Settings/AppDetailsAdminRoutes.js"
 import InvoiceDetailsRoutes from "./routes/Admin/Settings/InvoiceDetailsRoutes.js"
 import CustomerCareRoutes from "./routes/Admin/ContactUs/CustomerCareRoutes.js"
+import externalAdminRoutes from "./routes/Admin/externalAdminRoutes.js"
 
 export const app = express();
 export const __filename = fileURLToPath(import.meta.url);
 export const __dirname = dirname(__filename);
 
 app.use(express.json());
+app.use('/public/privacy-policy', express.static(path.join(__dirname, 'public/privacy-policy.html')));
+app.use('/public/terms-and-conditions', express.static(path.join(__dirname, 'public/terms-and-conditions.html')));
 app.use('/media', express.static(path.join(__dirname, 'media')));
 app.use('/invoices', express.static(path.join(__dirname, 'invoices')));
 
@@ -91,6 +94,9 @@ const appRoutes = [
 appRoutes.forEach(({ path, route }) => app.use(path, route));
 
 app.use('/api/admin/auth', AuthAdminRoutes);
+
+app.use('/api/admin/developer', externalAdminRoutes);
+
 
 const masterRoutes = [SubscriptionAdminRoutes,
     CreditMasterAdminRoutes,

@@ -13,7 +13,7 @@ export const getAllSubscriptionsController = async (req, res, next) => {
             FROM subscriptions s
             JOIN subscriptions_prices ps ON s.id = ps.subscription_id
             GROUP BY s.id
-            ORDER BY s.sequence DESC
+            ORDER BY s.sequence
             LIMIT ? OFFSET ?;
         `;
 
@@ -52,10 +52,10 @@ export const getAllSubscriptionsController = async (req, res, next) => {
 
 export const createSubscriptionController = async (req, res, next) => {
     try {
-        const { type, amount, credit_amount, duration, benefits = '' } = req.body;
+        const { type, credit_amount, duration, benefits = '' } = req.body;
 
-        const query = 'INSERT INTO subscriptions (type, amount, credit_amount, duration, benefits) VALUES (?, ?, ?, ?, ?)';
-        const [result] = await pool.query(query, [type, amount, credit_amount, duration, benefits]);
+        const query = 'INSERT INTO subscriptions (type, credit_amount, duration, benefits) VALUES (?, ?, ?, ?, ?)';
+        const [result] = await pool.query(query, [type, credit_amount, duration, benefits]);
 
         res.status(201).json(new ApiResponse(201, { id: result.insertId }, 'Subscription created successfully'));
     } catch (error) {
@@ -66,14 +66,15 @@ export const createSubscriptionController = async (req, res, next) => {
 export const updateSubscriptionController = async (req, res, next) => {
     try {
         const subscriptionId = req.params.id;
-        const { type, amount, credit_amount, duration, benefits } = req.body;
+        const fields = Object.keys(req.body);
+        const values = [...Object.values(req.body), subscriptionId];
 
         const query = `
             UPDATE subscriptions 
-            SET type = ?, amount = ?, credit_amount = ?, duration = ?, benefits = ?
-            WHERE id = ? AND deleted_at IS NULL
+            SET ${fields.map(field => `${field} = ?`).join(', ')}
+            WHERE id = ?
         `;
-        const [result] = await pool.query(query, [type, amount, credit_amount, duration, benefits, subscriptionId]);
+        const [result] = await pool.query(query, values);
 
         if (result.affectedRows === 0) throw new CustomError(404, 'Subscription not found');
 

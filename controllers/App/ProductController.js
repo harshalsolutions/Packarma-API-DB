@@ -439,25 +439,25 @@ export const getSearchHistoryController = async (req, res, next) => {
 };
 
 
-export const getCategoryByPackagingTreatmentController = async (req, res, next) => {
+export const getSubCategoryByPackagingTreatmentController = async (req, res, next) => {
     const connection = await pool.getConnection();
     const { id } = req.params;
 
     try {
         const selectQuery = `
-            SELECT DISTINCT c.*
-            FROM categories c
-            JOIN product p ON c.id = p.category_id
+            SELECT DISTINCT s.*
+            FROM subcategories s
+            JOIN product p ON s.id = p.sub_category_id
             WHERE p.packaging_treatment_id = ?;
         `;
 
         const [rows] = await connection.query(selectQuery, [id]);
 
         if (!rows.length) {
-            return res.status(404).json(new ApiResponse(404, [], 'No categories found for the specified packaging treatment'));
+            return res.status(404).json(new ApiResponse(404, [], 'No subcategories found for the specified packaging treatment'));
         }
 
-        res.json(new ApiResponse(200, rows, 'Categories fetched successfully'));
+        res.json(new ApiResponse(200, rows, 'Subcategories fetched successfully'));
     } catch (error) {
         next(new CustomError(500, error.message));
     } finally {

@@ -158,7 +158,7 @@ export const searchProductSuggestionsController = async (req, res, next) => {
         }
 
         let searchQuery = `
-            SELECT id AS product_id, product_name, product_image
+            SELECT id AS product_id, product_name, product_image, category_id, sub_category_id
             FROM product
             WHERE product_name LIKE ? AND status = 'active'
             ORDER BY product_name

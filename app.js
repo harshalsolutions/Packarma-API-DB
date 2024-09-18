@@ -53,6 +53,7 @@ import AppDetailsAdminRoutes from "./routes/Admin/Settings/AppDetailsAdminRoutes
 import InvoiceDetailsRoutes from "./routes/Admin/Settings/InvoiceDetailsRoutes.js"
 import CustomerCareRoutes from "./routes/Admin/ContactUs/CustomerCareRoutes.js"
 import externalAdminRoutes from "./routes/Admin/externalAdminRoutes.js"
+import dashboardAdminRoutes from "./routes/Admin/dashboardAdminRoutes.js"
 
 export const app = express();
 export const __filename = fileURLToPath(import.meta.url);
@@ -95,7 +96,9 @@ appRoutes.forEach(({ path, route }) => app.use(path, route));
 
 app.use('/api/admin/auth', AuthAdminRoutes);
 
-app.use('/api/admin/developer', externalAdminRoutes);
+app.use('/api/admin/developer', authMiddleware, externalAdminRoutes);
+
+app.use('/api/admin/dashboard', authMiddleware, dashboardAdminRoutes);
 
 
 const masterRoutes = [SubscriptionAdminRoutes,

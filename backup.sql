@@ -191,8 +191,6 @@ CREATE TABLE IF NOT EXISTS user_subscriptions (
     INDEX (subscription_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
-
 -- Product Table
 
 CREATE TABLE IF NOT EXISTS categories (

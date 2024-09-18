@@ -130,7 +130,7 @@ const customerRoutes = [
     subscriptionAdminRoutes
 ];
 
-customerRoutes.forEach(route => app.use('/api/admin/customer', route));
+customerRoutes.forEach(route => app.use('/api/admin/customer', authMiddleware, route));
 
 const staffRoutes = [
     PermissionAdminRoutes,
@@ -145,7 +145,7 @@ const contactUsRoutes = [
     CustomerCareRoutes
 ];
 
-contactUsRoutes.forEach(route => app.use('/api/admin/contact-us', route));
+contactUsRoutes.forEach(route => app.use('/api/admin/contact-us', authMiddleware, route));
 
 const generalSettingsRoutes = [
     MetaAdminRoutes,
@@ -157,5 +157,5 @@ const generalSettingsRoutes = [
     InvoiceDetailsRoutes
 ];
 
-generalSettingsRoutes.forEach(route => app.use('/api/admin/general-settings', route));
+generalSettingsRoutes.forEach(route => app.use('/api/admin/general-settings', authMiddleware, route));
 

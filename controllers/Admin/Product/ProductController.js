@@ -3,6 +3,7 @@ import pool from "../../../config/database.js";
 import CustomError from '../../../utils/CustomError.js';
 import { unlink } from 'fs';
 import path from 'path';
+import ExcelJS from 'exceljs';
 
 export const getAllProductsController = async (req, res, next) => {
     try {
@@ -152,3 +153,84 @@ export const deleteProductController = async (req, res, next) => {
         next(new CustomError(500, error.message));
     }
 };
+
+
+export const exportAllProductsController = async (req, res, next) => {
+    try {
+        const { link } = req.body;
+        const [productRows] = await pool.query(`
+            SELECT 
+                p.id,
+                p.product_name,
+                c.name AS category_name,
+                sc.name AS sub_category_name,
+                pf.name AS product_form_name,
+                pt.name AS packaging_treatment_name,
+                mu.name AS measurement_unit,
+                p.status,
+                p.createdAt,
+                p.updatedAt,
+                p.product_image
+            FROM 
+                product p
+            JOIN 
+                categories c ON p.category_id = c.id
+            JOIN 
+                subcategories sc ON p.sub_category_id = sc.id
+            JOIN 
+                product_form pf ON p.product_form_id = pf.id
+            JOIN 
+                packaging_treatment pt ON p.packaging_treatment_id = pt.id
+            JOIN 
+                measurement_unit mu ON p.measurement_unit_id = mu.id
+        `);
+
+        if (!productRows.length) throw new CustomError(404, 'No products found');
+
+        const csvData = productRows.map(product => ({
+            id: product.id,
+            product_name: product.product_name,
+            category_name: product.category_name,
+            sub_category_name: product.sub_category_name,
+            product_form_name: product.product_form_name,
+            packaging_treatment_name: product.packaging_treatment_name,
+            measurement_unit: product.measurement_unit,
+            status: product.status,
+            createdAt: product.createdAt,
+            updatedAt: product.updatedAt,
+            image: (link ? link : "") + product.product_image
+        }));
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('All Products');
+
+        worksheet.columns = [
+            { header: 'ID', key: 'id', width: 10 },
+            { header: 'Product Name', key: 'product_name', width: 30 },
+            { header: 'Image', key: 'image', width: 30 },
+            { header: 'Category Name', key: 'category_name', width: 30 },
+            { header: 'Sub Category Name', key: 'sub_category_name', width: 30 },
+            { header: 'Product Form Name', key: 'product_form_name', width: 30 },
+            { header: 'Packaging Treatment Name', key: 'packaging_treatment_name', width: 30 },
+            { header: 'Measurement Unit', key: 'measurement_unit', width: 15 },
+            { header: 'Status', key: 'status', width: 15 },
+            {
+                header: 'Created At', key: 'createdAt', width: 20, style: { numFmt: 'dd/mm/yyyy hh:mm:ss' }
+            },
+            {
+                header: 'Updated At', key: 'updatedAt', width: 20, style: { numFmt: 'dd/mm/yyyy hh:mm:ss' }
+            },
+        ];
+
+        worksheet.addRows(csvData);
+
+        res.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.attachment(`products_${new Date()}.xlsx`);
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (error) {
+        console.log(error)
+        next(error);
+    }
+};
+

@@ -6,7 +6,6 @@ export const getAllCustomerEnquiryController = async (req, res, next) => {
     try {
         const { page = 1, limit = 10, userId, userName, status, productName, category, subCategory, fromDate, toDate } = req.query;
         const offset = (page - 1) * limit;
-        console.log(req.query)
         let query = `
             SELECT sh.id, sh.user_id, sh.packaging_solution_id, sh.search_time, 
             ps.name, ps.image, ps.structure_type, ps.sequence, ps.storage_condition_id, ps.display_shelf_life_days, ps.product_id, ps.product_category_id, ps.product_form_id, 

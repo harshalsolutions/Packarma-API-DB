@@ -6,6 +6,10 @@ import { totalInWords } from '../../utils/InvoiceUtils.js';
 import pool from '../../config/database.js';
 import puppeteer from 'puppeteer';
 import ApiResponse from '../../utils/ApiResponse.js';
+import dotenv from 'dotenv';
+import axios from 'axios';
+
+dotenv.config();
 
 const htmlPath = path.join(process.cwd(), 'utils/invoice.html');
 const htmlTemplate = fs.readFileSync(htmlPath, 'utf8');
@@ -25,7 +29,6 @@ const getBrowserInstance = async () => {
 export const generateInvoiceController = async (req, res, next) => {
     try {
         const { customer_name, customer_gstin, state, products, customer_address, transaction_id } = req.body;
-
 
         let today = new Date();
         let day = today.getDate().toString().padStart(2, '0');
@@ -144,24 +147,41 @@ export const getCreditInvoicesController = async (req, res, next) => {
     }
 };
 
+async function convertToINR(amount, fromCurrency) {
+    try {
+        const response = await axios.get(`https://v6.exchangerate-api.com/v6/${process.env.CURRENCY_EXCHANGE_API_KEY}/latest/${fromCurrency}`);
+        const conversionRate = response.data.conversion_rates.INR;
+        return amount * conversionRate;
+    } catch (error) {
+        console.error('Error fetching exchange rate:', error);
+        throw new Error('Failed to convert currency');
+    }
+}
+
 export const addCreditInvoiceController = async (req, res, next) => {
     const connection = await pool.getConnection();
     const userId = req.user.userId;
 
     try {
-        const { plan_type, number_of_credits, total, invoice_date } = req.body;
+        const { number_of_credits, total_price, currency, invoice_date, invoice_link } = req.body;
 
-        if (!userId || !plan_type || !number_of_credits || !total || !invoice_date) {
+        if (!userId || !number_of_credits || !total_price || !currency || !invoice_date || !invoice_link) {
             throw new CustomError(400, 'All fields are required');
         }
 
+        let indian_price;
+        if (currency === 'INR') {
+            indian_price = total_price;
+        } else {
+            indian_price = await convertToINR(total_price, currency);
+        }
         await connection.beginTransaction();
 
         const query = `
-            INSERT INTO credit_invoice (user_id, plan_type, number_of_credits, total, invoice_date)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO credit_invoice (user_id, number_of_credits, total_price, currency, indian_price, invoice_date, invoice_link)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
-        const queryParams = [userId, plan_type, number_of_credits, total, invoice_date];
+        const queryParams = [userId, number_of_credits, total_price, currency, indian_price, invoice_date, invoice_link];
 
         await connection.query(query, queryParams);
 
@@ -209,16 +229,24 @@ export const addSubscriptionInvoiceController = async (req, res, next) => {
     const userId = req.user.userId;
 
     try {
-        const { subscription_id, total, invoice_date } = req.body;
-        if (!userId || !subscription_id || !total || !invoice_date) {
+        const { subscription_id, invoice_date, invoice_link, total_price, currency } = req.body;
+        if (!userId || !subscription_id || !total_price || !invoice_date || !currency || !invoice_link) {
             throw new CustomError(400, 'All fields are required');
         }
         await connection.beginTransaction();
         const query = `
-            INSERT INTO subscription_invoice (user_id, subscription_id, total, invoice_date)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO subscription_invoice (user_id, subscription_id, total_price, indian_price, invoice_date, invoice_link, currency)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
-        const queryParams = [userId, subscription_id, total, invoice_date];
+
+        let indian_price;
+        if (currency === 'INR') {
+            indian_price = total_price;
+        } else {
+            indian_price = await convertToINR(total_price, currency);
+        }
+
+        const queryParams = [userId, subscription_id, total_price, indian_price, invoice_date, invoice_link, currency];
 
         await connection.query(query, queryParams);
 
@@ -226,6 +254,7 @@ export const addSubscriptionInvoiceController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, {}, 'Subscription invoice added successfully'));
     } catch (error) {
+        console.log(error)
         await connection.rollback();
         next(new CustomError(500, error.message));
     } finally {

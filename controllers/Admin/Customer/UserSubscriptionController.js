@@ -11,11 +11,12 @@ export const getAllUserSubscriptionsController = async (req, res, next) => {
         const totalPages = Math.ceil(totalCount / limit);
 
         const [subscriptions] = await pool.query(`
-            SELECT us.*, u.firstname, u.lastname, s.type AS subscription_name
+            SELECT us.user_id, us.subscription_id, us.start_date, us.end_date, s.type AS subscription_name, si.total_price, si.currency, si.indian_price, si.invoice_link, si.invoice_date, si.createdAt, si.updatedAt, u.firstname, u.lastname, u.email
             FROM user_subscriptions AS us
-            JOIN users AS u ON us.user_id = u.user_id
+            JOIN subscription_invoice AS si ON us.subscription_id = si.subscription_id
             JOIN subscriptions AS s ON us.subscription_id = s.id
-            ORDER BY us.createdAt DESC
+            JOIN users AS u ON us.user_id = u.user_id
+            ORDER BY si.createdAt DESC
             LIMIT ? OFFSET ?
         `, [parseInt(limit), offset]);
 

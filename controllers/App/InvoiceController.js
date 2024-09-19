@@ -163,9 +163,9 @@ export const addCreditInvoiceController = async (req, res, next) => {
     const userId = req.user.userId;
 
     try {
-        const { number_of_credits, total_price, currency, invoice_date, invoice_link } = req.body;
+        const { number_of_credits, total_price, currency, invoice_date, invoice_link, transaction_id } = req.body;
 
-        if (!userId || !number_of_credits || !total_price || !currency || !invoice_date || !invoice_link) {
+        if (!userId || !number_of_credits || !total_price || !currency || !invoice_date || !invoice_link || !transaction_id) {
             throw new CustomError(400, 'All fields are required');
         }
 
@@ -178,10 +178,10 @@ export const addCreditInvoiceController = async (req, res, next) => {
         await connection.beginTransaction();
 
         const query = `
-            INSERT INTO credit_invoice (user_id, number_of_credits, total_price, currency, indian_price, invoice_date, invoice_link)
+            INSERT INTO credit_invoice (user_id, number_of_credits, total_price, currency, indian_price, invoice_date, invoice_link, transaction_id)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
-        const queryParams = [userId, number_of_credits, total_price, currency, indian_price, invoice_date, invoice_link];
+        const queryParams = [userId, number_of_credits, total_price, currency, indian_price, invoice_date, invoice_link, transaction_id];
 
         await connection.query(query, queryParams);
 
@@ -229,14 +229,14 @@ export const addSubscriptionInvoiceController = async (req, res, next) => {
     const userId = req.user.userId;
 
     try {
-        const { subscription_id, invoice_date, invoice_link, total_price, currency } = req.body;
-        if (!userId || !subscription_id || !total_price || !invoice_date || !currency || !invoice_link) {
+        const { subscription_id, invoice_date, invoice_link, total_price, currency, transaction_id } = req.body;
+        if (!userId || !subscription_id || !total_price || !invoice_date || !currency || !invoice_link || !transaction_id) {
             throw new CustomError(400, 'All fields are required');
         }
         await connection.beginTransaction();
         const query = `
-            INSERT INTO subscription_invoice (user_id, subscription_id, total_price, indian_price, invoice_date, invoice_link, currency)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO subscription_invoice (user_id, subscription_id, total_price, indian_price, invoice_date, invoice_link, currency, transaction_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         let indian_price;
@@ -246,7 +246,7 @@ export const addSubscriptionInvoiceController = async (req, res, next) => {
             indian_price = await convertToINR(total_price, currency);
         }
 
-        const queryParams = [userId, subscription_id, total_price, indian_price, invoice_date, invoice_link, currency];
+        const queryParams = [userId, subscription_id, total_price, indian_price, invoice_date, invoice_link, currency, transaction_id];
 
         await connection.query(query, queryParams);
 

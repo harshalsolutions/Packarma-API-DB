@@ -7,7 +7,6 @@ import pool from '../../config/database.js';
 import puppeteer from 'puppeteer';
 import ApiResponse from '../../utils/ApiResponse.js';
 import dotenv from 'dotenv';
-import axios from 'axios';
 
 dotenv.config();
 
@@ -147,17 +146,6 @@ export const getCreditInvoicesController = async (req, res, next) => {
     }
 };
 
-async function convertToINR(amount, fromCurrency) {
-    try {
-        const response = await axios.get(`https://v6.exchangerate-api.com/v6/${process.env.CURRENCY_EXCHANGE_API_KEY}/latest/${fromCurrency}`);
-        const conversionRate = response.data.conversion_rates.INR;
-        return amount * conversionRate;
-    } catch (error) {
-        console.error('Error fetching exchange rate:', error);
-        throw new Error('Failed to convert currency');
-    }
-}
-
 export const addCreditInvoiceController = async (req, res, next) => {
     const connection = await pool.getConnection();
     const userId = req.user.userId;
@@ -169,21 +157,19 @@ export const addCreditInvoiceController = async (req, res, next) => {
             throw new CustomError(400, 'All fields are required');
         }
 
-        let indian_price;
-        if (currency === 'INR') {
-            indian_price = total_price;
-        } else {
-            indian_price = await convertToINR(total_price, currency);
-        }
         await connection.beginTransaction();
 
         const query = `
-            INSERT INTO credit_invoice (user_id, number_of_credits, total_price, currency, indian_price, invoice_date, invoice_link, transaction_id)
+            INSERT INTO credit_invoice (user_id, number_of_credits, total_price, currency, invoice_date, invoice_link, transaction_id)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
-        const queryParams = [userId, number_of_credits, total_price, currency, indian_price, invoice_date, invoice_link, transaction_id];
+        const queryParams = [userId, number_of_credits, total_price, currency, invoice_date, invoice_link, transaction_id];
 
-        await connection.query(query, queryParams);
+        const [result] = await connection.query(query, queryParams);
+
+        if (!result.affectedRows) {
+            throw new CustomError(500, 'Credit invoice not added');
+        }
 
         await connection.commit();
 
@@ -235,18 +221,11 @@ export const addSubscriptionInvoiceController = async (req, res, next) => {
         }
         await connection.beginTransaction();
         const query = `
-            INSERT INTO subscription_invoice (user_id, subscription_id, total_price, indian_price, invoice_date, invoice_link, currency, transaction_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO subscription_invoice (user_id, subscription_id, total_price, invoice_date, invoice_link, currency, transaction_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
 
-        let indian_price;
-        if (currency === 'INR') {
-            indian_price = total_price;
-        } else {
-            indian_price = await convertToINR(total_price, currency);
-        }
-
-        const queryParams = [userId, subscription_id, total_price, indian_price, invoice_date, invoice_link, currency, transaction_id];
+        const queryParams = [userId, subscription_id, total_price, invoice_date, invoice_link, currency, transaction_id];
 
         await connection.query(query, queryParams);
 

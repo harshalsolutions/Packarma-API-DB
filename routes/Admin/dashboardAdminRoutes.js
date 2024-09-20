@@ -6,7 +6,6 @@ import {
     getTotalActiveSubscriptionCount,
     getTotalSignupsFromReferrals,
     getTotalEnquiriesCount,
-    getTotalRevenue,
     getTotalSubscriptionsFromReferralSignups,
     getUserComparison,
     getReferralTaskCompletion
@@ -21,7 +20,6 @@ router.get('/total-paid-subscriptions', getTotalPaidSubscriptionCount);
 router.get('/total-active-subscriptions', getTotalActiveSubscriptionCount);
 router.get('/total-signups-referrals', getTotalSignupsFromReferrals);
 router.get('/total-enquiries', getTotalEnquiriesCount);
-router.get('/total-revenue', getTotalRevenue);
 router.get('/total-subscriptions-referral-signups', getTotalSubscriptionsFromReferralSignups);
 router.get('/user-comparison', getUserComparison);
 router.get('/referral-task-completion', getReferralTaskCompletion);

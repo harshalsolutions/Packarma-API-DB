@@ -385,14 +385,14 @@ export const addSearchHistoryController = async (req, res, next) => {
     try {
         await connection.beginTransaction();
         const userId = req.user.userId;
-        const { packaging_solution_id } = req.body;
+        const { packaging_solution_id, weight_by_user } = req.body;
 
         const insertQuery = `
-            INSERT INTO search_history (user_id, packaging_solution_id)
-            VALUES (?, ?)
+            INSERT INTO search_history (user_id, packaging_solution_id, weight_by_user)
+            VALUES (?, ?, ?)
         `;
 
-        const [result] = await connection.query(insertQuery, [userId, packaging_solution_id]);
+        const [result] = await connection.query(insertQuery, [userId, packaging_solution_id, weight_by_user]);
 
         if (result.affectedRows === 0) {
             throw new CustomError(400, 'Failed to add search history');
@@ -414,13 +414,19 @@ export const getSearchHistoryController = async (req, res, next) => {
         await connection.beginTransaction();
         const userId = req.user.userId;
         const selectQuery = `
-            SELECT sh.*, ps.*, u.firstname, u.lastname
+            SELECT sh.*, ps.*, u.firstname, u.lastname, 
+            c.name AS category_name, sc.name AS subcategory_name, p.product_name
             FROM search_history sh
             JOIN packaging_solution ps ON sh.packaging_solution_id = ps.id
             JOIN users u ON sh.user_id = u.user_id
+            JOIN product p ON ps.product_id = p.id
+            JOIN categories c ON p.category_id = c.id
+            JOIN subcategories sc ON p.sub_category_id = sc.id
             WHERE sh.user_id = ?
             ORDER BY sh.search_time DESC
         `;
+
+
 
         const [rows] = await connection.query(selectQuery, [userId]);
 

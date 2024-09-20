@@ -93,10 +93,11 @@ export const createSubCategoryController = async (req, res, next) => {
         }
 
         const query = 'INSERT INTO subcategories (category_id, name, image) VALUES (?, ?, ?)';
-        await pool.query(query, [category_id, name, image]);
+        await pool.query(query, [category_id, name.trim(), image]);
 
         res.status(201).json(new ApiResponse(201, null, 'Subcategory created successfully'));
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
         next(new CustomError(500, error.message));
     }
 };
@@ -129,6 +130,7 @@ export const updateSubCategoryController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, null, 'Subcategory updated successfully'));
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
         next(new CustomError(500, error.message));
     }
 };

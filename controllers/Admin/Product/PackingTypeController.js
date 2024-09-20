@@ -6,9 +6,10 @@ export const createPackingTypeController = async (req, res, next) => {
     try {
         const { name, short_description } = req.body;
         const query = 'INSERT INTO packing_type (name, short_description) VALUES (?, ?)';
-        await pool.query(query, [name, short_description]);
+        await pool.query(query, [name.trim(), short_description.trim()]);
         res.status(201).json(new ApiResponse(201, null, 'Packing Type created successfully'));
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
         next(new CustomError(500, error.message));
     }
 };
@@ -41,6 +42,7 @@ export const updatePackingTypeController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, null, 'Packing Type updated successfully'));
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
         next(new CustomError(500, error.message));
     }
 };

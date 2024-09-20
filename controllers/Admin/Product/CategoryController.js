@@ -76,10 +76,11 @@ export const createCategoryController = async (req, res, next) => {
         }
 
         const query = 'INSERT INTO categories (name, image) VALUES (?, ?)';
-        await pool.query(query, [name, image]);
+        await pool.query(query, [name.trim(), image]);
 
         res.status(201).json(new ApiResponse(201, null, 'Category created successfully'));
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
         next(new CustomError(500, error.message));
     }
 };
@@ -112,6 +113,8 @@ export const updateCategoryController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, null, 'Category updated successfully'));
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
+
         next(new CustomError(500, error.message));
     }
 };

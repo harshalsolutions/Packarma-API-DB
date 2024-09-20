@@ -6,9 +6,10 @@ export const createMeasurementUnitController = async (req, res, next) => {
     try {
         const { name, symbol, status } = req.body;
         const query = 'INSERT INTO measurement_unit (name, symbol, status) VALUES (?, ?, ?)';
-        await pool.query(query, [name, symbol, status]);
+        await pool.query(query, [name.trim(), symbol, status]);
         res.status(201).json(new ApiResponse(201, null, 'Measurement Unit created successfully'));
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
         next(new CustomError(500, error.message));
     }
 };
@@ -41,6 +42,8 @@ export const updateMeasurementUnitController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, null, 'Measurement Unit updated successfully'));
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
+
         next(new CustomError(500, error.message));
     }
 };

@@ -67,10 +67,11 @@ export const createPackagingMachineController = async (req, res, next) => {
         }
 
         const query = 'INSERT INTO packaging_machine (name, short_description, image, status) VALUES (?, ?, ?, ?)';
-        await pool.query(query, [name, short_description, image, status]);
+        await pool.query(query, [name.trim(), short_description.trim(), image, status]);
 
         res.status(201).json(new ApiResponse(201, null, 'Packaging Machine created successfully'));
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
         next(new CustomError(500, error.message));
     }
 };
@@ -103,6 +104,7 @@ export const updatePackagingMachineController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, null, 'Packaging Machine updated successfully'));
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
         next(new CustomError(500, error.message));
     }
 };

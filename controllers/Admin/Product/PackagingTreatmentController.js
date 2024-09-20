@@ -65,10 +65,11 @@ export const createPackagingTreatmentController = async (req, res, next) => {
         }
 
         const query = 'INSERT INTO packaging_treatment (name, short_description, image, featured, status) VALUES (?, ?, ?, ?, ?)';
-        await pool.query(query, [name, short_description, image, featured, status]);
+        await pool.query(query, [name.trim(), short_description.trim(), image, featured, status]);
 
         res.status(201).json(new ApiResponse(201, null, 'Packaging Treatment created successfully'));
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
         next(new CustomError(500, error.message));
     }
 };
@@ -101,6 +102,7 @@ export const updatePackagingTreatmentController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, null, 'Packaging Treatment updated successfully'));
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
         next(new CustomError(500, error.message));
     }
 };

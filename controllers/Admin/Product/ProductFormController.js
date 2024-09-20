@@ -13,10 +13,11 @@ export const createProductFormController = async (req, res, next) => {
         }
 
         const query = 'INSERT INTO product_form (name, image, short_description) VALUES (?, ?, ?)';
-        await pool.query(query, [name, image, short_description]);
+        await pool.query(query, [name.trim(), image, short_description.trim()]);
 
         res.status(201).json(new ApiResponse(201, null, 'Product Form created successfully'));
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
         next(new CustomError(500, error.message));
     }
 };
@@ -61,6 +62,7 @@ export const updateProductFormController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, null, 'Product Form updated successfully'));
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
         next(new CustomError(500, error.message));
     }
 };

@@ -92,10 +92,11 @@ export const createProductController = async (req, res, next) => {
         }
 
         const query = 'INSERT INTO product (product_name, category_id, sub_category_id, product_form_id, packaging_treatment_id, measurement_unit_id, product_image) VALUES (?, ?, ?, ?, ?, ?, ?)';
-        await pool.query(query, [product_name, category_id, sub_category_id, product_form_id, packaging_treatment_id, measurement_unit_id, product_image]);
+        await pool.query(query, [product_name.trim(), category_id, sub_category_id, product_form_id, packaging_treatment_id, measurement_unit_id, product_image]);
 
         res.status(201).json(new ApiResponse(201, null, 'Product created successfully'));
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
         next(new CustomError(500, error.message));
     }
 };
@@ -129,6 +130,7 @@ export const updateProductController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, null, 'Product updated successfully'));
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
         next(new CustomError(500, error.message));
     }
 };

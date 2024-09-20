@@ -4,20 +4,24 @@ import CustomError from '../../../utils/CustomError.js';
 
 export const getCustomerCareController = async (req, res, next) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
+        const { page = 1, limit = 10, search } = req.query;
         const offset = (page - 1) * limit;
 
-        const query = `
-            SELECT * FROM help_support 
+        let query = `
+            SELECT *
+            FROM help_support 
+            WHERE name LIKE ? OR phone_number LIKE ?
             ORDER BY createdAt DESC 
             LIMIT ${limit} OFFSET ${offset}
         `;
 
-        const [enquiries] = await pool.query(query);
+        const queryParams = [`%${search}%`, `%${search}%`];
+
+        const [enquiries] = await pool.query(query, queryParams);
 
         if (!enquiries.length) throw new CustomError(404, 'No help and support messages found');
 
-        const [[{ totalCount }]] = await pool.query(`SELECT COUNT(*) as totalCount FROM help_support`);
+        const [[{ totalCount }]] = await pool.query(`SELECT COUNT(*) as totalCount FROM help_support WHERE name LIKE ? OR phone_number LIKE ?`, queryParams);
         const totalPages = Math.ceil(totalCount / limit);
 
         res.json(new ApiResponse(200, {
@@ -33,3 +37,4 @@ export const getCustomerCareController = async (req, res, next) => {
         next(new CustomError(500, error.message));
     }
 };
+

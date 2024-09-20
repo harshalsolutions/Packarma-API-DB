@@ -7,9 +7,10 @@ export const createPackagingMaterialController = async (req, res, next) => {
     try {
         const { material_name, material_description, wvtr, otr, cof, sit, gsm, special_feature } = req.body;
         const query = 'INSERT INTO packaging_material (material_name, material_description, wvtr, otr, cof, sit, gsm, special_feature) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-        await pool.query(query, [material_name, material_description, wvtr, otr, cof, sit, gsm, special_feature ?? null]);
+        await pool.query(query, [material_name.trim(), material_description.trim(), wvtr.trim(), otr.trim(), cof.trim(), sit.trim(), gsm.trim(), special_feature ?? null]);
         res.status(201).json(new ApiResponse(201, null, 'Packaging Material created successfully'));
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
         next(new CustomError(500, error.message));
     }
 };
@@ -41,6 +42,7 @@ export const updatePackagingMaterialController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, null, 'Packaging Material updated successfully'));
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
         next(new CustomError(500, error.message));
     }
 };

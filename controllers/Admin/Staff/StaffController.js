@@ -5,31 +5,28 @@ import bcrypt from 'bcrypt';
 
 export const getAllStaffController = async (req, res, next) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
+        const { page = 1, limit = 10, search } = req.query;
         const offset = (page - 1) * limit;
 
-        const [countRows] = await pool.query('SELECT COUNT(*) as count FROM admin');
+        let query = 'SELECT * FROM admin';
+        const queryParams = [];
+
+        if (search) {
+            query += ' WHERE name LIKE ? OR emailid LIKE ? OR phonenumber LIKE ?';
+            queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
+        }
+
+        query += ' ORDER BY createdAt DESC LIMIT ? OFFSET ?';
+        queryParams.push(Number(limit), Number(offset));
+
+        const [countRows] = await pool.query('SELECT COUNT(*) as count FROM admin' + (search ? ' WHERE name LIKE ? OR emailid LIKE ? OR phonenumber LIKE ?' : ''), [...queryParams.filter(Boolean), ...queryParams.filter(Boolean)]);
         const totalCount = countRows[0].count;
         const totalPages = Math.ceil(totalCount / limit);
 
-        const [rows] = await pool.query(`
-            SELECT 
-                * from admin
-            ORDER BY createdAt
-            LIMIT ? OFFSET ? 
-        `, [Number(limit), Number(offset)]);
-
-        const admins = rows.reduce((acc, row) => {
-            const { id, name, emailid, status, address, phonenumber, country_code, page_id, page_name, can_create, can_read, can_update, can_delete, can_export, permission_id } = row;
-            if (!acc[id]) {
-                acc[id] = { id, name, emailid, status, address, phonenumber, country_code, permissions: [] };
-            }
-            acc[id].permissions.push({ page_id, page_name, can_create, can_read, can_update, can_delete, can_export, permission_id });
-            return acc;
-        }, {});
+        const [rows] = await pool.query(query, queryParams);
 
         res.json(new ApiResponse(200, {
-            admins: Object.values(admins),
+            admins: rows,
             pagination: {
                 currentPage: Number(page),
                 totalPages,

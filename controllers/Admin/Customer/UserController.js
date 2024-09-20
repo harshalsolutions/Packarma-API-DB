@@ -188,9 +188,10 @@ export const AddCreditController = async (req, res, next) => {
     try {
         await connection.beginTransaction();
         const { user_id } = req.params;
-        const { credits } = req.body;
+        const { credits, description } = req.body;
         const [user] = await connection.query('UPDATE users SET credits = credits + ? WHERE user_id = ?', [credits, user_id]);
         await connection.query('INSERT INTO credit_history (user_id, change_amount, description) VALUES (?, ?, ?)', [user_id, credits, "Credit added by admin"]);
+        await connection.query('INSERT INTO credit_given_history (description, credits, adminId, user_id) VALUES (?, ?, ?, ?)', [description, credits, req.user.adminId, user_id]);
         if (!user.affectedRows) {
             await connection.rollback();
             return res.json(new ApiResponse(404, {}, 'User not found'));

@@ -124,7 +124,7 @@ export const createPackagingSolutionController = async (req, res, next) => {
         `;
 
         await pool.query(query, [
-            name, structure_type, sequence, storage_condition_id,
+            name.trim(), structure_type, sequence, storage_condition_id,
             display_shelf_life_days, product_id, product_category_id,
             product_form_id, packaging_treatment_id, packing_type_id,
             packaging_machine_id, packaging_material_id, product_min_weight,
@@ -134,6 +134,8 @@ export const createPackagingSolutionController = async (req, res, next) => {
 
         res.status(201).json(new ApiResponse(201, null, 'Packaging Solution created successfully'));
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
+
         next(new CustomError(500, error.message));
     }
 };
@@ -169,7 +171,7 @@ export const updatePackagingSolutionController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, null, 'Packaging Solution updated successfully'));
     } catch (error) {
-        console.log(error);
+        if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
         next(new CustomError(500, error.message));
     }
 };

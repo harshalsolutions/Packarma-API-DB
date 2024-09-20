@@ -8,14 +8,15 @@ export const getCustomerCareController = async (req, res, next) => {
         const offset = (page - 1) * limit;
 
         let query = `
-            SELECT *
-            FROM help_support 
-            WHERE name LIKE ? OR phone_number LIKE ?
-            ORDER BY createdAt DESC 
-            LIMIT ${limit} OFFSET ${offset}
+            SELECT hs.*, a.name AS admin_name
+            FROM help_support AS hs
+            LEFT JOIN admin AS a ON hs.admin_id = a.id
+            WHERE hs.name LIKE ? OR hs.phone_number LIKE ?
+            ORDER BY hs.createdAt DESC 
+            LIMIT ? OFFSET ?
         `;
 
-        const queryParams = [`%${search}%`, `%${search}%`];
+        const queryParams = [`%${search}%`, `%${search}%`, parseInt(limit), parseInt(offset)];
 
         const [enquiries] = await pool.query(query, queryParams);
 
@@ -33,6 +34,21 @@ export const getCustomerCareController = async (req, res, next) => {
                 itemsPerPage: Number(limit)
             }
         }));
+    } catch (error) {
+        next(new CustomError(500, error.message));
+    }
+};
+
+
+export const updateAdminDescriptionForEnquiryController = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { admin_description } = req.body;
+        if (!id || !admin_description) throw new CustomError(400, 'Please provide id and admin_description');
+
+        await pool.query('UPDATE help_support SET admin_description = ?, admin_id = ? WHERE id = ?', [admin_description, req.user.adminId, id]);
+
+        res.json(new ApiResponse(200, null, 'Admin description updated successfully'));
     } catch (error) {
         next(new CustomError(500, error.message));
     }

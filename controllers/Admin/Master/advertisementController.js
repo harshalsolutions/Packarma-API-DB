@@ -36,7 +36,7 @@ export const getAllAdvertisementController = async (req, res, next) => {
             queryParams.push(`%${search}%`);
         }
 
-        query += ' GROUP BY a.id ORDER BY a.id DESC';
+        query += ' GROUP BY a.id ORDER BY a.sequence';
         query += ' LIMIT ? OFFSET ?';
         queryParams.push(Number(limit), (Number(page) - 1) * Number(limit));
 
@@ -175,8 +175,10 @@ export const createAdvertisementController = async (req, res, next) => {
             image = `/media/advertisement/${req.file.filename}`;
         }
 
-        const query = 'INSERT INTO advertisement (title, description, start_date_time, end_date_time, link, app_page, image) VALUES (?, ?, ?, ?, ?, ?, ?)';
-        await pool.query(query, [title, description, start_date_time, end_date_time, link, app_page, image]);
+        const [[{ totalCount }]] = await pool.query('SELECT COUNT(*) as totalCount FROM advertisement');
+
+        const query = 'INSERT INTO advertisement (title, description, start_date_time, end_date_time, link, app_page, image, sequence) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+        await pool.query(query, [title, description, start_date_time, end_date_time, link, app_page, image, totalCount + 1]);
 
         res.status(201).json(new ApiResponse(201, null, 'Advertisement created successfully'));
     } catch (error) {

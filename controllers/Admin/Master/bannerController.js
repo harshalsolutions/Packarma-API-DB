@@ -43,7 +43,7 @@ export const getAllBannerController = async (req, res, next) => {
             queryParams.push(`%${search}%`);
         }
 
-        query += ' GROUP BY b.id ORDER BY b.id DESC';
+        query += ' GROUP BY b.id ORDER BY b.sequence';
         query += ' LIMIT ? OFFSET ?';
         queryParams.push(Number(limit), Number(offset));
 
@@ -186,8 +186,10 @@ export const createBannerController = async (req, res, next) => {
             banner_image = `/media/${req.body.type}/${req.file.filename}`;
         }
 
-        const query = 'INSERT INTO banner (title, description, start_date_time, end_date_time, link, app_page, banner_image) VALUES (?, ?, ?, ?, ?, ?, ?)';
-        await pool.query(query, [title, description, start_date_time, end_date_time, link, app_page, banner_image]);
+        const [[{ totalCount }]] = await pool.query('SELECT COUNT(*) as totalCount FROM banner');
+
+        const query = 'INSERT INTO banner (title, description, start_date_time, end_date_time, link, app_page, banner_image, sequence) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+        await pool.query(query, [title, description, start_date_time, end_date_time, link, app_page, banner_image, totalCount + 1]);
 
         res.status(201).json(new ApiResponse(201, null, 'Banner created successfully'));
     } catch (error) {

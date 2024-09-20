@@ -415,13 +415,14 @@ export const getSearchHistoryController = async (req, res, next) => {
         const userId = req.user.userId;
         const selectQuery = `
             SELECT sh.*, ps.*, u.firstname, u.lastname, 
-            c.name AS category_name, sc.name AS subcategory_name, p.product_name
+            c.name AS category_name, sc.name AS subcategory_name, p.product_name, pt.name AS packing_type_name
             FROM search_history sh
             JOIN packaging_solution ps ON sh.packaging_solution_id = ps.id
             JOIN users u ON sh.user_id = u.user_id
             JOIN product p ON ps.product_id = p.id
             JOIN categories c ON p.category_id = c.id
             JOIN subcategories sc ON p.sub_category_id = sc.id
+            JOIN packing_type pt ON ps.packing_type_id = pt.id
             WHERE sh.user_id = ?
             ORDER BY sh.search_time DESC
         `;

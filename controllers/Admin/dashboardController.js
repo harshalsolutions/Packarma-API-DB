@@ -64,21 +64,6 @@ export const getTotalEnquiriesCount = async (req, res, next) => {
     }
 };
 
-export const getTotalRevenue = async (req, res, next) => {
-    try {
-        const [[{ totalFromCreditInvoice }]] = await pool.query(`
-            SELECT SUM(total) as totalFromCreditInvoice FROM credit_invoice
-        `);
-        const [[{ totalFromSubscriptionInvoice }]] = await pool.query(`
-            SELECT SUM(total) as totalFromSubscriptionInvoice FROM subscription_invoice
-        `);
-        const totalRevenue = parseFloat(totalFromCreditInvoice) + parseFloat(totalFromSubscriptionInvoice);
-        res.json(new ApiResponse(200, { totalRevenue }));
-    } catch (error) {
-        next(new CustomError(500, error.message));
-    }
-};
-
 export const getTotalSubscriptionsFromReferralSignups = async (req, res, next) => {
     try {
         const [[{ totalCount }]] = await pool.query(`

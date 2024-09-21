@@ -23,7 +23,7 @@ export const getAddressController = async (req, res, next) => {
 
 export const addAddressController = async (req, res, next) => {
     try {
-        const { address, state, city, pincode, address_name } = req.body;
+        const { address, state, city, pincode, address_name, phone_number } = req.body;
         const userId = req.user.userId
         const connection = await pool.getConnection();
         await connection.beginTransaction();
@@ -39,10 +39,10 @@ export const addAddressController = async (req, res, next) => {
             const addName = address_name || `Address ${total_count + 1}`;
 
             const insertQuery = `
-                INSERT INTO addresses (user_id, address_name, address, state, city, pincode)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO addresses (user_id, address_name, address, state, city, pincode, phone_number)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
             `;
-            await connection.query(insertQuery, [userId, addName, address, state, city, pincode]);
+            await connection.query(insertQuery, [userId, addName, address, state, city, pincode, phone_number]);
             await connection.commit();
             res.status(201).json(new ApiResponse(201, null, 'Address added successfully'));
         } catch (error) {

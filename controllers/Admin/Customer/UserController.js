@@ -94,10 +94,8 @@ export const getAllUsersController = async (req, res, next) => {
 
         const [[{ totalCount }]] = await pool.query(countQuery, countParams);
 
-        // Calculating total pages
         const totalPages = Math.ceil(totalCount / Number(limit));
 
-        // If no users are found, return empty response with pagination info
         if (!users.length) {
             return res.json(new ApiResponse(200, {
                 users: [],
@@ -110,12 +108,10 @@ export const getAllUsersController = async (req, res, next) => {
             }, 'No users found'));
         }
 
-        // Removing passwords from the users' data before sending the response
         users.forEach(user => {
             delete user.password;
         });
 
-        // Sending the response with users data and pagination info
         res.json(new ApiResponse(200, {
             users: users,
             pagination: {

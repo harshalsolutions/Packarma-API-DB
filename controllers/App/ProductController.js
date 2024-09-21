@@ -151,7 +151,7 @@ export const getProductsController = async (req, res, next) => {
 
 export const searchProductSuggestionsController = async (req, res, next) => {
     try {
-        const { query, limit = 10 } = req.query;
+        const { query, subcategory_id, limit = 10 } = req.query;
 
         if (!query) {
             throw new CustomError(400, 'Search query is required');
@@ -161,18 +161,28 @@ export const searchProductSuggestionsController = async (req, res, next) => {
             SELECT id AS product_id, product_name, product_image, category_id, sub_category_id
             FROM product
             WHERE product_name LIKE ? AND status = 'active'
-            ORDER BY product_name
-            LIMIT ?
         `;
 
-        const searchPattern = `%${query}%`;
+        const searchPattern = `%${query.trim()}%`;
+        const queryParams = [searchPattern];
 
-        const [rows] = await pool.query(searchQuery, [searchPattern, parseInt(limit)]);
+        if (subcategory_id) {
+            searchQuery += ' AND sub_category_id = ?';
+            queryParams.push(parseInt(subcategory_id));
+        }
 
-        if (!rows.length) res.json(new ApiResponse(200, null, 'No product suggestions found'));
+        searchQuery += ' ORDER BY product_name LIMIT ?';
+        queryParams.push(parseInt(limit));
 
+        const [rows] = await pool.query(searchQuery, queryParams);
+
+        if (!rows.length) {
+            return res.json(new ApiResponse(200, [], 'No product suggestions found'));
+        }
         res.json(new ApiResponse(200, rows, 'Product suggestions fetched successfully'));
+
     } catch (error) {
+        console.error(error);
         next(new CustomError(500, error.message));
     }
 };
@@ -426,8 +436,6 @@ export const getSearchHistoryController = async (req, res, next) => {
             WHERE sh.user_id = ?
             ORDER BY sh.search_time DESC
         `;
-
-
 
         const [rows] = await connection.query(selectQuery, [userId]);
 

@@ -155,9 +155,15 @@ export const getUserWithAddressController = async (req, res, next) => {
 
 export const getAllUserAddressesController = async (req, res, next) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
-        const [addresses] = await pool.query('SELECT a.*, u.firstname, u.lastname, u.email FROM addresses as a JOIN users as u ON a.user_id = u.user_id ORDER BY a.created_at DESC LIMIT ? OFFSET ?', [Number(limit), (page - 1) * Number(limit)]);
-        const [[{ totalCount }]] = await pool.query(`SELECT COUNT(*) as totalCount FROM addresses`);
+        const { page = 1, limit = 10, search } = req.query;
+        let query = 'SELECT a.*, u.firstname, u.lastname, u.email FROM addresses as a JOIN users as u ON a.user_id = u.user_id';
+        const queryParams = []
+        if (search) {
+            query += ' WHERE a.user_id = ?';
+            queryParams.push(search);
+        }
+        const [addresses] = await pool.query(query + ' ORDER BY a.created_at DESC LIMIT ? OFFSET ?', [...queryParams, Number(limit), (page - 1) * Number(limit)]);
+        const [[{ totalCount }]] = await pool.query(`SELECT COUNT(*) as totalCount FROM addresses ${search ? 'WHERE user_id = ?' : ''}`, [search]);
 
         const totalPages = Math.ceil(totalCount / Number(limit));
 

@@ -68,6 +68,7 @@ export const createCreditPriceController = async (req, res, next) => {
 
         res.json(new ApiResponse(201, { id: result.insertId }, 'Credit Price created successfully'));
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
         next(new CustomError(500, error.message));
     }
 };
@@ -88,6 +89,7 @@ export const updateCreditPriceController = async (req, res, next) => {
 
         res.json(new ApiResponse(200, null, 'Credit Price updated successfully'));
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
         next(new CustomError(500, error.message));
     }
 };
@@ -110,11 +112,16 @@ export const deleteCreditPriceController = async (req, res, next) => {
 
 export const getAllCurrencyController = async (req, res, next) => {
     try {
-        const currencyArray = Object.keys(currencyData).map((key) => ({
-            code: key,
-            symbol: currencyData[key].symbol,
-            name: currencyData[key].name,
-        }));
+        const query = 'SELECT DISTINCT currency FROM credit_prices';
+        const [currencyRows] = await pool.query(query);
+        console.log(currencyRows)
+        const currencyArray = Object.keys(currencyData)
+            .filter((key) => !currencyRows.some((row) => row.code === key))
+            .map((key) => ({
+                code: key,
+                symbol: currencyData[key].symbol,
+                name: currencyData[key].name,
+            }));
         res.json(new ApiResponse(200, { currencies: currencyArray }, 'Currency Data successfully'));
     } catch (error) {
         next(new CustomError(500, error.message));

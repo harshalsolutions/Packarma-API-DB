@@ -33,17 +33,17 @@ export const getAllUsersController = async (req, res, next) => {
         }
 
         if (active_subscription) {
-            if (active_subscription === 'active') {
+            if (active_subscription === 'Active') {
                 query += ' AND us.subscription_id IS NOT NULL AND us.end_date > CURDATE()';
-            } else if (active_subscription === 'inactive') {
+            } else if (active_subscription === 'Inactive') {
                 query += ' AND (us.subscription_id IS NULL OR us.end_date <= CURDATE())';
             }
         }
 
         if (user_type) {
-            if (user_type === 'normal') {
+            if (user_type === 'Normal') {
                 query += ' AND u.user_id NOT IN (SELECT referred_user_id FROM referrals WHERE account_created = 1)';
-            } else if (user_type === 'referred') {
+            } else if (user_type === 'Referred') {
                 query += ' AND u.referral_code_id IN (SELECT id FROM referral_codes WHERE user_id IN (SELECT referred_user_id FROM referrals WHERE account_created = 1))';
             }
         }

@@ -29,26 +29,25 @@ export const getAllReferralsController = async (req, res, next) => {
 
         if (signup_done === 'Completed') {
             conditions.push('r.account_created = 1');
-        } else if (signup_done === 'Not Completed') {
+        } else if (signup_done === 'Incompleted') {
             conditions.push('r.account_created = 0');
         }
 
         if (subscription_done === 'Completed') {
             conditions.push('r.subscription_completed = 1');
-        } else if (subscription_done === 'Not Completed') {
+        } else if (subscription_done === 'Incompleted') {
             conditions.push('r.subscription_completed = 0');
         }
 
         if (redeem_done === 'Completed') {
             conditions.push('r.redeem_status = 1');
-        } else if (redeem_done === 'Not Completed') {
+        } else if (redeem_done === 'Incompleted') {
             conditions.push('r.redeem_status = 0');
         }
 
         if (conditions.length) {
             query += ' WHERE ' + conditions.join(' AND ');
         }
-
         const countQuery = 'SELECT COUNT(*) as totalCount FROM (' + query + ') as countTable';
         const [[{ totalCount }]] = await pool.query(countQuery, queryParams);
 

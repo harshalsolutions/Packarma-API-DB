@@ -23,17 +23,26 @@ export const getAddressController = async (req, res, next) => {
 
 export const addAddressController = async (req, res, next) => {
     try {
-        const { address_name, building, area, phone_number } = req.body;
+        const { address, state, city, pincode, address_name } = req.body;
         const userId = req.user.userId
         const connection = await pool.getConnection();
         await connection.beginTransaction();
 
         try {
-            const insertQuery = `
-                INSERT INTO addresses (user_id, address_name, building, area, phone_number)
-                VALUES (?, ?, ?, ?, ?)
+            const findQuery = `
+                SELECT COUNT(*) as total_count
+                FROM addresses
+                WHERE user_id = ?
             `;
-            await connection.query(insertQuery, [userId, address_name, building, area, phone_number]);
+            const [[{ total_count }]] = await connection.query(findQuery, [userId]);
+
+            const addName = address_name || `Address ${total_count + 1}`;
+
+            const insertQuery = `
+                INSERT INTO addresses (user_id, address_name, address, state, city, pincode)
+                VALUES (?, ?, ?, ?, ?, ?)
+            `;
+            await connection.query(insertQuery, [userId, addName, address, state, city, pincode]);
             await connection.commit();
             res.status(201).json(new ApiResponse(201, null, 'Address added successfully'));
         } catch (error) {
@@ -46,6 +55,7 @@ export const addAddressController = async (req, res, next) => {
         handleError(error, next);
     }
 };
+
 
 export const updateAddressController = async (req, res, next) => {
     try {
@@ -121,4 +131,5 @@ export const deleteAddressController = async (req, res, next) => {
         handleError(error, next);
     }
 };
+
 

@@ -27,7 +27,7 @@ const getBrowserInstance = async () => {
 
 export const generateInvoiceController = async (req, res, next) => {
     try {
-        const { customer_name, customer_gstin, state, products, customer_address, transaction_id } = req.body;
+        const { customer_name, customer_gstNo, products, customer_address_id, transaction_id } = req.body;
 
         let today = new Date();
         let day = today.getDate().toString().padStart(2, '0');
@@ -38,7 +38,7 @@ export const generateInvoiceController = async (req, res, next) => {
         const [[invoiceDetails], [result], [address]] = await Promise.all([
             pool.query('SELECT * FROM invoice_details LIMIT 1'),
             pool.query('SELECT MAX(id) as maxId FROM credit_invoice'),
-            pool.query(`SELECT * FROM addresses WHERE id = ? LIMIT 1`, [customer_address])
+            pool.query(`SELECT * FROM addresses WHERE id = ? LIMIT 1`, [customer_address_id])
         ]);
 
 
@@ -59,12 +59,12 @@ export const generateInvoiceController = async (req, res, next) => {
                     <td class="table-data">${product.amount}</td>
                     <td class="table-data">${product.discount}</td>
                     <td class="table-data">${product.taxable_value}</td>
-                    <td class="table-data">${state === "Maharashtra" ? product.cgst_rate : ""}</td>
-                    <td class="table-data">${state === "Maharashtra" ? product.cgst_amount : ""}</td>
-                    <td class="table-data">${state === "Maharashtra" ? product.sgst_rate : ""}</td>
-                    <td class="table-data">${state === "Maharashtra" ? product.sgst_amount : ""}</td>
-                    <td class="table-data">${state !== "Maharashtra" ? product.igst_rate : ""}</td>
-                    <td class="table-data">${state !== "Maharashtra" ? product.igst_amount : ""}</td>
+                    <td class="table-data">${address[0].state === "Maharashtra" ? product.cgst_rate : ""}</td>
+                    <td class="table-data">${address[0].state === "Maharashtra" ? product.cgst_amount : ""}</td>
+                    <td class="table-data">${address[0].state === "Maharashtra" ? product.sgst_rate : ""}</td>
+                    <td class="table-data">${address[0].state === "Maharashtra" ? product.sgst_amount : ""}</td>
+                    <td class="table-data">${address[0].state !== "Maharashtra" ? product.igst_rate : ""}</td>
+                    <td class="table-data">${address[0].state !== "Maharashtra" ? product.igst_amount : ""}</td>
                     <td class="table-data"><strong>${product.total}</strong></td>
                 </tr>
             `;
@@ -76,9 +76,9 @@ export const generateInvoiceController = async (req, res, next) => {
             .replace(/{{invoice_no}}/g, invoice_no)
             .replace(/{{invoice_date}}/g, invoice_date)
             .replace(/{{customer_name}}/g, customer_name)
-            .replace(/{{customer_address}}/g, address[0].building + ", " + address[0].area)
-            .replace(/{{customer_gstin}}/g, customer_gstin)
-            .replaceAll(/{{state}}/g, state)
+            .replace(/{{customer_address}}/g, address[0].address)
+            .replace(/{{customer_gstin}}/g, customer_gstNo)
+            .replaceAll(/{{state}}/g, address[0].state)
             .replace(/{{grand_total}}/g, parsedTotal)
             .replace(/{{total_in_words}}/g, totalInWords(parsedTotal))
             .replace('{{PRODUCT_ROWS}}', productRows)

@@ -16,7 +16,6 @@ export const getAllUsersController = async (req, res, next) => {
             LEFT JOIN subscriptions AS s ON us.subscription_id = s.id
             WHERE 1 = 1
         `;
-
         const queryParams = [];
         if (name) {
             query += ' AND (u.firstname LIKE ? OR u.lastname LIKE ?)';

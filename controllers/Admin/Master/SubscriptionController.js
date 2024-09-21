@@ -106,7 +106,7 @@ export const getAllCurrencyController = async (req, res, next) => {
         const query = 'SELECT DISTINCT currency FROM subscriptions_prices WHERE subscription_id = ?';
         const [currencyRows] = await pool.query(query, [id]);
         const currencyArray = Object.keys(currencyData)
-            .filter((key) => !currencyRows.some((row) => row.code === key))
+            .filter((key) => !currencyRows.some((row) => row.currency === key))
             .map((key) => ({
                 code: key,
                 symbol: currencyData[key].symbol,
@@ -133,7 +133,7 @@ export const getSubscriptionPriceController = async (req, res, next) => {
 };
 export const addSubscriptionPriceController = async (req, res, next) => {
     try {
-        const { subscription_id, price, currency, status } = req.body;
+        const { subscription_id, price, currency, status = "active" } = req.body;
 
         const query = 'INSERT INTO subscriptions_prices (subscription_id, price, currency, status) VALUES (?, ?, ?, ?)';
         const [result] = await pool.query(query, [subscription_id, price, currency, status]);

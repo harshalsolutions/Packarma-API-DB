@@ -4,7 +4,7 @@ import CustomError from "../../../utils/CustomError.js"
 
 export const getAllCustomerEnquiryController = async (req, res, next) => {
     try {
-        const { page = 1, limit = 10, userId, userName, status, productName, category, subCategory, fromDate, toDate } = req.query;
+        const { page = 1, limit = 10, userId, userName, status, product, category, subCategory, fromDate, toDate } = req.query;
         const offset = (page - 1) * limit;
         let query = `
             SELECT sh.*,
@@ -12,7 +12,7 @@ export const getAllCustomerEnquiryController = async (req, res, next) => {
             ps.packaging_treatment_id, ps.packing_type_id, pt.name AS packing_type_name, ps.packaging_machine_id, ps.packaging_material_id, ps.product_min_weight, ps.product_max_weight, 
             ps.min_order_quantity, ps.min_order_quantity_unit_id, ps.status, 
             u.firstname, u.lastname,
-            p.product_name, c.name AS category_name, sc.id AS subcategory_id,  sc.name AS subcategory_name, pf.name AS product_form_name, pt.name AS packaging_treatment_name
+            p.product_name, p.id AS product_id, c.name AS category_name, sc.id AS subcategory_id,  sc.name AS subcategory_name, pf.name AS product_form_name, pt.name AS packaging_treatment_name
             FROM search_history sh
             JOIN packaging_solution ps ON sh.packaging_solution_id = ps.id
             JOIN product p ON ps.product_id = p.id
@@ -40,9 +40,9 @@ export const getAllCustomerEnquiryController = async (req, res, next) => {
             queryParams.push(status);
         }
 
-        if (productName) {
-            query += ' AND ps.name LIKE ?';
-            queryParams.push(`%${productName}%`);
+        if (product) {
+            query += ' AND ps.product_id LIKE ?';
+            queryParams.push(`%${product}%`);
         }
 
         if (category) {

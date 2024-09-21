@@ -114,7 +114,6 @@ export const getAllCurrencyController = async (req, res, next) => {
     try {
         const query = 'SELECT DISTINCT currency FROM credit_prices';
         const [currencyRows] = await pool.query(query);
-        console.log(currencyRows)
         const currencyArray = Object.keys(currencyData)
             .filter((key) => !currencyRows.some((row) => row.code === key))
             .map((key) => ({

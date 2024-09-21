@@ -151,28 +151,39 @@ export const getProductsController = async (req, res, next) => {
 
 export const searchProductSuggestionsController = async (req, res, next) => {
     try {
-        const { query, subcategory_id, limit = 10 } = req.query;
+        const { query, limit = 10, product } = req.query;
 
         if (!query) {
             throw new CustomError(400, 'Search query is required');
         }
 
-        let searchQuery = `
-            SELECT id AS product_id, product_name, product_image, category_id, sub_category_id
-            FROM product
-            WHERE product_name LIKE ? AND status = 'active'
+        let searchQuery;
+        let queryParams;
+
+        if (product === 'true') {
+            searchQuery = 'SELECT p.*, sc.name AS subcategory_name FROM product AS p JOIN subcategories AS sc ON p.sub_category_id = sc.id WHERE product_name LIKE ? AND p.status = ? ORDER BY product_name LIMIT ?';
+            queryParams = [`%${query.trim()}%`, 'active', parseInt(limit)];
+        } else {
+            searchQuery = `
+            SELECT p.*, sc.name AS subcategory_name
+            FROM product AS p
+            JOIN subcategories AS sc ON p.sub_category_id = sc.id
+            WHERE sc.name LIKE ? AND p.status = 'active'
         `;
 
-        const searchPattern = `%${query.trim()}%`;
-        const queryParams = [searchPattern];
+            const searchPattern = `%${query.trim()}%`;
+            queryParams = [searchPattern];
 
-        if (subcategory_id) {
-            searchQuery += ' AND sub_category_id = ?';
-            queryParams.push(parseInt(subcategory_id));
+            const [subCategoryMatchRows] = await pool.query(searchQuery, queryParams);
+
+            if (subCategoryMatchRows.length > 0) {
+                searchQuery = 'SELECT p.*, sc.name AS subcategory_name FROM product AS p JOIN subcategories AS sc ON p.sub_category_id = sc.id WHERE p.sub_category_id = ? AND p.status = ? ORDER BY product_name LIMIT ?';
+                queryParams = [subCategoryMatchRows[0].sub_category_id, 'active', parseInt(limit)];
+            } else {
+                searchQuery = 'SELECT p.*, sc.name AS subcategory_name FROM product AS p JOIN subcategories AS sc ON p.sub_category_id = sc.id WHERE product_name LIKE ? AND p.status = ? ORDER BY product_name LIMIT ?';
+                queryParams = [searchPattern, 'active', parseInt(limit)];
+            }
         }
-
-        searchQuery += ' ORDER BY product_name LIMIT ?';
-        queryParams.push(parseInt(limit));
 
         const [rows] = await pool.query(searchQuery, queryParams);
 
@@ -186,8 +197,6 @@ export const searchProductSuggestionsController = async (req, res, next) => {
         next(new CustomError(500, error.message));
     }
 };
-
-
 export const getPackingTypesController = async (req, res, next) => {
     try {
         const { status } = req.query;

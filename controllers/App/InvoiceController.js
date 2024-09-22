@@ -50,25 +50,48 @@ export const generateInvoiceController = async (req, res, next) => {
 
         let productRows = '';
         let grand_total = 0;
+        let total_cgst = 0;
+        let total_sgst = 0;
+        let total_igst = 0;
+
         products.forEach((product, index) => {
-            grand_total += product.total;
+            const taxable_value = product.amount - product.discount;
+
+            let cgst_amount = 0;
+            let sgst_amount = 0;
+            let igst_amount = 0;
+
+            if (address[0].state === 'Maharashtra') {
+                cgst_amount = (taxable_value * 9) / 100;
+                sgst_amount = (taxable_value * 9) / 100;
+                total_cgst += cgst_amount;
+                total_sgst += sgst_amount;
+            } else {
+                igst_amount = (taxable_value * 18) / 100;
+                total_igst += igst_amount;
+            }
+
+            const total_product_amount = taxable_value + cgst_amount + sgst_amount + igst_amount;
+            grand_total += total_product_amount;
+
             productRows += `
-                <tr style="height: 5rem">
-                    <td class="table-data">${index + 1}</td>
-                    <td class="table-data" colspan="4">${product.description}</td>
-                    <td class="table-data">${product.amount}</td>
-                    <td class="table-data">${product.discount}</td>
-                    <td class="table-data">${product.taxable_value}</td>
-                    <td class="table-data">${address[0].state === "Maharashtra" ? product.cgst_rate : ""}</td>
-                    <td class="table-data">${address[0].state === "Maharashtra" ? product.cgst_amount : ""}</td>
-                    <td class="table-data">${address[0].state === "Maharashtra" ? product.sgst_rate : ""}</td>
-                    <td class="table-data">${address[0].state === "Maharashtra" ? product.sgst_amount : ""}</td>
-                    <td class="table-data">${address[0].state !== "Maharashtra" ? product.igst_rate : ""}</td>
-                    <td class="table-data">${address[0].state !== "Maharashtra" ? product.igst_amount : ""}</td>
-                    <td class="table-data"><strong>${product.total}</strong></td>
-                </tr>
-            `;
+        <tr style="height: 5rem">
+            <td class="table-data">${index + 1}</td>
+            <td class="table-data" colspan="4">${product.description}</td>
+            <td class="table-data">${product.amount}</td>
+            <td class="table-data">${product.discount}</td>
+            <td class="table-data">${taxable_value}</td>
+            <td class="table-data">${address[0].state === "Maharashtra" ? '9%' : ''}</td>
+            <td class="table-data">${address[0].state === "Maharashtra" ? cgst_amount.toFixed(2) : ''}</td>
+            <td class="table-data">${address[0].state === "Maharashtra" ? '9%' : ''}</td>
+            <td class="table-data">${address[0].state === "Maharashtra" ? sgst_amount.toFixed(2) : ''}</td>
+            <td class="table-data">${address[0].state !== "Maharashtra" ? '18%' : ''}</td>
+            <td class="table-data">${address[0].state !== "Maharashtra" ? igst_amount.toFixed(2) : ''}</td>
+            <td class="table-data"><strong>${total_product_amount.toFixed(2)}</strong></td>
+        </tr>
+    `;
         });
+
 
         const parsedTotal = parseFloat(grand_total.toFixed(2));
 
@@ -92,19 +115,16 @@ export const generateInvoiceController = async (req, res, next) => {
             .replace(/{{transaction_id}}/g, transaction_id);
 
         const pdfFolder = path.join(process.cwd(), 'invoices');
-
         if (!fs.existsSync(pdfFolder)) {
             fs.mkdirSync(pdfFolder);
         }
 
         const pdfFilePath = path.join(pdfFolder, `invoice_${invoice_no}.pdf`);
-
         const browser = await getBrowserInstance();
         const page = await browser.newPage();
         await page.setContent(populatedHtml, { waitUntil: 'networkidle0' });
         const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
         await page.close();
-
         fs.writeFileSync(pdfFilePath, pdfBuffer);
 
         const pdfDownloadLink = `/invoices/${path.basename(pdfFilePath)}`;
@@ -112,8 +132,15 @@ export const generateInvoiceController = async (req, res, next) => {
         res.json({
             success: true,
             message: 'Invoice generated successfully',
-            downloadLink: pdfDownloadLink
+            downloadLink: pdfDownloadLink,
+            finalAmount: {
+                grandTotal: parsedTotal,
+                totalCGST: total_cgst.toFixed(2),
+                totalSGST: total_sgst.toFixed(2),
+                totalIGST: total_igst.toFixed(2)
+            }
         });
+
     } catch (error) {
         handleError(error, next);
     }

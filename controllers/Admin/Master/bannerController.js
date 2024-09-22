@@ -4,6 +4,7 @@ import CustomError from '../../../utils/CustomError.js';
 import { unlink } from 'fs';
 import path from 'path';
 import ExcelJS from 'exceljs';
+import { formatDateTime } from '../../../utils/dateFormatter.js';
 
 export const getAllBannerController = async (req, res, next) => {
     try {
@@ -130,14 +131,14 @@ export const exportBannerControllerById = async (req, res, next) => {
         const csvData = userActivity.map(activity => ({
             title: banner.title,
             description: banner.description,
-            createdAt: banner.createdAt,
-            updatedAt: banner.updatedAt,
+            createdAt: formatDateTime(banner.createdAt),
+            updatedAt: formatDateTime(banner.updatedAt),
             user_id: activity.user_id,
             firstname: activity.firstname,
             lastname: activity.lastname,
             email: activity.email,
             activity_type: activity.activity_type,
-            activity_timestamp: activity.activity_timestamp,
+            activity_timestamp: formatDateTime(activity.activity_timestamp),
             total_views: banner.total_views,
             total_clicks: banner.total_clicks,
             image: (link ? link : "") + banner.banner_image
@@ -153,17 +154,17 @@ export const exportBannerControllerById = async (req, res, next) => {
             { header: 'Total Views', key: 'total_views', width: 15 },
             { header: 'Total Clicks', key: 'total_clicks', width: 15 },
             {
-                header: 'Created At', key: 'createdAt', width: 20, style: { numFmt: 'dd/mm/yyyy hh:mm:ss' }
+                header: 'Created At', key: 'createdAt', width: 20
             },
             {
-                header: 'Updated At', key: 'updatedAt', width: 20, style: { numFmt: 'dd/mm/yyyy hh:mm:ss' }
+                header: 'Updated At', key: 'updatedAt', width: 20
             },
             { header: 'User ID', key: 'user_id', width: 15 },
             { header: 'First Name', key: 'firstname', width: 15 },
             { header: 'Last Name', key: 'lastname', width: 15 },
             { header: 'Email', key: 'email', width: 30 },
             { header: 'Activity Type', key: 'activity_type', width: 30 },
-            { header: 'Activity Timestamp', key: 'activity_timestamp', width: 20, style: { numFmt: 'dd/mm/yyyy hh:mm:ss' } }
+            { header: 'Activity Timestamp', key: 'activity_timestamp', width: 20 }
         ];
 
         worksheet.addRows(csvData);

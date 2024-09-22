@@ -2,6 +2,7 @@ import ApiResponse from "../../../utils/ApiResponse.js";
 import pool from "../../../config/database.js";
 import CustomError from '../../../utils/CustomError.js';
 import ExcelJS from 'exceljs';
+import { formatDateTime } from "../../../utils/dateFormatter.js";
 
 export const createPackagingMaterialController = async (req, res, next) => {
     try {
@@ -125,8 +126,8 @@ export const exportAllMaterialsController = async (req, res, next) => {
             sit: material.sit,
             gsm: material.gsm,
             status: material.status,
-            updatedAt: material.updatedAt,
-            createdAt: material.createdAt,
+            updatedAt: formatDateTime(material.updatedAt),
+            createdAt: formatDateTime(material.createdAt),
         }));
 
         const workbook = new ExcelJS.Workbook();
@@ -143,10 +144,10 @@ export const exportAllMaterialsController = async (req, res, next) => {
             { header: 'GSM', key: 'gsm', width: 15 },
             { header: 'Status', key: 'status', width: 15 },
             {
-                header: 'Created At', key: 'createdAt', width: 20, style: { numFmt: 'dd/mm/yyyy hh:mm:ss' }
+                header: 'Created At', key: 'createdAt', width: 20
             },
             {
-                header: 'Updated At', key: 'updatedAt', width: 20, style: { numFmt: 'dd/mm/yyyy hh:mm:ss' }
+                header: 'Updated At', key: 'updatedAt', width: 20
             },
         ];
 

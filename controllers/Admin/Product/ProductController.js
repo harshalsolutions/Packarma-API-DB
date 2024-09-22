@@ -4,6 +4,7 @@ import CustomError from '../../../utils/CustomError.js';
 import { unlink } from 'fs';
 import path from 'path';
 import ExcelJS from 'exceljs';
+import { formatDateTime } from "../../../utils/dateFormatter.js";
 
 export const getAllProductsController = async (req, res, next) => {
     try {
@@ -198,8 +199,8 @@ export const exportAllProductsController = async (req, res, next) => {
             packaging_treatment_name: product.packaging_treatment_name,
             measurement_unit: product.measurement_unit,
             status: product.status,
-            createdAt: product.createdAt,
-            updatedAt: product.updatedAt,
+            createdAt: formatDateTime(product.createdAt),
+            updatedAt: formatDateTime(product.updatedAt),
             image: (link ? link : "") + product.product_image
         }));
 
@@ -217,10 +218,10 @@ export const exportAllProductsController = async (req, res, next) => {
             { header: 'Measurement Unit', key: 'measurement_unit', width: 15 },
             { header: 'Status', key: 'status', width: 15 },
             {
-                header: 'Created At', key: 'createdAt', width: 20, style: { numFmt: 'dd/mm/yyyy hh:mm:ss' }
+                header: 'Created At', key: 'createdAt', width: 20
             },
             {
-                header: 'Updated At', key: 'updatedAt', width: 20, style: { numFmt: 'dd/mm/yyyy hh:mm:ss' }
+                header: 'Updated At', key: 'updatedAt', width: 20
             },
         ];
 

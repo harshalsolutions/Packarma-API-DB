@@ -2,6 +2,7 @@ import ApiResponse from "../../../utils/ApiResponse.js"
 import pool from "../../../config/database.js";
 import CustomError from '../../../utils/CustomError.js';
 import ExcelJS from 'exceljs';
+import { formatDateTime } from "../../../utils/dateFormatter.js";
 
 export const getPackagingSolutionController = async (req, res, next) => {
     try {
@@ -331,8 +332,8 @@ export const exportAllPackagingSolutionController = async (req, res, next) => {
             min_order_quantity: solution.min_order_quantity,
             min_order_quantity_unit_name: solution.min_order_quantity_unit_name,
             status: solution.status,
-            createdAt: solution.createdAt,
-            updatedAt: solution.updatedAt,
+            createdAt: formatDateTime(solution.createdAt),
+            updatedAt: formatDateTime(solution.updatedAt),
             image: (link ? link : "") + solution.image
         }));
 
@@ -359,8 +360,8 @@ export const exportAllPackagingSolutionController = async (req, res, next) => {
             { header: 'Min Order Quantity', key: 'min_order_quantity', width: 20 },
             { header: 'Min Order Quantity Unit', key: 'min_order_quantity_unit_name', width: 20 },
             { header: 'Status', key: 'status', width: 15 },
-            { header: 'Created At', key: 'createdAt', width: 20, style: { numFmt: 'dd/mm/yyyy hh:mm:ss' } },
-            { header: 'Updated At', key: 'updatedAt', width: 20, style: { numFmt: 'dd/mm/yyyy hh:mm:ss' } },
+            { header: 'Created At', key: 'createdAt', width: 20 },
+            { header: 'Updated At', key: 'updatedAt', width: 20 },
         ];
 
         worksheet.addRows(csvData);

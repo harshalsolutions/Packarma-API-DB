@@ -3,6 +3,7 @@ import pool from '../../../config/database.js';
 import ExcelJS from 'exceljs';
 import CustomError from "../../../utils/CustomError.js"
 import bcrypt from 'bcryptjs';
+import { formatDateTime } from '../../../utils/dateFormatter.js';
 export const getAllUsersController = async (req, res, next) => {
     try {
         const { page = 1, limit = 10, ...filters } = req.query;
@@ -241,8 +242,8 @@ export const exportUsersDataController = async (req, res, next) => {
             email_verified_at: user.email_verified_at,
             gst_number: user.gst_number,
             gst_document_link: user.gst_document_link ? (link ? link : "") + user.gst_document_link : null,
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt,
+            createdAt: formatDateTime(user.createdAt),
+            updatedAt: formatDateTime(user.updatedAt),
         }));
 
         worksheet.addRow([
@@ -278,11 +279,11 @@ export const exportUsersDataController = async (req, res, next) => {
             { key: 'start_date', width: 20, style: { numFmt: 'dd/mm/yyyy' } },
             { key: 'end_date', width: 20, style: { numFmt: 'dd/mm/yyyy' } },
             { key: 'email_verified', width: 15 },
-            { key: 'email_verified_at', width: 20, style: { numFmt: 'dd/mm/yyyy hh:mm:ss' } },
+            { key: 'email_verified_at', width: 20 },
             { key: 'gst_number', width: 30 },
             { key: 'gst_document_link', width: 30 },
-            { key: 'createdAt', width: 20, style: { numFmt: 'dd/mm/yyyy hh:mm:ss' } },
-            { key: 'updatedAt', width: 20, style: { numFmt: 'dd/mm/yyyy hh:mm:ss' } },
+            { key: 'createdAt', width: 20 },
+            { key: 'updatedAt', width: 20 },
         ];
 
         worksheet.addRows(csvData);

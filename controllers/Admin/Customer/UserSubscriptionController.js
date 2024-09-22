@@ -1,5 +1,8 @@
 import ApiResponse from '../../../utils/ApiResponse.js';
 import pool from '../../../config/database.js';
+import ExcelJS from 'exceljs';
+import { formatDateTime } from '../../../utils/dateFormatter.js';
+
 
 export const getAllUserSubscriptionsController = async (req, res, next) => {
     const connection = await pool.getConnection();
@@ -142,3 +145,71 @@ export const getAllSubscriptionController = async (req, res, next) => {
         connection.release();
     }
 };
+
+
+export const exportAllSubscriptionController = async (req, res, next) => {
+    try {
+        const { link } = req.body;
+        const [subscriptionsRows] = await pool.query(`
+            SELECT 
+            i.id, 
+            CONCAT(u.firstname, ' ', u.lastname) AS user_name,
+            s.type AS subscription_type,
+            us.start_date AS subscription_start_date,
+            us.end_date AS subscription_end_date,
+            i.transaction_id,
+            i.invoice_link,  
+            i.invoice_date
+        FROM subscription_invoice i
+        JOIN users u ON i.user_id = u.user_id
+        JOIN subscriptions s ON i.subscription_id = s.id 
+        JOIN (
+            SELECT user_id, subscription_id, start_date, end_date
+            FROM user_subscriptions
+            WHERE (user_id, start_date) IN (
+                SELECT user_id, MAX(start_date)
+                FROM user_subscriptions
+                GROUP BY user_id
+            )
+        ) us ON u.user_id = us.user_id
+        `);
+
+        if (!subscriptionsRows.length) throw new CustomError(404, 'No subscriptions found');
+
+        const csvData = subscriptionsRows.map(subscription => ({
+            id: subscription.id,
+            user_name: subscription.user_name,
+            subscription_type: subscription.subscription_type,
+            subscription_start_date: formatDateTime(subscription.subscription_start_date),
+            subscription_end_date: formatDateTime(subscription.subscription_end_date),
+            transaction_id: subscription.transaction_id,
+            invoice_link: (link ? link : "") + subscription.invoice_link,
+            invoice_date: formatDateTime(subscription.invoice_date),
+        }));
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('User Subscriptions');
+
+        worksheet.columns = [
+            { header: 'ID', key: 'id', width: 10 },
+            { header: 'User Name', key: 'user_name', width: 30 },
+            { header: 'Subscription Type', key: 'subscription_type', width: 30 },
+            { header: 'Subscription Start Date', key: 'subscription_start_date', width: 20 },
+            { header: 'Subscription End Date', key: 'subscription_end_date', width: 20 },
+            { header: 'Transaction ID', key: 'transaction_id', width: 30 },
+            { header: 'Invoice Link', key: 'invoice_link', width: 30 },
+            { header: 'Invoice Date', key: 'invoice_date', width: 20 }
+        ];
+
+        worksheet.addRows(csvData);
+
+        res.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.attachment(`user_subscriptions_${new Date().toISOString()}.xlsx`);
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (error) {
+        console.log(error);
+        next(error);
+    }
+};
+

@@ -121,11 +121,11 @@ export const getUserController = async (req, res, next) => {
                 LEFT JOIN referral_codes r ON u.user_id = r.user_id 
                 LEFT JOIN user_subscriptions us ON u.user_id = us.user_id 
                 LEFT JOIN subscriptions s ON us.subscription_id = s.id 
-                WHERE u.user_id = ? AND us.createdAt = (
+                WHERE u.user_id = ? AND (us.createdAt IS NULL OR us.createdAt = (
                     SELECT MAX(createdAt) 
                     FROM user_subscriptions 
                     WHERE user_id = u.user_id
-                )`,
+                ))`,
             [userId]
         );
         if (!rows.length) throw new CustomError(404, 'User not found');

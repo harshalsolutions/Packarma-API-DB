@@ -263,7 +263,7 @@ export const getInvoicesController = async (req, res, next) => {
             FROM ${type === 'credit' ? 'credit_invoice' : 'subscription_invoice'} i
             JOIN users u ON i.user_id = u.user_id
             JOIN addresses a ON i.address_id = a.id
-            LEFT JOIN invoice_product_details ipd ON i.id = ipd.invoice_id
+            LEFT JOIN invoice_product_details ipd ON i.id = ipd.invoice_id AND ipd.type = ?
         `;
 
         if (type === 'subscription') {
@@ -272,7 +272,7 @@ export const getInvoicesController = async (req, res, next) => {
 
         query += `WHERE i.user_id = ?`;
 
-        const invoices = await connection.query(query, [userId]);
+        const invoices = await connection.query(query, [type, userId]);
 
         const formattedInvoices = invoices[0].map(invoice => {
             const formattedInvoice = {

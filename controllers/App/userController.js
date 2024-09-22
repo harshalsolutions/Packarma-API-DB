@@ -115,24 +115,17 @@ export const getUserController = async (req, res, next) => {
     try {
         const userId = req.user.userId;
         const [rows] = await pool.query(
-            'SELECT u.*, r.code as referral_code, ' +
-            '(SELECT us.subscription_id FROM user_subscriptions us ' +
-            'LEFT JOIN subscriptions s ON us.subscription_id = s.id ' +
-            'WHERE us.user_id = u.user_id AND us.end_date > NOW() ' +
-            'ORDER BY us.end_date DESC LIMIT 1) as subscription_id, ' +
-            '(SELECT us.start_date FROM user_subscriptions us ' +
-            'WHERE us.user_id = u.user_id AND us.end_date > NOW() ' +
-            'ORDER BY us.end_date DESC LIMIT 1) as start_date, ' +
-            '(SELECT us.end_date FROM user_subscriptions us ' +
-            'WHERE us.user_id = u.user_id AND us.end_date > NOW() ' +
-            'ORDER BY us.end_date DESC LIMIT 1) as end_date, ' +
-            '(SELECT s.type FROM user_subscriptions us ' +
-            'LEFT JOIN subscriptions s ON us.subscription_id = s.id ' +
-            'WHERE us.user_id = u.user_id AND us.end_date > NOW() ' +
-            'ORDER BY us.end_date DESC LIMIT 1) as subscription_name ' +
-            'FROM users u ' +
-            'LEFT JOIN referral_codes r ON u.user_id = r.user_id ' +
-            'WHERE u.user_id = ?',
+            `SELECT u.*, r.code as referral_code, 
+                us.subscription_id, us.start_date, us.end_date, s.type AS subscription_name 
+                FROM users u 
+                LEFT JOIN referral_codes r ON u.user_id = r.user_id 
+                LEFT JOIN user_subscriptions us ON u.user_id = us.user_id 
+                LEFT JOIN subscriptions s ON us.subscription_id = s.id 
+                WHERE u.user_id = ? AND us.createdAt = (
+                    SELECT MAX(createdAt) 
+                    FROM user_subscriptions 
+                    WHERE user_id = u.user_id
+                )`,
             [userId]
         );
         if (!rows.length) throw new CustomError(404, 'User not found');

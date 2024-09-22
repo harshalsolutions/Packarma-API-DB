@@ -1,14 +1,12 @@
 import express from 'express';
-import { addCreditInvoiceController, addSubscriptionInvoiceController, generateInvoiceController, getCreditInvoicesController, getSubscriptionInvoicesController } from '../../controllers/App/InvoiceController.js';
+import { generateInvoiceController, getInvoiceByIdController, getInvoicesController } from '../../controllers/App/InvoiceController.js';
 import authMiddleware from "../../middlewares/authMiddleware.js"
 const router = express.Router();
 
-router.post('/create-invoice', generateInvoiceController);
 
-router.get('/credit/get-invoices', authMiddleware, getCreditInvoicesController);
-router.get('/subscription/get-invoices', authMiddleware, getSubscriptionInvoicesController);
+router.get('/get-invoices', authMiddleware, getInvoicesController);
+router.get('/get-invoice/:id', authMiddleware, getInvoiceByIdController);
 
-router.post('/credit/add-invoice', authMiddleware, addCreditInvoiceController);
-router.post('/subscription/add-invoice', authMiddleware, addSubscriptionInvoiceController);
+router.post('/create-invoice/:invoice_type', authMiddleware, generateInvoiceController);
 
 export default router;

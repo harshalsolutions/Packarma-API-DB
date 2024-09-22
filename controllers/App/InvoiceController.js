@@ -25,9 +25,64 @@ const getBrowserInstance = async () => {
     return browser;
 };
 
-export const generateInvoiceController = async (req, res, next) => {
+const addInvoiceToDatabase = async (connection, invoiceType, invoiceData) => {
     try {
-        const { customer_name, customer_gstNo, products, customer_address_id, transaction_id } = req.body;
+        const [day, month, year] = invoiceData.invoice_date.split('/');
+        const formattedDate = `${year}-${month}-${day}`;
+
+        let invoiceId;
+
+        if (invoiceType === 'credit') {
+            const query = `
+                INSERT INTO credit_invoice (user_id, no_of_credits, total_price, currency, invoice_date, invoice_link, transaction_id, customer_name, customer_gstno, address_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `;
+            const queryParams = [
+                invoiceData.userId, invoiceData.no_of_credits, invoiceData.total_price, invoiceData.currency,
+                formattedDate, invoiceData.invoice_link, invoiceData.transaction_id,
+                invoiceData.customer_name, invoiceData.customer_gstNo, invoiceData.customer_address_id
+            ];
+            const [result] = await connection.query(query, queryParams);
+            invoiceId = result.insertId;
+        } else if (invoiceType === 'subscription') {
+            const query = `
+                INSERT INTO subscription_invoice (user_id, subscription_id, total_price, invoice_date, invoice_link, currency, transaction_id, customer_name, customer_gstno, address_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `;
+            const queryParams = [
+                invoiceData.userId, invoiceData.subscription_id, invoiceData.total_price, formattedDate,
+                invoiceData.invoice_link, invoiceData.currency, invoiceData.transaction_id,
+                invoiceData.customer_name, invoiceData.customer_gstNo, invoiceData.customer_address_id
+            ];
+            const [result] = await connection.query(query, queryParams);
+            invoiceId = result.insertId;
+        }
+        console.log('Invoice inserted successfully', invoiceId);
+        await connection.commit();
+
+        const productDetailsQuery = `
+            INSERT INTO invoice_product_details (invoice_id, product_description, amount, discount, taxable_value, cgst_rate, cgst_amount, sgst_rate, sgst_amount, igst_rate, igst_amount, total_amount, type)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        for (const product of invoiceData.products) {
+            const productDetailsParams = [
+                invoiceId, product.description, product.amount, product.discount, product.taxable_value,
+                product.cgst_rate, product.cgst_amount, product.sgst_rate, product.sgst_amount, product.igst_rate, product.igst_amount, product.total_amount, invoiceType
+            ];
+            await connection.query(productDetailsQuery, productDetailsParams);
+        }
+    } catch (error) {
+        console.log(error);
+        throw new CustomError(500, 'Failed to add invoice to database');
+    }
+};
+
+
+export const generateInvoiceController = async (req, res, next) => {
+    const connection = await pool.getConnection();
+    const { invoice_type } = req.params;
+    try {
+        const { customer_name, customer_gstNo, products, customer_address_id, transaction_id, no_of_credits, currency, subscription_id } = req.body;
 
         let today = new Date();
         let day = today.getDate().toString().padStart(2, '0');
@@ -37,25 +92,26 @@ export const generateInvoiceController = async (req, res, next) => {
 
         const [[invoiceDetails], [result], [address]] = await Promise.all([
             pool.query('SELECT * FROM invoice_details LIMIT 1'),
-            pool.query('SELECT MAX(id) as maxId FROM credit_invoice'),
+            pool.query('SELECT MAX(id) as maxId FROM credit_invoice UNION SELECT MAX(id) as maxId FROM subscription_invoice'),
             pool.query(`SELECT * FROM addresses WHERE id = ? LIMIT 1`, [customer_address_id])
         ]);
-
 
         if (!invoiceDetails.length) {
             throw new CustomError(500, 'Invoice details not found');
         }
         const details = invoiceDetails[0];
-        const invoice_no = result[0].maxId ? result[0].maxId + 1 : 1;
+        const invoice_no = result[0].maxId ? parseInt(result[0].maxId) + 1 : 1;
 
         let productRows = '';
         let grand_total = 0;
         let total_cgst = 0;
         let total_sgst = 0;
         let total_igst = 0;
+        let total_before_tax = 0;
 
         products.forEach((product, index) => {
-            const taxable_value = product.amount - product.discount;
+            let tax_rate = address[0].state === 'Maharashtra' ? 0.18 : 0.18;
+            const taxable_value = (product.amount - product.discount) / (1 + tax_rate);
 
             let cgst_amount = 0;
             let sgst_amount = 0;
@@ -73,6 +129,7 @@ export const generateInvoiceController = async (req, res, next) => {
 
             const total_product_amount = taxable_value + cgst_amount + sgst_amount + igst_amount;
             grand_total += total_product_amount;
+            total_before_tax += taxable_value;
 
             productRows += `
         <tr style="height: 5rem">
@@ -80,7 +137,7 @@ export const generateInvoiceController = async (req, res, next) => {
             <td class="table-data" colspan="4">${product.description}</td>
             <td class="table-data">${product.amount}</td>
             <td class="table-data">${product.discount}</td>
-            <td class="table-data">${taxable_value}</td>
+            <td class="table-data">${taxable_value.toFixed(2)}</td>
             <td class="table-data">${address[0].state === "Maharashtra" ? '9%' : ''}</td>
             <td class="table-data">${address[0].state === "Maharashtra" ? cgst_amount.toFixed(2) : ''}</td>
             <td class="table-data">${address[0].state === "Maharashtra" ? '9%' : ''}</td>
@@ -92,8 +149,8 @@ export const generateInvoiceController = async (req, res, next) => {
     `;
         });
 
-
         const parsedTotal = parseFloat(grand_total.toFixed(2));
+        const parsedTotalBeforeTax = parseFloat(total_before_tax.toFixed(2));
 
         const populatedHtml = htmlTemplate
             .replace(/{{invoice_no}}/g, invoice_no)
@@ -129,142 +186,179 @@ export const generateInvoiceController = async (req, res, next) => {
 
         const pdfDownloadLink = `/invoices/${path.basename(pdfFilePath)}`;
 
-        res.json({
-            success: true,
-            message: 'Invoice generated successfully',
+        await connection.beginTransaction();
+        try {
+            await addInvoiceToDatabase(connection, invoice_type, {
+                userId: req.user.userId,
+                no_of_credits,
+                total_price: parsedTotal,
+                currency,
+                invoice_date,
+                invoice_link: pdfDownloadLink,
+                transaction_id,
+                customer_name,
+                customer_gstNo,
+                customer_address_id,
+                subscription_id,
+                products: products.map(product => ({
+                    description: product.description,
+                    amount: product.amount,
+                    discount: product.discount,
+                    taxable_value: (product.amount - product.discount) / (1 + (address[0].state === 'Maharashtra' ? 0.18 : 0.18)),
+                    cgst_rate: address[0].state === 'Maharashtra' ? 0.09 : 0,
+                    cgst_amount: address[0].state === 'Maharashtra' ? ((product.amount - product.discount) / (1 + 0.18) * 0.09).toFixed(2) : 0,
+                    sgst_rate: address[0].state === 'Maharashtra' ? 0.09 : 0,
+                    sgst_amount: address[0].state === 'Maharashtra' ? ((product.amount - product.discount) / (1 + 0.18) * 0.09).toFixed(2) : 0,
+                    igst_rate: address[0].state !== 'Maharashtra' ? 0.18 : 0,
+                    igst_amount: address[0].state !== 'Maharashtra' ? ((product.amount - product.discount) / (1 + 0.18) * 0.18).toFixed(2) : 0,
+                    total_amount: ((product.amount - product.discount) / (1 + (address[0].state === 'Maharashtra' ? 0.18 : 0.18)) +
+                        (address[0].state === 'Maharashtra' ? ((product.amount - product.discount) / (1 + 0.18) * 0.09 * 2) : ((product.amount - product.discount) / (1 + 0.18) * 0.18))).toFixed(2),
+                }))
+            });
+            await connection.commit();
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        }
+
+        res.json(new ApiResponse(200, 'Invoice generated successfully', {
             downloadLink: pdfDownloadLink,
             finalAmount: {
-                grandTotal: parsedTotal,
-                totalCGST: total_cgst.toFixed(2),
-                totalSGST: total_sgst.toFixed(2),
-                totalIGST: total_igst.toFixed(2)
+                parsedTotal: parsedTotal,
+                totalBeforeTax: parsedTotalBeforeTax,
+                totalCGST: parseFloat(total_cgst.toFixed(2)),
+                totalSGST: parseFloat(total_sgst.toFixed(2)),
+                totalIGST: parseFloat(total_igst.toFixed(2))
             }
+        }));
+
+    } catch (error) {
+        await connection.rollback();
+        res.status(500).json(new ApiResponse(500, 'An error occurred', { error: error.message }));
+    } finally {
+        connection.release();
+    }
+};
+
+export const getInvoicesController = async (req, res, next) => {
+    const connection = await pool.getConnection();
+    const userId = req.user.userId;
+    const { type } = req.query;
+    try {
+        let query = `
+            SELECT 
+                i.id, i.customer_name, i.customer_gstno, i.total_price, i.currency, i.invoice_link, i.transaction_id, i.invoice_date,
+                u.user_id, u.firstname, u.lastname, u.email,
+                a.address_name, a.address, a.state, a.city, a.pincode, a.phone_number,
+                ipd.product_description, ipd.amount, ipd.discount, ipd.taxable_value, ipd.cgst_rate, ipd.cgst_amount, ipd.sgst_rate, ipd.sgst_amount, ipd.igst_rate, ipd.igst_amount, ipd.total_amount, ipd.type
+        `;
+
+        if (type === 'credit') {
+            query += `, i.no_of_credits `;
+        } else if (type === 'subscription') {
+            query += `, s.type, s.credit_amount, s.duration, s.benefits `;
+        }
+
+        query += `
+            FROM ${type === 'credit' ? 'credit_invoice' : 'subscription_invoice'} i
+            JOIN users u ON i.user_id = u.user_id
+            JOIN addresses a ON i.address_id = a.id
+            LEFT JOIN invoice_product_details ipd ON i.id = ipd.invoice_id
+        `;
+
+        if (type === 'subscription') {
+            query += `JOIN subscriptions s ON i.subscription_id = s.id `;
+        }
+
+        query += `WHERE i.user_id = ?`;
+
+        const invoices = await connection.query(query, [userId]);
+
+        const formattedInvoices = invoices[0].map(invoice => {
+            const formattedInvoice = {
+                id: invoice.id,
+                user: {
+                    user_id: invoice.user_id,
+                    firstname: invoice.firstname,
+                    lastname: invoice.lastname,
+                    email: invoice.email
+                },
+                address: {
+                    address_id: invoice.address_id,
+                    address_name: invoice.address_name,
+                    address: invoice.address,
+                    state: invoice.state,
+                    city: invoice.city,
+                    pincode: invoice.pincode,
+                    phone_number: invoice.phone_number,
+                },
+                customer_name: invoice.customer_name,
+                customer_gstno: invoice.customer_gstno,
+                total_price: invoice.total_price,
+                currency: invoice.currency,
+                invoice_link: invoice.invoice_link,
+                transaction_id: invoice.transaction_id,
+                invoice_date: invoice.invoice_date,
+                product_details: {
+                    product_id: invoice.product_id,
+                    invoice_id: invoice.invoice_id,
+                    product_description: invoice.product_description,
+                    amount: invoice.amount,
+                    discount: invoice.discount,
+                    taxable_value: invoice.taxable_value,
+                    cgst_rate: invoice.cgst_rate,
+                    cgst_amount: invoice.cgst_amount,
+                    sgst_rate: invoice.sgst_rate,
+                    sgst_amount: invoice.sgst_amount,
+                    igst_rate: invoice.igst_rate,
+                    igst_amount: invoice.igst_amount,
+                    total_amount: invoice.total_amount
+                },
+                createdAt: invoice.createdAt,
+                updatedAt: invoice.updatedAt,
+            };
+
+            if (type === 'subscription') {
+                formattedInvoice.subscription = {
+                    subscription_id: invoice.subscription_id,
+                    type: invoice.type,
+                    credit_amount: invoice.credit_amount,
+                    duration: invoice.duration,
+                    benefits: invoice.benefits
+                };
+            } else if (type === 'credit') {
+                formattedInvoice.no_of_credits = invoice.no_of_credits;
+            }
+
+            return formattedInvoice;
         });
 
+        res.json(new ApiResponse(200, 'Invoices fetched successfully', formattedInvoices));
     } catch (error) {
-        handleError(error, next);
-    }
-};
-
-export const getCreditInvoicesController = async (req, res, next) => {
-    try {
-        const userId = req.user.userId;
-
-        let query = `
-            SELECT *
-            FROM credit_invoice 
-        `;
-        const queryParams = [];
-
-        if (userId) {
-            query += ' WHERE user_id = ?';
-            queryParams.push(userId);
-        }
-
-        const [rows] = await pool.query(query, queryParams);
-
-        if (!rows.length) {
-            return res.json(new ApiResponse(200, null, 'No credit invoices found'));
-        }
-
-        res.json(new ApiResponse(200, rows, 'Credit invoices fetched successfully'));
-    } catch (error) {
-        next(new CustomError(500, error.message));
-    }
-};
-
-export const addCreditInvoiceController = async (req, res, next) => {
-    const connection = await pool.getConnection();
-    const userId = req.user.userId;
-
-    try {
-        const { number_of_credits, total_price, currency, invoice_date, invoice_link, transaction_id } = req.body;
-
-        if (!userId || !number_of_credits || !total_price || !currency || !invoice_date || !invoice_link || !transaction_id) {
-            throw new CustomError(400, 'All fields are required');
-        }
-
-        await connection.beginTransaction();
-
-        const query = `
-            INSERT INTO credit_invoice (user_id, number_of_credits, total_price, currency, invoice_date, invoice_link, transaction_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        `;
-        const queryParams = [userId, number_of_credits, total_price, currency, invoice_date, invoice_link, transaction_id];
-
-        const [result] = await connection.query(query, queryParams);
-
-        if (!result.affectedRows) {
-            throw new CustomError(500, 'Credit invoice not added');
-        }
-
-        await connection.commit();
-
-        res.json(new ApiResponse(200, {}, 'Credit invoice added successfully'));
-    } catch (error) {
-        await connection.rollback();
-        next(new CustomError(500, error.message));
+        console.log(error);
+        res.status(500).json(new ApiResponse(500, 'An error occurred', { error: error.message }));
     } finally {
         connection.release();
     }
 };
 
-
-export const getSubscriptionInvoicesController = async (req, res, next) => {
-    try {
-        const userId = req.user.userId;
-
-        let query = `
-            SELECT si.*, s.* 
-            FROM subscription_invoice AS si 
-            JOIN subscriptions AS s ON si.subscription_id = s.id
-        `;
-        const queryParams = [];
-
-        if (userId) {
-            query += ' WHERE user_id = ?';
-            queryParams.push(userId);
-        }
-
-        const [rows] = await pool.query(query, queryParams);
-
-        if (!rows.length) throw new CustomError(404, 'No subscription invoices found');
-
-        res.json(new ApiResponse(200, rows, 'Subscription invoices fetched successfully'));
-    } catch (error) {
-        next(new CustomError(500, error.message));
-    }
-};
-
-
-export const addSubscriptionInvoiceController = async (req, res, next) => {
+export const getInvoiceByIdController = async (req, res, next) => {
     const connection = await pool.getConnection();
-    const userId = req.user.userId;
-
+    const { id } = req.params;
+    const { type } = req.query;
     try {
-        const { subscription_id, invoice_date, invoice_link, total_price, currency, transaction_id } = req.body;
-        if (!userId || !subscription_id || !total_price || !invoice_date || !currency || !invoice_link || !transaction_id) {
-            throw new CustomError(400, 'All fields are required');
-        }
-        await connection.beginTransaction();
-        const query = `
-            INSERT INTO subscription_invoice (user_id, subscription_id, total_price, invoice_date, invoice_link, currency, transaction_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        `;
-
-        const queryParams = [userId, subscription_id, total_price, invoice_date, invoice_link, currency, transaction_id];
-
-        await connection.query(query, queryParams);
-
-        await connection.commit();
-
-        res.json(new ApiResponse(200, {}, 'Subscription invoice added successfully'));
+        const invoice = await connection.query(`
+            SELECT i.*, u.*, a.*, ipd.*
+            FROM ${type === 'credit' ? 'credit_invoice' : 'subscription_invoice'} i
+            JOIN users u ON i.user_id = u.id
+            JOIN addresses a ON i.address_id = a.id
+            LEFT JOIN invoice_product_details ipd ON i.id = ipd.invoice_id
+            WHERE i.id = ?
+        `, [id]);
+        res.json(new ApiResponse(200, 'Invoice fetched successfully', invoice[0]));
     } catch (error) {
-        console.log(error)
-        await connection.rollback();
-        next(new CustomError(500, error.message));
+        res.status(500).json(new ApiResponse(500, 'An error occurred', { error: error.message }));
     } finally {
         connection.release();
     }
 };
-

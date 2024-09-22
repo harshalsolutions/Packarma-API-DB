@@ -220,7 +220,7 @@ export const generateInvoiceController = async (req, res, next) => {
             throw error;
         }
 
-        res.json(new ApiResponse(200, 'Invoice generated successfully', {
+        res.json(new ApiResponse(200, {
             downloadLink: pdfDownloadLink,
             finalAmount: {
                 parsedTotal: parsedTotal,
@@ -229,11 +229,11 @@ export const generateInvoiceController = async (req, res, next) => {
                 totalSGST: parseFloat(total_sgst.toFixed(2)),
                 totalIGST: parseFloat(total_igst.toFixed(2))
             }
-        }));
+        }, 'Invoice generated successfully'));
 
     } catch (error) {
         await connection.rollback();
-        res.status(500).json(new ApiResponse(500, 'An error occurred', { error: error.message }));
+        res.status(500).json(new ApiResponse(500, { error: error.message }, 'An error occurred'));
     } finally {
         connection.release();
     }
@@ -332,10 +332,10 @@ export const getInvoicesController = async (req, res, next) => {
             return formattedInvoice;
         });
 
-        res.json(new ApiResponse(200, 'Invoices fetched successfully', formattedInvoices));
+        res.json(new ApiResponse(200, formattedInvoices, 'Invoices fetched successfully'));
     } catch (error) {
         console.log(error);
-        res.status(500).json(new ApiResponse(500, 'An error occurred', { error: error.message }));
+        res.status(500).json(new ApiResponse(500, { error: error.message }, 'An error occurred'));
     } finally {
         connection.release();
     }
@@ -376,7 +376,7 @@ export const getInvoiceByIdController = async (req, res, next) => {
         const [invoices] = await connection.query(query, [type, id]);
 
         if (invoices.length === 0) {
-            return res.status(404).json(new ApiResponse(404, 'Invoice not found'));
+            return res.status(404).json(new ApiResponse(404, {}, 'Invoice not found'));
         }
 
         const invoice = invoices[0];
@@ -435,10 +435,10 @@ export const getInvoiceByIdController = async (req, res, next) => {
             formattedInvoice.no_of_credits = invoice.no_of_credits;
         }
 
-        res.json(new ApiResponse(200, 'Invoice fetched successfully', formattedInvoice));
+        res.json(new ApiResponse(200, formattedInvoice, 'Invoice fetched successfully'));
     } catch (error) {
         console.log(error);
-        res.status(500).json(new ApiResponse(500, 'An error occurred', { error: error.message }));
+        res.status(500).json(new ApiResponse(500, { error: error.message }, 'An error occurred'));
     } finally {
         connection.release();
     }

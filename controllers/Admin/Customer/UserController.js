@@ -297,7 +297,6 @@ export const exportUsersDataController = async (req, res, next) => {
         next(new CustomError(500, error.message));
     }
 };
-
 export const updateUserDetailsController = async (req, res, next) => {
     const id = req.params.id;
     const {
@@ -312,22 +311,21 @@ export const updateUserDetailsController = async (req, res, next) => {
         country_code,
         credits,
     } = req.body;
+
     const connection = await pool.getConnection();
     try {
-        const query = `
+        let query = `
             UPDATE users
             SET
                 firstname = ?,
                 lastname = ?,
                 email = ?,
                 email_domain = ?,
-                password = ?,
                 gst_number = ?,
                 gst_document_link = ?,
                 phone_number = ?,
                 country_code = ?,
                 credits = ?
-            WHERE user_id = ?
         `;
 
         const values = [
@@ -340,25 +338,30 @@ export const updateUserDetailsController = async (req, res, next) => {
             phone_number,
             country_code,
             credits,
-            id];
+            id
+        ];
 
         if (password) {
             const hashedPassword = await bcrypt.hash(password, 10);
-            values.splice(4, 0, hashedPassword);
+            query = query.replace('credits = ?', 'credits = ?, password = ?');
+            values.splice(values.length - 1, 0, hashedPassword);
         }
+
+        query += ` WHERE user_id = ?`;
 
         const [result] = await connection.query(query, values);
 
         if (result.affectedRows !== 1) {
-            next(new CustomError(404, 'User not found'));
+            return next(new CustomError(404, 'User not found'));
         }
 
         res.status(200).json(new ApiResponse(200, {}, 'User updated successfully'));
     } catch (error) {
-        console.log(error)
+        console.log(error);
         next(new CustomError(500, error.message));
     } finally {
         connection.release();
     }
 };
+
 

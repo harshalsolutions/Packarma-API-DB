@@ -111,7 +111,7 @@ export const generateInvoiceController = async (req, res, next) => {
 
         products.forEach((product, index) => {
             let tax_rate = address[0].state === 'Maharashtra' ? 0.18 : 0.18;
-            const taxable_value = (product.amount - product.discount) / (1 + tax_rate);
+            const taxable_value = product.amount / (1 + tax_rate);
 
             let cgst_amount = 0;
             let sgst_amount = 0;
@@ -204,15 +204,14 @@ export const generateInvoiceController = async (req, res, next) => {
                     description: product.description,
                     amount: product.amount,
                     discount: product.discount,
-                    taxable_value: (product.amount - product.discount) / (1 + (address[0].state === 'Maharashtra' ? 0.18 : 0.18)),
+                    taxable_value: product.amount / (1 + (address[0].state === 'Maharashtra' ? 0.18 : 0.18)),
                     cgst_rate: address[0].state === 'Maharashtra' ? 0.09 : 0,
-                    cgst_amount: address[0].state === 'Maharashtra' ? ((product.amount - product.discount) / (1 + 0.18) * 0.09).toFixed(2) : 0,
+                    cgst_amount: address[0].state === 'Maharashtra' ? ((product.amount / (1 + 0.18)) * 0.09).toFixed(2) : 0,
                     sgst_rate: address[0].state === 'Maharashtra' ? 0.09 : 0,
-                    sgst_amount: address[0].state === 'Maharashtra' ? ((product.amount - product.discount) / (1 + 0.18) * 0.09).toFixed(2) : 0,
+                    sgst_amount: address[0].state === 'Maharashtra' ? ((product.amount / (1 + 0.18)) * 0.09).toFixed(2) : 0,
                     igst_rate: address[0].state !== 'Maharashtra' ? 0.18 : 0,
-                    igst_amount: address[0].state !== 'Maharashtra' ? ((product.amount - product.discount) / (1 + 0.18) * 0.18).toFixed(2) : 0,
-                    total_amount: ((product.amount - product.discount) / (1 + (address[0].state === 'Maharashtra' ? 0.18 : 0.18)) +
-                        (address[0].state === 'Maharashtra' ? ((product.amount - product.discount) / (1 + 0.18) * 0.09 * 2) : ((product.amount - product.discount) / (1 + 0.18) * 0.18))).toFixed(2),
+                    igst_amount: address[0].state !== 'Maharashtra' ? ((product.amount / (1 + 0.18)) * 0.18).toFixed(2) : 0,
+                    total_amount: product.amount,
                 }))
             });
             await connection.commit();

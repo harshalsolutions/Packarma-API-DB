@@ -62,8 +62,6 @@ export const getCreditHistory = async (req, res, next) => {
     }
 };
 
-
-
 export const addUserSubscription = async (req, res, next) => {
     const { subscriptionId, startDate, endDate } = req.body;
     const userId = req.user.userId;
@@ -76,13 +74,28 @@ export const addUserSubscription = async (req, res, next) => {
             const [rows] = await connection.query('SELECT id FROM subscriptions WHERE id = ?', [subscriptionId]);
             if (!rows.length) throw new CustomError(404, 'Subscription not found');
 
-            await connection.query(
-                'INSERT INTO user_subscriptions (user_id, subscription_id, start_date, end_date) VALUES (?, ?, ?, ?)',
-                [userId, subscriptionId, startDate, endDate]
+            const [existingSubscription] = await connection.query(
+                'SELECT * FROM user_subscriptions WHERE user_id = ?',
+                [userId]
             );
 
+            if (existingSubscription.length) {
+                await connection.query(
+                    `UPDATE user_subscriptions
+                     SET start_date = ?, end_date = ?, subscription_id = ?
+                     WHERE user_id = ?`,
+                    [startDate, endDate, subscriptionId, userId]
+                );
+            } else {
+                await connection.query(
+                    `INSERT INTO user_subscriptions (user_id, subscription_id, start_date, end_date)
+                     VALUES (?, ?, ?, ?)`,
+                    [userId, subscriptionId, startDate, endDate]
+                );
+            }
+
             await connection.commit();
-            res.status(201).json(new ApiResponse(201, null, 'Subscription added successfully'));
+            res.status(201).json(new ApiResponse(201, null, 'Subscription added or updated successfully'));
         } catch (error) {
             await connection.rollback();
             handleError(error, next);

@@ -104,6 +104,7 @@ export const getAllCreditPurchaseController = async (req, res, next) => {
 
 export const exportCreditPurchaseController = async (req, res, next) => {
     const connection = await pool.getConnection();
+    const { link } = req.body
     try {
         let query = `
             SELECT 
@@ -127,7 +128,7 @@ export const exportCreditPurchaseController = async (req, res, next) => {
             city: invoice.city,
             state: invoice.state,
             transaction_id: invoice.transaction_id,
-            invoice_link: invoice.invoice_link,
+            invoice_link: (link ? link : "") + invoice.invoice_link,
             invoice_date: formatDateTime(invoice.invoice_date),
         }));
 

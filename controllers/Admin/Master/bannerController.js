@@ -77,7 +77,12 @@ export const getAllBannerController = async (req, res, next) => {
 export const exportBannerControllerById = async (req, res, next) => {
     try {
         const bannerId = req.params.id;
+        const { type } = req.query;
         const { link } = req.body
+        if (!['click', 'view'].includes(type)) {
+            throw new CustomError(400, 'Invalid type parameter. Must be "click" or "view".');
+        }
+
         const [bannerRows] = await pool.query(`
             SELECT 
                 b.title,
@@ -123,10 +128,8 @@ export const exportBannerControllerById = async (req, res, next) => {
             JOIN 
                 users u ON ba.user_id = u.user_id
             WHERE 
-                ba.banner_id = ?
-        `, [bannerId]);
-
-        console.log(banner)
+                ba.banner_id = ? AND ba.activity_type = ?
+        `, [bannerId, type]);
 
         const csvData = userActivity.map(activity => ({
             title: banner.title,
@@ -137,7 +140,6 @@ export const exportBannerControllerById = async (req, res, next) => {
             firstname: activity.firstname,
             lastname: activity.lastname,
             email: activity.email,
-            activity_type: activity.activity_type,
             activity_timestamp: formatDateTime(activity.activity_timestamp),
             total_views: banner.total_views,
             total_clicks: banner.total_clicks,
@@ -145,32 +147,26 @@ export const exportBannerControllerById = async (req, res, next) => {
         }));
 
         const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet('Banner Clicks and Views');
+        const worksheet = workbook.addWorksheet(`Banner ${bannerId} ${type.charAt(0).toUpperCase() + type.slice(1)}s`);
 
         worksheet.columns = [
             { header: 'Title', key: 'title', width: 30 },
             { header: 'Description', key: 'description', width: 30 },
             { header: 'Image', key: 'image', width: 30 },
-            { header: 'Total Views', key: 'total_views', width: 15 },
-            { header: 'Total Clicks', key: 'total_clicks', width: 15 },
-            {
-                header: 'Created At', key: 'createdAt', width: 20
-            },
-            {
-                header: 'Updated At', key: 'updatedAt', width: 20
-            },
             { header: 'User ID', key: 'user_id', width: 15 },
             { header: 'First Name', key: 'firstname', width: 15 },
             { header: 'Last Name', key: 'lastname', width: 15 },
             { header: 'Email', key: 'email', width: 30 },
-            { header: 'Activity Type', key: 'activity_type', width: 30 },
-            { header: 'Activity Timestamp', key: 'activity_timestamp', width: 20 }
+            { header: 'Activity Timestamp', key: 'activity_timestamp', width: 20 },
+            { header: 'Created At', key: 'createdAt', width: 20 },
+            { header: 'Updated At', key: 'updatedAt', width: 20 },
+            { header: type === 'click' ? 'Total Clicks' : 'Total Views', key: type === 'click' ? 'total_clicks' : 'total_views', width: 15 }
         ];
 
         worksheet.addRows(csvData);
 
         res.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.attachment(`banner_${bannerId}_${new Date()}.xlsx`);
+        res.attachment(`banner_${bannerId}_${type}_${new Date().toISOString()}.xlsx`);
         await workbook.xlsx.write(res);
         res.end();
     } catch (error) {

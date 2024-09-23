@@ -195,7 +195,7 @@ export const createAdvertisementController = async (req, res, next) => {
 export const updateAdvertisementController = async (req, res, next) => {
     try {
         const advertisementId = req.params.id;
-        const { products, ...updateData } = req.body;
+        const { products, type, ...updateData } = req.body;
 
         if (req.file) {
             const [existingAdRows] = await pool.query('SELECT image FROM advertisement WHERE id = ?', [advertisementId]);

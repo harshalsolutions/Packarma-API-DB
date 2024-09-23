@@ -19,7 +19,7 @@ export const getCategoryController = async (req, res, next) => {
 
 export const getAllCategoriesController = async (req, res, next) => {
     try {
-        const { status, page = 1, limit = 10, search } = req.query;
+        const { status, page = 1, limit = 10, search, pagination = 'true' } = req.query;
         const offset = (page - 1) * limit;
 
         let query = 'SELECT * FROM categories';
@@ -35,32 +35,39 @@ export const getAllCategoriesController = async (req, res, next) => {
             queryParams.push(`%${search}%`);
         }
 
-        query += ' ORDER BY createdAt DESC';
-
-        query += ' LIMIT ? OFFSET ?';
-        queryParams.push(parseInt(limit), offset);
+        if (pagination === 'true') {
+            query += ' ORDER BY createdAt DESC LIMIT ? OFFSET ?';
+            queryParams.push(parseInt(limit), offset);
+        } else {
+            query += ' ORDER BY createdAt DESC';
+        }
 
         const [rows] = await pool.query(query, queryParams);
-        const [totalCount] = await pool.query('SELECT COUNT(*) as count FROM categories' + (status ? ' WHERE status = ?' : ''), status ? [status] : []);
 
-        if (!rows.length) res.json(new ApiResponse(200, {
-            category: []
-        }, 'No Category found'));
+        if (pagination === 'true') {
+            const [totalCount] = await pool.query('SELECT COUNT(*) as count FROM categories' + (status ? ' WHERE status = ?' : ''), status ? [status] : []);
 
-        const total = totalCount[0].count;
-        const totalPages = Math.ceil(total / limit);
-        const pagination = {
-            currentPage: Number(page),
-            totalPages: totalPages,
-            totalItems: total,
-            itemsPerPage: Number(limit)
-        };
+            if (!rows.length) res.json(new ApiResponse(200, {
+                category: []
+            }, 'No Category found'));
 
-        res.json(new ApiResponse(200, {
-            categories: rows,
-            pagination
-        }, "Categories retrieved successfully"));
-
+            const total = totalCount[0].count;
+            const totalPages = Math.ceil(total / limit);
+            const pagination = {
+                currentPage: Number(page),
+                totalPages: totalPages,
+                totalItems: total,
+                itemsPerPage: Number(limit)
+            };
+            res.json(new ApiResponse(200, {
+                categories: rows,
+                pagination
+            }, "Categories retrieved successfully"));
+        } else {
+            res.json(new ApiResponse(200, {
+                categories: rows
+            }, "Categories retrieved successfully"));
+        }
     } catch (error) {
         next(new CustomError(500, error.message));
     }

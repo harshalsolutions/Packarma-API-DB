@@ -31,7 +31,8 @@ export const getAllPackagingSolutionsController = async (req, res, next) => {
             packaging_material_name,
             status,
             page = 1,
-            limit = 10
+            limit = 10,
+            pagination = 'true'
         } = req.query;
 
         const offset = (page - 1) * limit;
@@ -125,8 +126,12 @@ export const getAllPackagingSolutionsController = async (req, res, next) => {
             query += ' WHERE ' + conditions.join(' AND ');
         }
 
-        query += ' ORDER BY ps.createdAt DESC LIMIT ? OFFSET ?';
-        queryParams.push(parseInt(limit), offset);
+        if (pagination === 'true') {
+            query += ' ORDER BY ps.createdAt DESC LIMIT ? OFFSET ?';
+            queryParams.push(parseInt(limit), offset);
+        } else {
+            query += ' ORDER BY ps.createdAt DESC';
+        }
 
         const [rows] = await pool.query(query, queryParams);
 
@@ -141,21 +146,34 @@ export const getAllPackagingSolutionsController = async (req, res, next) => {
         if (conditions.length > 0) {
             countQuery += ' WHERE ' + conditions.join(' AND ');
         }
-        const [totalCount] = await pool.query(countQuery, queryParams.slice(0, -2));
-        const total = totalCount[0].count;
-        const totalPages = Math.ceil(total / limit);
-        const pagination = {
-            currentPage: Number(page),
-            totalPages: totalPages,
-            totalItems: total,
-            itemsPerPage: Number(limit)
-        };
 
-        res.json(new ApiResponse(200, {
-            packagingSolutions: rows,
-            pagination
-        }, "Packaging Solutions retrieved successfully"));
+        if (pagination === 'true') {
+            countQuery += ' ORDER BY ps.createdAt DESC LIMIT ? OFFSET ?';
+            queryParams.push(parseInt(limit), offset);
+        } else {
+            countQuery += ' ORDER BY ps.createdAt DESC';
+        }
 
+        if (pagination === 'true') {
+            const [totalCount] = await pool.query(countQuery, queryParams.slice(0, -2));
+            const total = totalCount[0].count;
+            const totalPages = Math.ceil(total / limit);
+            const paginationData = {
+                currentPage: Number(page),
+                totalPages: totalPages,
+                totalItems: total,
+                itemsPerPage: Number(limit)
+            };
+
+            res.json(new ApiResponse(200, {
+                packagingSolutions: rows,
+                pagination: paginationData
+            }, "Packaging Solutions retrieved successfully"));
+        } else {
+            res.json(new ApiResponse(200, {
+                packagingSolutions: rows
+            }, "Packaging Solutions retrieved successfully"));
+        }
     } catch (error) {
         next(new CustomError(500, error.message));
     }

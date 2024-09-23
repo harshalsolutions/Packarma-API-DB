@@ -20,7 +20,7 @@ export const getPackagingMachineController = async (req, res, next) => {
 
 export const getAllPackagingMachineController = async (req, res, next) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
+        const { page = 1, limit = 10, pagination = 'true' } = req.query;
         const offset = (page - 1) * limit;
 
         let query = `
@@ -29,9 +29,12 @@ export const getAllPackagingMachineController = async (req, res, next) => {
         `;
         const queryParams = [];
 
-
-        query += ' ORDER BY createdAt DESC LIMIT ? OFFSET ?';
-        queryParams.push(parseInt(limit), offset);
+        if (pagination === 'true') {
+            query += ' ORDER BY createdAt DESC LIMIT ? OFFSET ?';
+            queryParams.push(parseInt(limit), offset);
+        } else {
+            query += ' ORDER BY createdAt DESC';
+        }
 
         const [rows] = await pool.query(query, queryParams);
         const [totalCount] = await pool.query('SELECT COUNT(*) as count FROM packaging_machine');
@@ -40,19 +43,25 @@ export const getAllPackagingMachineController = async (req, res, next) => {
             packaging_machine: []
         }, 'No Packaging Machine found'));
 
-        const total = totalCount[0].count;
-        const totalPages = Math.ceil(total / limit);
-        const pagination = {
-            currentPage: Number(page),
-            totalPages: totalPages,
-            totalItems: total,
-            itemsPerPage: Number(limit)
-        };
+        if (pagination === 'true') {
+            const total = totalCount[0].count;
+            const totalPages = Math.ceil(total / limit);
+            const paginationData = {
+                currentPage: Number(page),
+                totalPages: totalPages,
+                totalItems: total,
+                itemsPerPage: Number(limit)
+            };
 
-        res.json(new ApiResponse(200, {
-            packaging_machine: rows,
-            pagination
-        }, "Packaging Machine retrieved successfully"));
+            res.json(new ApiResponse(200, {
+                packaging_machine: rows,
+                pagination: paginationData
+            }, "Packaging Machine retrieved successfully"));
+        } else {
+            res.json(new ApiResponse(200, {
+                packaging_machine: rows
+            }, "Packaging Machine retrieved successfully"));
+        }
     } catch (error) {
         next(new CustomError(500, error.message));
     }

@@ -168,8 +168,7 @@ export const exportAdvertisementControllerById = async (req, res, next) => {
 
 export const createAdvertisementController = async (req, res, next) => {
     try {
-        const { title, description, start_date_time, end_date_time, link, app_page } = req.body;
-
+        const { title, description, start_date_time, end_date_time, link, app_page, products } = req.body;
         let image = null;
         if (req.file) {
             image = `/media/advertisement/${req.file.filename}`;
@@ -178,7 +177,14 @@ export const createAdvertisementController = async (req, res, next) => {
         const [[{ totalCount }]] = await pool.query('SELECT COUNT(*) as totalCount FROM advertisement');
 
         const query = 'INSERT INTO advertisement (title, description, start_date_time, end_date_time, link, app_page, image, sequence) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-        await pool.query(query, [title, description, start_date_time, end_date_time, link, app_page, image, totalCount + 1]);
+        const [result] = await pool.query(query, [title, description, start_date_time, end_date_time, link, app_page, image, totalCount + 1]);
+
+        const advertisementId = result.insertId;
+
+        if (products && products.length > 0) {
+            const productValues = products.split(",").map(productId => [advertisementId, productId]);
+            await pool.query('INSERT INTO advertisement_product (advertisement_id, product_id) VALUES ?', [productValues]);
+        }
 
         res.status(201).json(new ApiResponse(201, null, 'Advertisement created successfully'));
     } catch (error) {
@@ -189,14 +195,13 @@ export const createAdvertisementController = async (req, res, next) => {
 export const updateAdvertisementController = async (req, res, next) => {
     try {
         const advertisementId = req.params.id;
-        const updateData = req.body;
-        delete req.body.type
+        const { products, ...updateData } = req.body;
 
         if (req.file) {
             const [existingAdRows] = await pool.query('SELECT image FROM advertisement WHERE id = ?', [advertisementId]);
             if (!existingAdRows.length) throw new CustomError(404, 'Advertisement not found');
 
-            const oldFilePath = existingAdRows[0].advertisement_image;
+            const oldFilePath = existingAdRows[0].image;
 
             if (oldFilePath) {
                 const absolutePath = path.join(process.cwd(), oldFilePath);
@@ -213,6 +218,12 @@ export const updateAdvertisementController = async (req, res, next) => {
 
         const query = `UPDATE advertisement SET ${fields}, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`;
         await pool.query(query, values);
+
+        if (products && products.length > 0) {
+            await pool.query('DELETE FROM advertisement_product WHERE advertisement_id = ?', [advertisementId]);
+            const productValues = products.split(",").map(productId => [advertisementId, productId]);
+            await pool.query('INSERT INTO advertisement_product (advertisement_id, product_id) VALUES ?', [productValues]);
+        }
 
         res.json(new ApiResponse(200, null, 'Advertisement updated successfully'));
     } catch (error) {

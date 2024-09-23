@@ -8,7 +8,7 @@ import { formatDateTime } from "../../../utils/dateFormatter.js";
 
 export const getAllProductsController = async (req, res, next) => {
     try {
-        const { status, category_id, sub_category_id, product_form_id, packaging_treatment_id, productName, page = 1, limit = 10 } = req.query;
+        const { status, category_id, sub_category_id, product_form_id, packaging_treatment_id, productName, page = 1, limit = 10, pagination = 'true' } = req.query;
         const offset = (page - 1) * limit;
 
         let query = 'SELECT * FROM product';
@@ -45,28 +45,37 @@ export const getAllProductsController = async (req, res, next) => {
             query += ` WHERE ${conditions.join(' AND ')}`;
         }
 
-        query += ' ORDER BY createdAt DESC LIMIT ? OFFSET ?';
-        queryParams.push(parseInt(limit), offset);
-
-        const [rows] = await pool.query(query, queryParams);
-        let countQuery = 'SELECT COUNT(*) as count FROM product';
-        const countParams = [];
-        if (conditions.length > 0) {
-            countQuery += ` WHERE ${conditions.join(' AND ')}`;
-            countParams.push(...queryParams.slice(0, queryParams.length - 2)); // Avoid limit and offset
+        if (pagination === 'true') {
+            query += ' ORDER BY createdAt DESC LIMIT ? OFFSET ?';
+            queryParams.push(parseInt(limit), offset);
+        } else {
+            query += ' ORDER BY createdAt DESC';
         }
 
-        const [totalCount] = await pool.query(countQuery, countParams);
-        const total = totalCount[0].count;
-        const totalPages = Math.ceil(total / limit);
-        const pagination = {
-            currentPage: Number(page),
-            totalPages: totalPages,
-            totalItems: total,
-            itemsPerPage: Number(limit)
-        };
+        const [rows] = await pool.query(query, queryParams);
 
-        res.json(new ApiResponse(200, { products: rows, pagination }, "Products retrieved successfully"));
+        if (pagination === 'true') {
+            let countQuery = 'SELECT COUNT(*) as count FROM product';
+            const countParams = [];
+            if (conditions.length > 0) {
+                countQuery += ` WHERE ${conditions.join(' AND ')}`;
+                countParams.push(...queryParams.slice(0, queryParams.length - 2)); // Avoid limit and offset
+            }
+
+            const [totalCount] = await pool.query(countQuery, countParams);
+            const total = totalCount[0].count;
+            const totalPages = Math.ceil(total / limit);
+            const paginationData = {
+                currentPage: Number(page),
+                totalPages: totalPages,
+                totalItems: total,
+                itemsPerPage: Number(limit)
+            };
+
+            res.json(new ApiResponse(200, { products: rows, pagination: paginationData }, "Products retrieved successfully"));
+        } else {
+            res.json(new ApiResponse(200, { products: rows }, "Products retrieved successfully"));
+        }
 
     } catch (error) {
         next(new CustomError(500, error.message));

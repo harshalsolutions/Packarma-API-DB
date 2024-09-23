@@ -20,7 +20,7 @@ export const getSubCategoryController = async (req, res, next) => {
 
 export const getAllSubCategoriesController = async (req, res, next) => {
     try {
-        const { category_id, page = 1, limit = 10, search, status } = req.query;
+        const { category_id, page = 1, limit = 10, search, status, pagination = 'true' } = req.query;
         const offset = (page - 1) * limit;
         let query = `
             SELECT subcategories.*, categories.name AS category_name
@@ -50,34 +50,41 @@ export const getAllSubCategoriesController = async (req, res, next) => {
             query += ` WHERE ${conditions.join(' AND ')}`;
         }
 
-        query += ' ORDER BY subcategories.createdAt DESC LIMIT ? OFFSET ?';
-        queryParams.push(parseInt(limit), offset);
+        if (pagination === 'true') {
+            query += ' ORDER BY subcategories.createdAt DESC LIMIT ? OFFSET ?';
+            queryParams.push(parseInt(limit), offset);
+        }
 
         const [rows] = await pool.query(query, queryParams);
 
-        let countQuery = 'SELECT COUNT(*) as count FROM subcategories LEFT JOIN categories ON subcategories.category_id = categories.id';
-        const countParams = [];
+        if (pagination === 'true') {
+            let countQuery = 'SELECT COUNT(*) as count FROM subcategories LEFT JOIN categories ON subcategories.category_id = categories.id';
+            const countParams = [];
 
-        if (conditions.length > 0) {
-            countQuery += ` WHERE ${conditions.join(' AND ')}`;
-            countParams.push(...queryParams.slice(0, queryParams.length - 2)); // Avoid limit and offset
+            if (conditions.length > 0) {
+                countQuery += ` WHERE ${conditions.join(' AND ')}`;
+                countParams.push(...queryParams.slice(0, queryParams.length - 2));
+            }
+
+            const [totalCount] = await pool.query(countQuery, countParams);
+            const total = totalCount[0].count;
+            const totalPages = Math.ceil(total / limit);
+            const pagination = {
+                currentPage: Number(page),
+                totalPages: totalPages,
+                totalItems: total,
+                itemsPerPage: Number(limit)
+            };
+
+            if (!rows.length) {
+                return res.json(new ApiResponse(200, { subcategories: [] }, 'No Subcategories found'));
+            }
+
+            res.json(new ApiResponse(200, { subcategories: rows, pagination }, "Subcategories retrieved successfully"));
+        } else {
+            res.json(new ApiResponse(200, { subcategories: rows }, "Subcategories retrieved successfully"));
         }
 
-        const [totalCount] = await pool.query(countQuery, countParams);
-        const total = totalCount[0].count;
-        const totalPages = Math.ceil(total / limit);
-        const pagination = {
-            currentPage: Number(page),
-            totalPages: totalPages,
-            totalItems: total,
-            itemsPerPage: Number(limit)
-        };
-
-        if (!rows.length) {
-            return res.json(new ApiResponse(200, { subcategories: [] }, 'No Subcategories found'));
-        }
-
-        res.json(new ApiResponse(200, { subcategories: rows, pagination }, "Subcategories retrieved successfully"));
     } catch (error) {
         next(new CustomError(500, error.message));
     }

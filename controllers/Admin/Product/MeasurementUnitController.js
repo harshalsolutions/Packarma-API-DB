@@ -63,22 +63,32 @@ export const deleteMeasurementUnitController = async (req, res, next) => {
 
 export const getAllMeasurementUnitsController = async (req, res, next) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
+        const { page = 1, limit = 10, pagination = 'true' } = req.query;
         const offset = (page - 1) * limit;
 
-        const [rows] = await pool.query('SELECT * FROM measurement_unit ORDER BY createdAt DESC LIMIT ? OFFSET ?', [parseInt(limit), offset]);
-        const [totalCount] = await pool.query('SELECT COUNT(*) as count FROM measurement_unit');
+        let query = 'SELECT * FROM measurement_unit ORDER BY createdAt DESC';
+        const queryParams = [];
 
-        const total = totalCount[0].count;
-        const totalPages = Math.ceil(total / limit);
-        const pagination = {
-            currentPage: Number(page),
-            totalPages: totalPages,
-            totalItems: total,
-            itemsPerPage: Number(limit)
-        };
+        if (pagination === 'true') {
+            query += ' LIMIT ? OFFSET ?';
+            queryParams.push(parseInt(limit), offset);
+        }
 
-        res.json(new ApiResponse(200, { measurementUnits: rows, pagination }, "Measurement Units retrieved successfully"));
+        const [rows] = await pool.query(query, queryParams);
+        if (pagination === 'true') {
+            const total = rows.length;
+            const totalPages = Math.ceil(total / limit);
+            const paginationData = {
+                currentPage: Number(page),
+                totalPages: totalPages,
+                totalItems: total,
+                itemsPerPage: Number(limit)
+            };
+
+            res.json(new ApiResponse(200, { measurementUnits: rows, pagination: paginationData }, "Measurement Units retrieved successfully"));
+        } else {
+            res.json(new ApiResponse(200, { measurementUnits: rows }, "Measurement Units retrieved successfully"));
+        }
     } catch (error) {
         next(new CustomError(500, error.message));
     }

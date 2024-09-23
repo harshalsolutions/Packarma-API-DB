@@ -90,22 +90,35 @@ export const deleteProductFormController = async (req, res, next) => {
 
 export const getAllProductFormsController = async (req, res, next) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
+        const { page = 1, limit = 10, pagination = 'true' } = req.query;
         const offset = (page - 1) * limit;
 
-        const [rows] = await pool.query('SELECT * FROM product_form ORDER BY createdAt DESC LIMIT ? OFFSET ?', [parseInt(limit), offset]);
-        const [totalCount] = await pool.query('SELECT COUNT(*) as count FROM product_form');
+        let query = 'SELECT * FROM product_form ORDER BY createdAt DESC';
+        const queryParams = [];
 
-        const total = totalCount[0].count;
-        const totalPages = Math.ceil(total / limit);
-        const pagination = {
-            currentPage: Number(page),
-            totalPages: totalPages,
-            totalItems: total,
-            itemsPerPage: Number(limit)
-        };
+        if (pagination === 'true') {
+            query += ' LIMIT ? OFFSET ?';
+            queryParams.push(parseInt(limit), offset);
+        }
 
-        res.json(new ApiResponse(200, { productForms: rows, pagination }, "Product Forms retrieved successfully"));
+        const [rows] = await pool.query(query, queryParams);
+        if (pagination === 'true') {
+            const [totalCount] = await pool.query('SELECT COUNT(*) as count FROM product_form');
+
+            const total = totalCount[0].count;
+            const totalPages = Math.ceil(total / limit);
+            const pagination = {
+                currentPage: Number(page),
+                totalPages: totalPages,
+                totalItems: total,
+                itemsPerPage: Number(limit)
+            };
+
+            res.json(new ApiResponse(200, { productForms: rows, pagination }, "Product Forms retrieved successfully"));
+        } else {
+            res.json(new ApiResponse(200, { productForms: rows }, "Product Forms retrieved successfully"));
+        }
+
     } catch (error) {
         next(new CustomError(500, error.message));
     }

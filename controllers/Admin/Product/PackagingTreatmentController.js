@@ -20,7 +20,7 @@ export const getPackagingTreatmentController = async (req, res, next) => {
 
 export const getAllPackagingTreatmentsController = async (req, res, next) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
+        const { page = 1, limit = 10, pagination = 'true' } = req.query;
         const offset = (page - 1) * limit;
 
         let query = `
@@ -28,29 +28,38 @@ export const getAllPackagingTreatmentsController = async (req, res, next) => {
         `;
         const queryParams = [];
 
-        query += ' ORDER BY createdAt DESC LIMIT ? OFFSET ?';
-        queryParams.push(parseInt(limit), offset);
+        if (pagination === 'true') {
+            query += ' ORDER BY createdAt DESC LIMIT ? OFFSET ?';
+            queryParams.push(parseInt(limit), offset);
+        } else {
+            query += ' ORDER BY createdAt DESC';
+        }
 
         const [rows] = await pool.query(query, queryParams);
-        const [totalCount] = await pool.query('SELECT COUNT(*) as count FROM packaging_treatment');
-
         if (!rows.length) res.json(new ApiResponse(200, {
             packaging_treatments: []
         }, 'No Packaging Treatments found'));
 
-        const total = totalCount[0].count;
-        const totalPages = Math.ceil(total / limit);
-        const pagination = {
-            currentPage: Number(page),
-            totalPages: totalPages,
-            totalItems: total,
-            itemsPerPage: Number(limit)
-        };
+        if (pagination === 'true') {
+            const [totalCount] = await pool.query('SELECT COUNT(*) as count FROM packaging_treatment');
+            const total = totalCount[0].count;
+            const totalPages = Math.ceil(total / limit);
+            const pagination = {
+                currentPage: Number(page),
+                totalPages: totalPages,
+                totalItems: total,
+                itemsPerPage: Number(limit)
+            };
 
-        res.json(new ApiResponse(200, {
-            packaging_treatments: rows,
-            pagination
-        }, "Packaging Treatments retrieved successfully"));
+            res.json(new ApiResponse(200, {
+                packaging_treatments: rows,
+                pagination
+            }, "Packaging Treatments retrieved successfully"));
+        } else {
+            res.json(new ApiResponse(200, {
+                packaging_treatments: rows
+            }, "Packaging Treatments retrieved successfully"));
+        }
     } catch (error) {
         next(new CustomError(500, error.message));
     }

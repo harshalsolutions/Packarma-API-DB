@@ -95,7 +95,7 @@ export const getAllCreditPurchaseController = async (req, res, next) => {
         }, 'Credit Purchase Invoices fetched successfully'));
     } catch (error) {
         console.log(error);
-        res.status(500).json(new ApiResponse(500, 'An error occurred', { error: error.message }));
+        res.status(500).json(new ApiResponse(500, 'An error occurred', error.message));
     } finally {
         connection.release();
     }

@@ -205,6 +205,8 @@ export const exportAllSubscriptionController = async (req, res, next) => {
             si.transaction_id, 
             si.invoice_link, 
             si.invoice_date
+            si.total_price, 
+            si.currency, 
         FROM 
             users u
         JOIN 
@@ -227,6 +229,8 @@ export const exportAllSubscriptionController = async (req, res, next) => {
             transaction_id: subscription.transaction_id,
             invoice_link: (link ? link : "") + subscription.invoice_link,
             invoice_date: formatDateTime(subscription.invoice_date),
+            total_price: subscription.total_price,
+            currency: subscription.currency,
         }));
 
         const workbook = new ExcelJS.Workbook();
@@ -240,7 +244,9 @@ export const exportAllSubscriptionController = async (req, res, next) => {
             { header: 'Subscription End Date', key: 'subscription_end_date', width: 20 },
             { header: 'Transaction ID', key: 'transaction_id', width: 30 },
             { header: 'Invoice Link', key: 'invoice_link', width: 30 },
-            { header: 'Invoice Date', key: 'invoice_date', width: 20 }
+            { header: 'Total Price', key: 'total_price', width: 20 },
+            { header: 'Currency', key: 'currency', width: 20 },
+            { header: 'Invoice Date', key: 'invoice_date', width: 20 },
         ];
 
         worksheet.addRows(csvData);

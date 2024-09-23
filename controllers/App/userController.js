@@ -116,7 +116,22 @@ export const getUserController = async (req, res, next) => {
         const userId = req.user.userId;
         const [rows] = await pool.query(
             `SELECT u.*, r.code as referral_code, 
-                us.subscription_id, us.start_date, us.end_date, s.type AS subscription_name 
+                CASE 
+                    WHEN us.end_date < CURRENT_DATE THEN NULL 
+                    ELSE us.subscription_id 
+                END AS subscription_id,
+                CASE 
+                    WHEN us.end_date < CURRENT_DATE THEN NULL 
+                    ELSE us.start_date 
+                END AS start_date,
+                CASE 
+                    WHEN us.end_date < CURRENT_DATE THEN NULL 
+                    ELSE us.end_date 
+                END AS end_date,
+                CASE 
+                    WHEN us.end_date < CURRENT_DATE THEN NULL 
+                    ELSE s.type 
+                END AS subscription_name 
                 FROM users u 
                 LEFT JOIN referral_codes r ON u.user_id = r.user_id 
                 LEFT JOIN user_subscriptions us ON u.user_id = us.user_id 

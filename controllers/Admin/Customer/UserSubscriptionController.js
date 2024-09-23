@@ -194,38 +194,71 @@ export const getAllSubscriptionController = async (req, res, next) => {
 export const exportAllSubscriptionController = async (req, res, next) => {
     try {
         const { link } = req.body;
-        const [subscriptionsRows] = await pool.query(`
-            SELECT 
-            i.id, 
-            CONCAT(u.firstname, ' ', u.lastname) AS user_name,
-            s.type AS subscription_type,
-            us.start_date AS subscription_start_date,
-            us.end_date AS subscription_end_date,
-            i.transaction_id,
-            i.invoice_link,  
-            i.invoice_date
-        FROM subscription_invoice i
-        JOIN users u ON i.user_id = u.user_id
-        JOIN subscriptions s ON i.subscription_id = s.id 
-        JOIN (
-            SELECT user_id, subscription_id, start_date, end_date
-            FROM user_subscriptions
-            WHERE (user_id, start_date) IN (
-                SELECT user_id, MAX(start_date)
-                FROM user_subscriptions
-                GROUP BY user_id
-            )
-        ) us ON u.user_id = us.user_id
-        `);
+        let query = `
+        SELECT 
+            u.user_id, 
+            u.firstname, 
+            u.lastname, 
+            u.email, 
+            a.address_name, 
+            a.address, 
+            a.state, 
+            a.city, 
+            a.pincode, 
+            a.phone_number AS address_phone_number,
+            si.id AS invoice_id, 
+            si.customer_name, 
+            si.customer_gstno, 
+            si.total_price, 
+            si.currency, 
+            si.invoice_link, 
+            si.transaction_id, 
+            si.invoice_date, 
+            si.createdAt AS invoice_createdAt, 
+            si.updatedAt AS invoice_updatedAt, 
+            s.type AS subscription_type, 
+            s.credit_amount, 
+            s.duration, 
+            s.benefits, 
+            s.sequence, 
+            s.createdAt AS subscription_createdAt, 
+            s.updatedAt AS subscription_updatedAt,
+            ipd.product_description,
+            ipd.amount, 
+            ipd.discount, 
+            ipd.taxable_value, 
+            ipd.cgst_rate, 
+            ipd.cgst_amount, 
+            ipd.sgst_rate, 
+            ipd.sgst_amount, 
+            ipd.igst_rate, 
+            ipd.igst_amount, 
+            ipd.total_amount,
+            us.start_date,
+            us.end_date
+        FROM 
+            users u
+        JOIN 
+            subscription_invoice si ON u.user_id = si.user_id
+        JOIN 
+            subscriptions s ON si.subscription_id = s.id
+        JOIN 
+            addresses a ON si.address_id = a.id
+        JOIN 
+            invoice_product_details ipd ON si.invoice_id = ipd.invoice_id
+        JOIN 
+            user_subscriptions us ON si.invoice_id = us.invoiceId
+        `;
+        const [subscriptionsRows] = await pool.query(query);
 
         if (!subscriptionsRows.length) throw new CustomError(404, 'No subscriptions found');
 
         const csvData = subscriptionsRows.map(subscription => ({
             id: subscription.id,
-            user_name: subscription.user_name,
+            user_name: subscription.firstname + " " + subscription.lastname,
             subscription_type: subscription.subscription_type,
-            subscription_start_date: formatDateTime(subscription.subscription_start_date),
-            subscription_end_date: formatDateTime(subscription.subscription_end_date),
+            subscription_start_date: formatDateTime(subscription.start_date),
+            subscription_end_date: formatDateTime(subscription.end_date),
             transaction_id: subscription.transaction_id,
             invoice_link: (link ? link : "") + subscription.invoice_link,
             invoice_date: formatDateTime(subscription.invoice_date),

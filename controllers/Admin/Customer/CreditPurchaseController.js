@@ -107,7 +107,7 @@ export const exportCreditPurchaseController = async (req, res, next) => {
     try {
         let query = `
             SELECT 
-                i.id, i.customer_name, i.total_price, i.currency, i.invoice_date,
+                i.id, i.customer_name, i.total_price, i.currency, i.invoice_date, i.invoice_link,
                 u.firstname, u.lastname,
                 a.city, a.state, i.no_of_credits, i.transaction_id
             FROM credit_invoice i
@@ -127,6 +127,7 @@ export const exportCreditPurchaseController = async (req, res, next) => {
             city: invoice.city,
             state: invoice.state,
             transaction_id: invoice.transaction_id,
+            invoice_link: invoice.invoice_link,
             invoice_date: formatDateTime(invoice.invoice_date),
         }));
 
@@ -143,7 +144,8 @@ export const exportCreditPurchaseController = async (req, res, next) => {
             { header: 'City', key: 'city', width: 20 },
             { header: 'State', key: 'state', width: 20 },
             { header: 'Transaction ID', key: 'transaction_id', width: 30 },
-            { header: 'Invoice Date', key: 'invoice_date', width: 20 }
+            { header: 'Invoice Link', key: 'invoice_link', width: 30 },
+            { header: 'Invoice Date', key: 'invoice_date', width: 20 },
         ];
 
         worksheet.addRows(csvData);

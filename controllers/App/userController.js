@@ -16,15 +16,15 @@ const generateToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET, {
 
 export const registerController = async (req, res, next) => {
     try {
-        const { firstname, lastname, email, password, referralCode } = req.body;
+        const { firstname, lastname, email, password, referralCode, type = "normal" } = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);
         const connection = await pool.getConnection();
         await connection.beginTransaction();
 
         try {
             const [userResult] = await connection.query(
-                'INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)',
-                [firstname, lastname, email, hashedPassword]
+                'INSERT INTO users (firstname, lastname, email, password, type) VALUES (?, ?, ?, ?, ?)',
+                [firstname, lastname, email, hashedPassword, type]
             );
             const userId = userResult.insertId;
             const newReferralCode = generateReferralCode(10);
@@ -79,6 +79,46 @@ export const loginController = async (req, res, next) => {
         const token = generateToken(user.user_id);
         const { password: _, ...userWithoutPassword } = user;
         res.json(new ApiResponse(200, { user: userWithoutPassword, token }, 'Login successful'));
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const authenticateFirebaseController = async (req, res, next) => {
+    try {
+        const { email, type, uid, firstname, lastname } = req.body;
+        const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+
+        if (rows.length) {
+            const user = rows[0];
+            if (user.type === 'normal') {
+                throw new CustomError(400, 'User already registered with normal login');
+            } else {
+                const token = generateToken(user.user_id);
+                const { password: _, ...userWithoutPassword } = user;
+                return res.json(new ApiResponse(200, { user: userWithoutPassword, token }, 'Login successful'));
+            }
+        } else {
+            const connection = await pool.getConnection();
+            await connection.beginTransaction();
+
+            try {
+                const [userResult] = await connection.query(
+                    'INSERT INTO users (firstname, lastname, email, type, uid) VALUES (?, ?, ?, ?, ?)',
+                    [firstname, lastname, email, type, uid]
+                );
+                const userId = userResult.insertId;
+                const token = generateToken(userId);
+
+                await connection.commit();
+                res.status(201).json(new ApiResponse(201, { token }, 'User registered successfully'));
+            } catch (error) {
+                await connection.rollback();
+                throw error;
+            } finally {
+                connection.release();
+            }
+        }
     } catch (error) {
         next(error);
     }

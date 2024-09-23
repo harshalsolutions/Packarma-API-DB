@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import authMiddleware from '../../middlewares/authMiddleware.js';
-import { addHelpSupportController, freeCreditDocumentController, getUserController, loginController, registerController, requestOtpController, requestPasswordResetOtpController, resetPasswordController, updatePasswordController, updateUserController, verifyOtpController } from "../../controllers/App/userController.js"
+import { addHelpSupportController, freeCreditDocumentController, getUserController, loginController, registerController, authenticateFirebaseController, requestOtpController, requestPasswordResetOtpController, resetPasswordController, updatePasswordController, updateUserController, verifyOtpController } from "../../controllers/App/userController.js"
 import upload from '../../middlewares/multerMiddleware.js';
 
 import { getCreditHistory, modifyCredits } from '../../controllers/App/subscriptionAndCreditsController.js';
@@ -10,6 +10,9 @@ const router = Router();
 
 router.post('/register', registerController);
 router.post('/login', loginController);
+
+router.post('/auth-firebase', authenticateFirebaseController);
+
 router.post('/otp/request', requestOtpController);
 router.post('/otp/verify', verifyOtpController);
 router.post('/password/otp/request', requestPasswordResetOtpController);

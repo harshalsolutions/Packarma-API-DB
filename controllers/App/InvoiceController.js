@@ -55,25 +55,93 @@ const addInvoiceToDatabase = async (connection, invoiceType, invoiceData) => {
                 invoiceData.customer_name, invoiceData.customer_gstNo, invoiceData.customer_address_id
             ];
             const [result] = await connection.query(query, queryParams);
-            invoiceId = result.insertId;
         }
-        console.log('Invoice inserted successfully', invoiceId);
-        await connection.commit();
 
         const productDetailsQuery = `
             INSERT INTO invoice_product_details (invoice_id, product_description, amount, discount, taxable_value, cgst_rate, cgst_amount, sgst_rate, sgst_amount, igst_rate, igst_amount, total_amount, type)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
+        const invoice_no = invoiceData.invoice_no ? invoiceData.invoice_no : invoiceData.invoice_id;
         for (const product of invoiceData.products) {
             const productDetailsParams = [
-                invoiceId, product.description, product.amount, product.discount, product.taxable_value,
+                invoiceData.invoice_no, product.description, product.amount, product.discount, product.taxable_value,
                 product.cgst_rate, product.cgst_amount, product.sgst_rate, product.sgst_amount, product.igst_rate, product.igst_amount, product.total_amount, invoiceType
             ];
             await connection.query(productDetailsQuery, productDetailsParams);
         }
+
+        await connection.commit();
+
+        if (invoiceType === 'subscription') {
+            const subscription = await pool.query('SELECT * FROM subscriptions WHERE id = ?', [invoiceData.subscription_id]);
+            if (!subscription.length) throw new CustomError(404, 'Subscription not found');
+            const subscriptionDetails = subscription[0];
+            const startDate = new Date();
+            const endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + subscriptionDetails[0].duration);
+            await addUserSubscription(invoiceData.userId, invoiceData.subscription_id, startDate, endDate);
+        }
+
+        if (invoiceType === 'credit') {
+            await addUserCredits(invoiceData.userId, invoiceData.no_of_credits);
+        }
+
     } catch (error) {
-        console.log(error);
-        throw new CustomError(500, 'Failed to add invoice to database');
+        throw error;
+    }
+};
+
+const addUserCredits = async (userId, credits) => {
+    const description = `You have purchased ${credits} credits`;
+    try {
+        const connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        try {
+            const [rows] = await connection.query('SELECT credits FROM users WHERE user_id = ?', [userId]);
+            if (!rows.length) throw new CustomError(404, 'User not found');
+
+            const currentCredits = rows[0].credits;
+            const newCredits = currentCredits + credits;
+
+            await connection.query('UPDATE users SET credits = ?, updatedAt = CURRENT_TIMESTAMP WHERE user_id = ?', [newCredits, userId]);
+
+            await connection.query(
+                'INSERT INTO credit_history (user_id, change_amount, description) VALUES (?, ?, ?)',
+                [userId, credits, description]
+            );
+
+            await connection.commit();
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
+    } catch (error) {
+        throw error;
+    }
+};
+
+const addUserSubscription = async (userId, subscriptionId, startDate, endDate) => {
+    try {
+        const connection = await pool.getConnection();
+        await connection.beginTransaction();
+        try {
+            await connection.query(
+                'INSERT INTO user_subscriptions (user_id, subscription_id, start_date, end_date) VALUES (?, ?, ?, ?)',
+                [userId, subscriptionId, startDate, endDate]
+            );
+
+            await connection.commit();
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
+    } catch (error) {
+        throw error;
     }
 };
 
@@ -83,7 +151,6 @@ export const generateInvoiceController = async (req, res, next) => {
     const { invoice_type } = req.params;
     try {
         const { customer_name, customer_gstNo, products, customer_address_id, transaction_id, no_of_credits, currency, subscription_id } = req.body;
-
         let today = new Date();
         let day = today.getDate().toString().padStart(2, '0');
         let month = (today.getMonth() + 1).toString().padStart(2, '0');
@@ -92,7 +159,7 @@ export const generateInvoiceController = async (req, res, next) => {
 
         const [[invoiceDetails], [result], [address]] = await Promise.all([
             pool.query('SELECT * FROM invoice_details LIMIT 1'),
-            pool.query('SELECT MAX(id) as maxId FROM credit_invoice UNION SELECT MAX(id) as maxId FROM subscription_invoice'),
+            pool.query('SELECT COUNT(*) as count FROM invoice_product_details'),
             pool.query(`SELECT * FROM addresses WHERE id = ? LIMIT 1`, [customer_address_id])
         ]);
 
@@ -100,7 +167,7 @@ export const generateInvoiceController = async (req, res, next) => {
             throw new CustomError(500, 'Invoice details not found');
         }
         const details = invoiceDetails[0];
-        const invoice_no = result[0].maxId ? parseInt(result[0].maxId) + 1 : 1;
+        const invoice_no = result[0].count ? parseInt(result[0].count) + 1 : 1;
 
         let productRows = '';
         let grand_total = 0;
@@ -189,6 +256,7 @@ export const generateInvoiceController = async (req, res, next) => {
         await connection.beginTransaction();
         try {
             await addInvoiceToDatabase(connection, invoice_type, {
+                invoice_no,
                 userId: req.user.userId,
                 no_of_credits,
                 total_price: parsedTotal,

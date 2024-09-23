@@ -63,37 +63,6 @@ export const getCreditHistory = async (req, res, next) => {
 };
 
 
-
-export const addUserSubscription = async (req, res, next) => {
-    const { subscriptionId, startDate, endDate } = req.body;
-    const userId = req.user.userId;
-
-    try {
-        const connection = await pool.getConnection();
-        await connection.beginTransaction();
-
-        try {
-            const [rows] = await connection.query('SELECT id FROM subscriptions WHERE id = ?', [subscriptionId]);
-            if (!rows.length) throw new CustomError(404, 'Subscription not found');
-
-            await connection.query(
-                'INSERT INTO user_subscriptions (user_id, subscription_id, start_date, end_date) VALUES (?, ?, ?, ?)',
-                [userId, subscriptionId, startDate, endDate]
-            );
-
-            await connection.commit();
-            res.status(201).json(new ApiResponse(201, null, 'Subscription added successfully'));
-        } catch (error) {
-            await connection.rollback();
-            handleError(error, next);
-        } finally {
-            connection.release();
-        }
-    } catch (error) {
-        handleError(error, next);
-    }
-};
-
 export const getSubscriptionsController = async (req, res, next) => {
     try {
         const query = `

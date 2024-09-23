@@ -2,7 +2,8 @@ import { Router } from 'express';
 import authMiddleware from '../../middlewares/authMiddleware.js';
 import { addHelpSupportController, freeCreditDocumentController, getUserController, loginController, registerController, requestOtpController, requestPasswordResetOtpController, resetPasswordController, updatePasswordController, updateUserController, verifyOtpController } from "../../controllers/App/userController.js"
 import upload from '../../middlewares/multerMiddleware.js';
-import { addUserSubscription, getCreditHistory, modifyCredits } from '../../controllers/App/subscriptionAndCreditsController.js';
+
+import { getCreditHistory, modifyCredits } from '../../controllers/App/subscriptionAndCreditsController.js';
 
 const router = Router();
 
@@ -28,7 +29,6 @@ router.post("/free-credit", upload.single("gst_document"), freeCreditDocumentCon
 router.post('/modify-credits', modifyCredits);
 router.get('/credit-history', getCreditHistory);
 
-router.post('/add-user-subscription', addUserSubscription);
 
 
 

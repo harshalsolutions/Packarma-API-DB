@@ -43,16 +43,16 @@ const addInvoiceToDatabase = async (connection, invoiceType, invoiceData) => {
                 invoiceData.customer_name, invoiceData.customer_gstNo, invoiceData.customer_address_id
             ];
             const [result] = await connection.query(query, queryParams);
-            invoiceId = result.insertId;
+
         } else if (invoiceType === 'subscription') {
             const query = `
-                INSERT INTO subscription_invoice (user_id, subscription_id, total_price, invoice_date, invoice_link, currency, transaction_id, customer_name, customer_gstno, address_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO subscription_invoice (user_id, subscription_id, total_price, invoice_date, invoice_link, currency, transaction_id, customer_name, customer_gstno, address_id, invoice_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
             const queryParams = [
                 invoiceData.userId, invoiceData.subscription_id, invoiceData.total_price, formattedDate,
                 invoiceData.invoice_link, invoiceData.currency, invoiceData.transaction_id,
-                invoiceData.customer_name, invoiceData.customer_gstNo, invoiceData.customer_address_id
+                invoiceData.customer_name, invoiceData.customer_gstNo, invoiceData.customer_address_id, invoiceData.invoice_no
             ];
             const [result] = await connection.query(query, queryParams);
         }
@@ -61,7 +61,6 @@ const addInvoiceToDatabase = async (connection, invoiceType, invoiceData) => {
             INSERT INTO invoice_product_details (invoice_id, product_description, amount, discount, taxable_value, cgst_rate, cgst_amount, sgst_rate, sgst_amount, igst_rate, igst_amount, total_amount, type)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
-        const invoice_no = invoiceData.invoice_no ? invoiceData.invoice_no : invoiceData.invoice_id;
         for (const product of invoiceData.products) {
             const productDetailsParams = [
                 invoiceData.invoice_no, product.description, product.amount, product.discount, product.taxable_value,
@@ -79,7 +78,7 @@ const addInvoiceToDatabase = async (connection, invoiceType, invoiceData) => {
             const startDate = new Date();
             const endDate = new Date(startDate);
             endDate.setDate(endDate.getDate() + subscriptionDetails[0].duration);
-            await addUserSubscription(invoiceData.userId, invoiceData.subscription_id, startDate, endDate);
+            await addUserSubscription(invoiceData.userId, invoiceData.subscription_id, startDate, endDate, invoiceData.invoice_no);
         }
 
         if (invoiceType === 'credit') {
@@ -123,14 +122,14 @@ const addUserCredits = async (userId, credits) => {
     }
 };
 
-const addUserSubscription = async (userId, subscriptionId, startDate, endDate) => {
+const addUserSubscription = async (userId, subscriptionId, startDate, endDate, invoiceId) => {
     try {
         const connection = await pool.getConnection();
         await connection.beginTransaction();
         try {
             await connection.query(
-                'INSERT INTO user_subscriptions (user_id, subscription_id, start_date, end_date) VALUES (?, ?, ?, ?)',
-                [userId, subscriptionId, startDate, endDate]
+                'INSERT INTO user_subscriptions (user_id, subscription_id, start_date, end_date, invoiceId) VALUES (?, ?, ?, ?, ?)',
+                [userId, subscriptionId, startDate, endDate, invoiceId]
             );
 
             await connection.commit();
@@ -301,7 +300,7 @@ export const generateInvoiceController = async (req, res, next) => {
 
     } catch (error) {
         await connection.rollback();
-        res.status(500).json(new ApiResponse(500, { error: error.message }, 'An error occurred'));
+        res.status(500).json(new ApiResponse(500, error.message, 'An error occurred'));
     } finally {
         connection.release();
     }
@@ -403,7 +402,7 @@ export const getInvoicesController = async (req, res, next) => {
         res.json(new ApiResponse(200, formattedInvoices, 'Invoices fetched successfully'));
     } catch (error) {
         console.log(error);
-        res.status(500).json(new ApiResponse(500, { error: error.message }, 'An error occurred'));
+        res.status(500).json(new ApiResponse(500, error.message, 'An error occurred'));
     } finally {
         connection.release();
     }
@@ -506,7 +505,7 @@ export const getInvoiceByIdController = async (req, res, next) => {
         res.json(new ApiResponse(200, formattedInvoice, 'Invoice fetched successfully'));
     } catch (error) {
         console.log(error);
-        res.status(500).json(new ApiResponse(500, { error: error.message }, 'An error occurred'));
+        res.status(500).json(new ApiResponse(500, error.message, 'An error occurred'));
     } finally {
         connection.release();
     }

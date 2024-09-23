@@ -86,7 +86,7 @@ export const loginController = async (req, res, next) => {
 
 export const authenticateFirebaseController = async (req, res, next) => {
     try {
-        const { email, type, uid, firstname, lastname } = req.body;
+        const { email, type, uid, firstname, lastname, referralCode } = req.body;
         const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
 
         if (rows.length) {
@@ -108,10 +108,38 @@ export const authenticateFirebaseController = async (req, res, next) => {
                     [firstname, lastname, email, type, uid]
                 );
                 const userId = userResult.insertId;
-                const token = generateToken(userId);
+                const newReferralCode = generateReferralCode(10);
 
+                if (referralCode) {
+                    const [referralCodeResult] = await connection.query(
+                        'SELECT id FROM referral_codes WHERE code = ?',
+                        [referralCode]
+                    );
+
+                    if (referralCodeResult.length > 0) {
+                        const referralCodeId = referralCodeResult[0].id;
+                        await connection.query(
+                            'INSERT INTO referrals (referral_code_id, referred_user_id, account_created) VALUES (?, ?, ?)',
+                            [referralCodeId, userId, true]
+                        );
+                    } else {
+                        throw new CustomError(400, 'Invalid referral code');
+                    }
+                }
+
+                const [newReferralCodeResult] = await connection.query(
+                    'INSERT INTO referral_codes (user_id, code) VALUES (?, ?)',
+                    [userId, newReferralCode]
+                );
+                const newReferralCodeId = newReferralCodeResult.insertId;
+                await connection.query(
+                    'UPDATE users SET referral_code_id = ? WHERE user_id = ?',
+                    [newReferralCodeId, userId]
+                );
+
+                const token = generateToken(userId);
                 await connection.commit();
-                res.status(201).json(new ApiResponse(201, { token }, 'User registered successfully'));
+                res.status(201).json(new ApiResponse(201, { token, referralCode: newReferralCode }, 'User registered successfully'));
             } catch (error) {
                 await connection.rollback();
                 throw error;

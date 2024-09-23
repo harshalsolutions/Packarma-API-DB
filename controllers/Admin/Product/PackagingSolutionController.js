@@ -135,7 +135,8 @@ export const getAllPackagingSolutionsController = async (req, res, next) => {
 
         const [rows] = await pool.query(query, queryParams);
 
-        let countQuery = `SELECT COUNT(*) as count FROM packaging_solution ps
+        if (pagination === 'true') {
+            let countQuery = `SELECT COUNT(*) as count FROM packaging_solution ps
             LEFT JOIN product p ON ps.product_id = p.id
             LEFT JOIN product_form pf ON ps.product_form_id = pf.id
             LEFT JOIN packaging_treatment pt ON ps.packaging_treatment_id = pt.id
@@ -143,18 +144,10 @@ export const getAllPackagingSolutionsController = async (req, res, next) => {
             LEFT JOIN packaging_machine pm ON ps.packaging_machine_id = pm.id
             LEFT JOIN packaging_material pmat ON ps.packaging_material_id = pmat.id`;
 
-        if (conditions.length > 0) {
-            countQuery += ' WHERE ' + conditions.join(' AND ');
-        }
+            if (conditions.length > 0) {
+                countQuery += ' WHERE ' + conditions.join(' AND ');
+            }
 
-        if (pagination === 'true') {
-            countQuery += ' ORDER BY ps.createdAt DESC LIMIT ? OFFSET ?';
-            queryParams.push(parseInt(limit), offset);
-        } else {
-            countQuery += ' ORDER BY ps.createdAt DESC';
-        }
-
-        if (pagination === 'true') {
             const [totalCount] = await pool.query(countQuery, queryParams.slice(0, -2));
             const total = totalCount[0].count;
             const totalPages = Math.ceil(total / limit);

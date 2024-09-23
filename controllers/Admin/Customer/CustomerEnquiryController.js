@@ -1,7 +1,8 @@
 import ApiResponse from '../../../utils/ApiResponse.js';
 import pool from '../../../config/database.js';
 import CustomError from "../../../utils/CustomError.js"
-
+import { formatDateTime } from '../../../utils/dateFormatter.js';
+import ExcelJS from 'exceljs';
 export const getAllCustomerEnquiryController = async (req, res, next) => {
     try {
         const {
@@ -102,13 +103,11 @@ export const getAllCustomerEnquiryController = async (req, res, next) => {
             countParams.push(fromDate, toDate);
         }
 
-        query += ' ORDER BY sh.search_time DESC LIMIT ? OFFSET ?';
+        query += ' ORDER BY sh.search_time DESC, sh.id DESC LIMIT ? OFFSET ?';
         queryParams.push(parseInt(limit, 10), parseInt(offset, 10));
 
-        // Execute the main query
         const [enquiries] = await pool.query(query, queryParams);
 
-        // Execute the count query to get total items
         const [[{ totalCount }]] = await pool.query(countQuery, countParams);
 
         const totalPages = Math.ceil(totalCount / limit);
@@ -130,3 +129,74 @@ export const getAllCustomerEnquiryController = async (req, res, next) => {
         next(new CustomError(500, error.message));
     }
 };
+
+
+export const exportCustomerEnquiryController = async (req, res, next) => {
+    const connection = await pool.getConnection();
+    try {
+        let query = `
+            SELECT 
+                sh.id, sh.search_time,
+                u.firstname, u.lastname,
+                p.product_name, 
+                c.name AS category_name, 
+                sc.name AS subcategory_name, 
+                pt.name AS packaging_type_name, 
+                ps.display_shelf_life_days, 
+                ps.product_min_weight, 
+                ps.product_max_weight, 
+                sh.weight_by_user
+            FROM search_history sh
+            JOIN users u ON sh.user_id = u.user_id
+            JOIN packaging_solution ps ON sh.packaging_solution_id = ps.id
+            JOIN product p ON ps.product_id = p.id
+            JOIN categories c ON p.category_id = c.id
+            JOIN subcategories sc ON p.sub_category_id = sc.id
+            JOIN packaging_treatment pt ON ps.packaging_treatment_id = pt.id
+            ORDER BY sh.search_time DESC, sh.id DESC
+        `;
+
+        const invoices = await connection.query(query);
+
+        const csvData = invoices[0].map(invoice => ({
+            id: invoice.id,
+            user_name: `${invoice.firstname} ${invoice.lastname}`,
+            product_name: invoice.product_name,
+            category_name: invoice.category_name,
+            subcategory_name: invoice.subcategory_name,
+            packaging_type_name: invoice.packaging_type_name,
+            shelf_life: invoice.display_shelf_life_days,
+            product_weight: `${invoice.product_min_weight} - ${invoice.product_max_weight}`,
+            weight_by_user: invoice.weight_by_user,
+            searchtime: formatDateTime(invoice.search_time),
+        }));
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Customer Enquiries');
+
+        worksheet.columns = [
+            { header: 'ID', key: 'id', width: 10 },
+            { header: 'User Name', key: 'user_name', width: 30 },
+            { header: 'Product Name', key: 'product_name', width: 30 },
+            { header: 'Category Name', key: 'category_name', width: 30 },
+            { header: 'Subcategory Name', key: 'subcategory_name', width: 30 },
+            { header: 'Packaging Type Name', key: 'packaging_type_name', width: 30 },
+            { header: 'Shelf Life', key: 'shelf_life', width: 20 },
+            { header: 'Product Weight', key: 'product_weight', width: 20 },
+            { header: 'Weight by User', key: 'weight_by_user', width: 20 },
+            { header: 'Search Time', key: 'searchtime', width: 20 },
+        ];
+
+        worksheet.addRows(csvData);
+
+        res.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.attachment(`customer_enquiry_${new Date().toISOString()}.xlsx`);
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (error) {
+        console.log(error);
+        res.status(500).json(new ApiResponse(500, 'An error occurred', error.message));
+    } finally {
+        connection.release();
+    }
+}

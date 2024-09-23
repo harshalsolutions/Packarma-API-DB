@@ -1,6 +1,7 @@
 import ApiResponse from '../../../utils/ApiResponse.js';
 import pool from '../../../config/database.js';
-
+import { formatDateTime } from '../../../utils/dateFormatter.js';
+import ExcelJS from 'exceljs';
 export const getAllCreditPurchaseController = async (req, res, next) => {
     const connection = await pool.getConnection();
     const { page = 1, limit = 10, search = '' } = req.query;
@@ -100,3 +101,61 @@ export const getAllCreditPurchaseController = async (req, res, next) => {
         connection.release();
     }
 };
+
+export const exportCreditPurchaseController = async (req, res, next) => {
+    const connection = await pool.getConnection();
+    try {
+        let query = `
+            SELECT 
+                i.id, i.customer_name, i.total_price, i.currency, i.invoice_date,
+                u.firstname, u.lastname,
+                a.city, a.state, i.no_of_credits, i.transaction_id
+            FROM credit_invoice i
+            JOIN users u ON i.user_id = u.user_id
+            JOIN addresses a ON i.address_id = a.id
+        `;
+
+        const invoices = await connection.query(query);
+
+        const csvData = invoices[0].map(invoice => ({
+            id: invoice.id,
+            user_name: `${invoice.firstname} ${invoice.lastname}`,
+            customer_name: invoice.customer_name,
+            total_price: invoice.total_price,
+            currency: invoice.currency,
+            no_of_credits: invoice.no_of_credits,
+            city: invoice.city,
+            state: invoice.state,
+            transaction_id: invoice.transaction_id,
+            invoice_date: formatDateTime(invoice.invoice_date),
+        }));
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Credit Purchase');
+
+        worksheet.columns = [
+            { header: 'ID', key: 'id', width: 10 },
+            { header: 'User Name', key: 'user_name', width: 30 },
+            { header: 'Customer Name', key: 'customer_name', width: 30 },
+            { header: 'Total Price', key: 'total_price', width: 20 },
+            { header: 'Currency', key: 'currency', width: 20 },
+            { header: 'No of Credits', key: 'no_of_credits', width: 20 },
+            { header: 'City', key: 'city', width: 20 },
+            { header: 'State', key: 'state', width: 20 },
+            { header: 'Transaction ID', key: 'transaction_id', width: 30 },
+            { header: 'Invoice Date', key: 'invoice_date', width: 20 }
+        ];
+
+        worksheet.addRows(csvData);
+
+        res.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.attachment(`credit_purchase_${new Date().toISOString()}.xlsx`);
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (error) {
+        console.log(error);
+        res.status(500).json(new ApiResponse(500, 'An error occurred', error.message));
+    } finally {
+        connection.release();
+    }
+}

@@ -199,53 +199,18 @@ export const exportAllSubscriptionController = async (req, res, next) => {
             u.user_id, 
             u.firstname, 
             u.lastname, 
-            u.email, 
-            a.address_name, 
-            a.address, 
-            a.state, 
-            a.city, 
-            a.pincode, 
-            a.phone_number AS address_phone_number,
-            si.id AS invoice_id, 
-            si.customer_name, 
-            si.customer_gstno, 
-            si.total_price, 
-            si.currency, 
-            si.invoice_link, 
-            si.transaction_id, 
-            si.invoice_date, 
-            si.createdAt AS invoice_createdAt, 
-            si.updatedAt AS invoice_updatedAt, 
             s.type AS subscription_type, 
-            s.credit_amount, 
-            s.duration, 
-            s.benefits, 
-            s.sequence, 
-            s.createdAt AS subscription_createdAt, 
-            s.updatedAt AS subscription_updatedAt,
-            ipd.product_description,
-            ipd.amount, 
-            ipd.discount, 
-            ipd.taxable_value, 
-            ipd.cgst_rate, 
-            ipd.cgst_amount, 
-            ipd.sgst_rate, 
-            ipd.sgst_amount, 
-            ipd.igst_rate, 
-            ipd.igst_amount, 
-            ipd.total_amount,
             us.start_date,
-            us.end_date
+            us.end_date,
+            si.transaction_id, 
+            si.invoice_link, 
+            si.invoice_date
         FROM 
             users u
         JOIN 
             subscription_invoice si ON u.user_id = si.user_id
         JOIN 
             subscriptions s ON si.subscription_id = s.id
-        JOIN 
-            addresses a ON si.address_id = a.id
-        JOIN 
-            invoice_product_details ipd ON si.invoice_id = ipd.invoice_id
         JOIN 
             user_subscriptions us ON si.invoice_id = us.invoiceId
         `;
@@ -254,7 +219,7 @@ export const exportAllSubscriptionController = async (req, res, next) => {
         if (!subscriptionsRows.length) throw new CustomError(404, 'No subscriptions found');
 
         const csvData = subscriptionsRows.map(subscription => ({
-            id: subscription.id,
+            id: subscription.user_id,
             user_name: subscription.firstname + " " + subscription.lastname,
             subscription_type: subscription.subscription_type,
             subscription_start_date: formatDateTime(subscription.start_date),

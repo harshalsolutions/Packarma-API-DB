@@ -62,42 +62,44 @@ export const deleteStaffController = async (req, res, next) => {
 };
 
 export const updateStaffController = async (req, res, next) => {
+    const connection = await pool.getConnection();
     try {
         const { staffId } = req.params;
-        const updates = Object.entries(req.body)
-            .filter(([key, value]) => value !== undefined)
-            .map(([key, value]) => ({ key, value }));
+        const updates = [];
 
-        const connection = await pool.getConnection();
         await connection.beginTransaction();
+
         if (req.body.password) {
             const hashedPassword = await bcrypt.hash(req.body.password, 10);
             updates.push({ key: 'password', value: hashedPassword });
         }
 
-        try {
-            const [existingStaff] = await connection.query('SELECT * FROM admin WHERE id = ?', [staffId]);
-            if (!existingStaff.length) throw new CustomError(404, 'Staff not found');
-
-            if (updates.length > 0) {
-                const updateFields = updates.map(({ key }) => `${key} = ?`).join(', ');
-                const updateValues = updates.map(({ value }) => value);
-                updateValues.push(staffId);
-
-                await connection.query(
-                    `UPDATE admin SET ${updateFields} WHERE id = ?`,
-                    updateValues
-                );
+        for (const [key, value] of Object.entries(req.body)) {
+            if (value !== undefined && key !== 'password' && !['createdAt', 'updatedAt', 'permissions'].includes(key)) {
+                updates.push({ key, value });
             }
-            await connection.commit();
-            res.json(new ApiResponse(200, {}, 'Staff updated successfully'));
-        } catch (error) {
-            await connection.rollback();
-            throw error;
-        } finally {
-            connection.release();
         }
+
+        const [existingStaff] = await connection.query('SELECT * FROM admin WHERE id = ?', [staffId]);
+        if (!existingStaff.length) throw new CustomError(404, 'Staff not found');
+
+        if (updates.length > 0) {
+            const updateFields = updates.map(({ key }) => `${key} = ?`).join(', ');
+            const updateValues = updates.map(({ value }) => value);
+            updateValues.push(staffId);
+
+            await connection.query(
+                `UPDATE admin SET ${updateFields} WHERE id = ?`,
+                updateValues
+            );
+        }
+
+        await connection.commit();
+        res.json(new ApiResponse(200, {}, 'Staff updated successfully'));
     } catch (error) {
+        await connection.rollback();
         handleError(error, next);
+    } finally {
+        connection.release();
     }
 };

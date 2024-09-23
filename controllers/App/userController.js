@@ -69,11 +69,15 @@ export const registerController = async (req, res, next) => {
 
 export const loginController = async (req, res, next) => {
     try {
+        if (!req.body.email || !req.body.password) throw new CustomError(400, 'Email and password are required');
         const { email, password } = req.body;
         const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
         if (!rows.length) throw new CustomError(404, 'User not found');
 
         const user = rows[0];
+
+        if (user.block) throw new CustomError(403, 'User is blocked');
+
         if (!(await bcrypt.compare(password, user.password))) throw new CustomError(401, 'Invalid credentials');
 
         const token = generateToken(user.user_id);

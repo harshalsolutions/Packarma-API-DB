@@ -204,9 +204,9 @@ export const exportAllSubscriptionController = async (req, res, next) => {
             us.end_date,
             si.transaction_id, 
             si.invoice_link, 
-            si.invoice_date
+            si.invoice_date,
             si.total_price, 
-            si.currency, 
+            si.currency
         FROM 
             users u
         JOIN 

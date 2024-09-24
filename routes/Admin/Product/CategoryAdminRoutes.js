@@ -6,8 +6,8 @@ const router = express.Router();
 
 router.get("/categories", getAllCategoriesController);
 router.get("/categories/:id", getCategoryController);
-router.post("/categories", upload.single('image'), createCategoryController);
-router.put("/categories/:id", upload.single('image'), updateCategoryController);
+router.post("/categories", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'unselected', maxCount: 1 }]), createCategoryController);
+router.put("/categories/:id", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'unselected', maxCount: 1 }]), updateCategoryController);
 router.delete("/categories/:id", deleteCategoryController);
 
 export default router;

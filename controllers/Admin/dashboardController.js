@@ -25,7 +25,7 @@ export const getTotalFreeSubscriptionCount = async (req, res, next) => {
 export const getTotalPaidSubscriptionCount = async (req, res, next) => {
     try {
         const [[{ totalCount }]] = await pool.query(`
-            SELECT COUNT(*) as totalCount FROM user_subscriptions WHERE subscription_id != 1
+            SELECT COUNT(*) as totalCount FROM user_subscriptions WHERE subscription_id IS NOT NULL AND subscription_id != 1
         `);
         res.json(new ApiResponse(200, { totalCount }));
     } catch (error) {
@@ -36,8 +36,20 @@ export const getTotalPaidSubscriptionCount = async (req, res, next) => {
 export const getTotalActiveSubscriptionCount = async (req, res, next) => {
     try {
         const [[{ totalCount }]] = await pool.query(`
-            SELECT COUNT(*) as totalCount FROM user_subscriptions WHERE subscription_id != 1 AND end_date >= CURDATE()
+            SELECT COUNT(DISTINCT user_id) as totalCount 
+            FROM user_subscriptions 
+            WHERE subscription_id != 1 AND end_date >= CURDATE()
         `);
+        res.json(new ApiResponse(200, { totalCount }));
+    } catch (error) {
+        next(new CustomError(500, error.message));
+    }
+};
+
+
+export const getTotalEnquiriesCount = async (req, res, next) => {
+    try {
+        const [[{ totalCount }]] = await pool.query(`SELECT COUNT(*) as totalCount FROM search_history`);
         res.json(new ApiResponse(200, { totalCount }));
     } catch (error) {
         next(new CustomError(500, error.message));
@@ -47,17 +59,11 @@ export const getTotalActiveSubscriptionCount = async (req, res, next) => {
 export const getTotalSignupsFromReferrals = async (req, res, next) => {
     try {
         const [[{ totalCount }]] = await pool.query(`
-            SELECT COUNT(*) as totalCount FROM users WHERE referral_code_id IS NOT NULL
+            SELECT COUNT(*) as totalCount 
+            FROM users u 
+            JOIN referrals r ON u.referral_code_id = r.referral_code_id 
+            WHERE u.referral_code_id IS NOT NULL
         `);
-        res.json(new ApiResponse(200, { totalCount }));
-    } catch (error) {
-        next(new CustomError(500, error.message));
-    }
-};
-
-export const getTotalEnquiriesCount = async (req, res, next) => {
-    try {
-        const [[{ totalCount }]] = await pool.query(`SELECT COUNT(*) as totalCount FROM search_history`);
         res.json(new ApiResponse(200, { totalCount }));
     } catch (error) {
         next(new CustomError(500, error.message));
@@ -70,6 +76,7 @@ export const getTotalSubscriptionsFromReferralSignups = async (req, res, next) =
             SELECT COUNT(us.id) as totalCount 
             FROM user_subscriptions us 
             JOIN users u ON us.user_id = u.user_id 
+            JOIN referrals r ON u.referral_code_id = r.referral_code_id 
             WHERE u.referral_code_id IS NOT NULL
         `);
         res.json(new ApiResponse(200, { totalCount }));

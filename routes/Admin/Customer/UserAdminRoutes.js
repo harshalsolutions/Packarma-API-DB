@@ -1,5 +1,5 @@
 import express from 'express';
-import { AddCreditController, exportUsersDataController, getAllUserAddressesController, getAllUsersController, getUserWithAddressController, updateUserDetailsController } from '../../../controllers/Admin/Customer/UserController.js';
+import { AddCreditController, exportUsersDataController, getAllUserAddressesController, getAllUsersController, getUserWithAddressController, updateBlockStatusController, updateUserDetailsController } from '../../../controllers/Admin/Customer/UserController.js';
 
 const router = express.Router();
 
@@ -10,5 +10,7 @@ router.post('/users/add-credit/:user_id', AddCreditController);
 router.post('/users/export', exportUsersDataController);
 
 router.post("/users/update/:id", updateUserDetailsController)
+
+router.post("/users/block/:id", updateBlockStatusController)
 
 export default router;

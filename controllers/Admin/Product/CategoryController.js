@@ -78,12 +78,14 @@ export const createCategoryController = async (req, res, next) => {
     try {
         const { name, sequence } = req.body;
         let image = null;
-        if (req.file) {
-            image = `/media/categories/${req.file.filename}`;
+        let unselected = null;
+        if (req.files) {
+            image = req.files['image'] ? `/media/categories/${req.files['image'][0].filename}` : null;
+            unselected = req.files['unselected'] ? `/media/categories/${req.files['unselected'][0].filename}` : null;
         }
 
-        const query = 'INSERT INTO categories (name, image, sequence) VALUES (?, ?, ?)';
-        await pool.query(query, [name.trim(), image, sequence]);
+        const query = 'INSERT INTO categories (name, image, unselected, sequence) VALUES (?, ?, ?, ?)';
+        await pool.query(query, [name.trim(), image, unselected, sequence]);
 
         res.status(201).json(new ApiResponse(201, null, 'Category created successfully'));
     } catch (error) {
@@ -96,20 +98,35 @@ export const updateCategoryController = async (req, res, next) => {
     try {
         const { id } = req.params;
         const updateData = req.body;
-        delete updateData.type
-        if (req.file) {
-            const [existingCategoryRows] = await pool.query('SELECT image FROM categories WHERE id = ?', [id]);
+        delete updateData.type;
+
+        if (req.files) {
+            const [existingCategoryRows] = await pool.query('SELECT image, unselected FROM categories WHERE id = ?', [id]);
             if (!existingCategoryRows.length) throw new CustomError(404, 'Category not found');
 
-            const oldFilePath = existingCategoryRows[0].image;
-            if (oldFilePath) {
-                const absolutePath = path.join(process.cwd(), oldFilePath);
-                unlink(absolutePath, (err) => {
+            const oldImagePath = existingCategoryRows[0].image;
+            const oldUnselectedPath = existingCategoryRows[0].unselected;
+
+            if (oldImagePath) {
+                const absoluteImagePath = path.join(process.cwd(), oldImagePath);
+                unlink(absoluteImagePath, (err) => {
                     if (err) console.error(`Error deleting file: ${err.message}`);
                 });
             }
 
-            updateData.image = `/media/categories/${req.file.filename}`;
+            if (oldUnselectedPath) {
+                const absoluteUnselectedPath = path.join(process.cwd(), oldUnselectedPath);
+                unlink(absoluteUnselectedPath, (err) => {
+                    if (err) console.error(`Error deleting file: ${err.message}`);
+                });
+            }
+
+            if (req.files['image']) {
+                updateData.image = `/media/categories/${req.files['image'][0].filename}`;
+            }
+            if (req.files['unselected']) {
+                updateData.unselected = `/media/categories/${req.files['unselected'][0].filename}`;
+            }
         }
 
         const fields = Object.keys(updateData).map(field => `${field} = ?`).join(', ');

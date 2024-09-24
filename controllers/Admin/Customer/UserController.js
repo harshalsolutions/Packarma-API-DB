@@ -4,6 +4,8 @@ import ExcelJS from 'exceljs';
 import CustomError from "../../../utils/CustomError.js"
 import bcrypt from 'bcryptjs';
 import { formatDateTime } from '../../../utils/dateFormatter.js';
+
+
 export const getAllUsersController = async (req, res, next) => {
     try {
         const { page = 1, limit = 10, ...filters } = req.query;
@@ -13,8 +15,11 @@ export const getAllUsersController = async (req, res, next) => {
             SELECT u.*, r.code, us.subscription_id, us.start_date, us.end_date, s.type AS subscription_name
             FROM users AS u
             LEFT JOIN referral_codes AS r ON u.referral_code_id = r.id
-            LEFT JOIN user_subscriptions AS us ON u.user_id = us.user_id 
-              AND (us.end_date > NOW() OR us.end_date IS NULL)
+            LEFT JOIN (
+                SELECT * FROM user_subscriptions 
+                WHERE start_date <= NOW() AND end_date >= NOW()
+                ORDER BY start_date ASC
+            ) AS us ON u.user_id = us.user_id
             LEFT JOIN subscriptions AS s ON us.subscription_id = s.id
             WHERE 1 = 1
         `;
@@ -78,17 +83,17 @@ export const getAllUsersController = async (req, res, next) => {
         }
 
         if (active_subscription) {
-            if (active_subscription === 'active') {
+            if (active_subscription === 'Active') {
                 countQuery += ' AND us.subscription_id IS NOT NULL AND us.end_date > CURDATE()';
-            } else if (active_subscription === 'inactive') {
+            } else if (active_subscription === 'Inactive') {
                 countQuery += ' AND (us.subscription_id IS NULL OR us.end_date <= CURDATE())';
             }
         }
 
         if (user_type) {
-            if (user_type === 'normal') {
+            if (user_type === 'Normal') {
                 countQuery += ' AND u.user_id NOT IN (SELECT referred_user_id FROM referrals WHERE account_created = 1)';
-            } else if (user_type === 'referred') {
+            } else if (user_type === 'Referred') {
                 countQuery += ' AND u.referral_code_id IN (SELECT id FROM referral_codes WHERE user_id IN (SELECT referred_user_id FROM referrals WHERE account_created = 1))';
             }
         }
@@ -220,10 +225,12 @@ export const exportUsersDataController = async (req, res, next) => {
             SELECT u.*, r.code, us.subscription_id, us.start_date, us.end_date, s.type AS subscription_name
             FROM users AS u
             LEFT JOIN referral_codes AS r ON u.referral_code_id = r.id
-            LEFT JOIN user_subscriptions AS us ON u.user_id = us.user_id 
-              AND (us.end_date > NOW() OR us.end_date IS NULL)
+            LEFT JOIN (
+                SELECT * FROM user_subscriptions 
+                WHERE start_date <= NOW() AND end_date >= NOW()
+                ORDER BY start_date ASC
+            ) AS us ON u.user_id = us.user_id
             LEFT JOIN subscriptions AS s ON us.subscription_id = s.id
-            ORDER BY u.user_id;
         `, []);
 
         const csvData = users.map(user => ({
@@ -233,7 +240,7 @@ export const exportUsersDataController = async (req, res, next) => {
             email: user.email,
             referral_code: user.code,
             credits: user.credits,
-            active_subscription: user.subscription_id !== null ? 'Yes' : 'No',
+            active_subscription: user.subscription_id !== null ? 'Active' : 'Inactive',
             subscription_id: user.subscription_id,
             subscription_name: user.subscription_name,
             start_date: user.start_date,
@@ -298,6 +305,7 @@ export const exportUsersDataController = async (req, res, next) => {
         next(new CustomError(500, error.message));
     }
 };
+
 export const updateUserDetailsController = async (req, res, next) => {
     const id = req.params.id;
     const {
@@ -365,4 +373,40 @@ export const updateUserDetailsController = async (req, res, next) => {
     }
 };
 
+
+
+export const updateBlockStatusController = async (req, res, next) => {
+    const id = req.params.id;
+    const {
+        block
+    } = req.body;
+
+    const connection = await pool.getConnection();
+    try {
+        let query = `
+            UPDATE users
+            SET
+                block = ?
+            WHERE user_id = ?
+        `;
+
+        const values = [
+            block,
+            id
+        ];
+
+        const [result] = await connection.query(query, values);
+
+        if (result.affectedRows !== 1) {
+            return next(new CustomError(404, 'User not found'));
+        }
+
+        res.status(200).json(new ApiResponse(200, {}, 'Block status Updated!'));
+    } catch (error) {
+        console.log(error);
+        next(new CustomError(500, error.message));
+    } finally {
+        connection.release();
+    }
+};
 

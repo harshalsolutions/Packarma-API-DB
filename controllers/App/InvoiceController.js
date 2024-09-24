@@ -416,7 +416,8 @@ export const getInvoicesController = async (req, res, next) => {
 
 export const getInvoiceByIdController = async (req, res, next) => {
     const connection = await pool.getConnection();
-    const { id } = req.params;
+    const id = req.params.id;
+    const userId = req.user.userId;
     const { type } = req.query;
     try {
         let query = `
@@ -437,78 +438,77 @@ export const getInvoiceByIdController = async (req, res, next) => {
             FROM customer_invoices i
             JOIN users u ON i.user_id = u.user_id
             JOIN addresses a ON i.address_id = a.id
-            LEFT JOIN invoice_product_details ipd ON i.id = ipd.invoice_id AND ipd.type = ?
+            LEFT JOIN invoice_product_details ipd ON i.id = ipd.invoice_id
         `;
 
         if (type === 'subscription') {
             query += `JOIN subscriptions s ON i.subscription_id = s.id `;
         }
 
-        query += `WHERE i.id = ? AND i.type = ?`;
+        query += `WHERE i.id = ? AND i.user_id = ? AND i.type = ?`;
 
-        const [invoices] = await connection.query(query, [type, id, type]);
+        const invoices = await connection.query(query, [id, userId, type]);
 
-        if (invoices.length === 0) {
-            return res.status(404).json(new ApiResponse(404, {}, 'Invoice not found'));
-        }
-
-        const invoice = invoices[0];
-        const formattedInvoice = {
-            id: invoice.id,
-            user: {
-                user_id: invoice.user_id,
-                firstname: invoice.firstname,
-                lastname: invoice.lastname,
-                email: invoice.email
-            },
-            address: {
-                address_id: invoice.address_id,
-                address_name: invoice.address_name,
-                address: invoice.address,
-                state: invoice.state,
-                city: invoice.city,
-                pincode: invoice.pincode,
-                phone_number: invoice.phone_number,
-            },
-            customer_name: invoice.customer_name,
-            customer_gstno: invoice.customer_gstno,
-            total_price: invoice.total_price,
-            currency: invoice.currency,
-            invoice_link: invoice.invoice_link,
-            transaction_id: invoice.transaction_id,
-            invoice_date: invoice.invoice_date,
-            product_details: {
-                product_id: invoice.product_id,
-                invoice_id: invoice.invoice_id,
-                product_description: invoice.product_description,
-                amount: invoice.amount,
-                discount: invoice.discount,
-                taxable_value: invoice.taxable_value,
-                cgst_rate: invoice.cgst_rate,
-                cgst_amount: invoice.cgst_amount,
-                sgst_rate: invoice.sgst_rate,
-                sgst_amount: invoice.sgst_amount,
-                igst_rate: invoice.igst_rate,
-                igst_amount: invoice.igst_amount,
-                total_amount: invoice.total_amount
-            },
-            createdAt: invoice.createdAt,
-            updatedAt: invoice.updatedAt,
-        };
-
-        if (type === 'subscription') {
-            formattedInvoice.subscription = {
-                subscription_id: invoice.subscription_id,
-                type: invoice.type,
-                credit_amount: invoice.credit_amount,
-                duration: invoice.duration,
-                benefits: invoice.benefits
+        const formattedInvoices = invoices[0].map(invoice => {
+            const formattedInvoice = {
+                id: invoice.id,
+                user: {
+                    user_id: invoice.user_id,
+                    firstname: invoice.firstname,
+                    lastname: invoice.lastname,
+                    email: invoice.email
+                },
+                address: {
+                    address_id: invoice.address_id,
+                    address_name: invoice.address_name,
+                    address: invoice.address,
+                    state: invoice.state,
+                    city: invoice.city,
+                    pincode: invoice.pincode,
+                    phone_number: invoice.phone_number,
+                },
+                customer_name: invoice.customer_name,
+                customer_gstno: invoice.customer_gstno,
+                total_price: invoice.total_price,
+                currency: invoice.currency,
+                invoice_link: invoice.invoice_link,
+                transaction_id: invoice.transaction_id,
+                invoice_date: invoice.invoice_date,
+                product_details: {
+                    product_id: invoice.product_id,
+                    invoice_id: invoice.invoice_id,
+                    product_description: invoice.product_description,
+                    amount: invoice.amount,
+                    discount: invoice.discount,
+                    taxable_value: invoice.taxable_value,
+                    cgst_rate: invoice.cgst_rate,
+                    cgst_amount: invoice.cgst_amount,
+                    sgst_rate: invoice.sgst_rate,
+                    sgst_amount: invoice.sgst_amount,
+                    igst_rate: invoice.igst_rate,
+                    igst_amount: invoice.igst_amount,
+                    total_amount: invoice.total_amount
+                },
+                createdAt: invoice.createdAt,
+                updatedAt: invoice.updatedAt,
             };
-        } else if (type === 'credit') {
-            formattedInvoice.no_of_credits = invoice.no_of_credits;
-        }
 
-        res.json(new ApiResponse(200, formattedInvoice, 'Invoice fetched successfully'));
+            if (type === 'subscription') {
+                formattedInvoice.subscription = {
+                    subscription_id: invoice.subscription_id,
+                    type: invoice.type,
+                    credit_amount: invoice.credit_amount,
+                    duration: invoice.duration,
+                    benefits: invoice.benefits
+                };
+            } else if (type === 'credit') {
+                formattedInvoice.no_of_credits = invoice.no_of_credits;
+            }
+
+            return formattedInvoice;
+        });
+
+        res.json(new ApiResponse(200, formattedInvoices, 'Invoices fetched successfully'));
     } catch (error) {
         console.log(error);
         res.status(500).json(new ApiResponse(500, error.message, 'An error occurred'));

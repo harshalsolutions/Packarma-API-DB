@@ -186,43 +186,56 @@ export const updateUserController = async (req, res, next) => {
 export const getUserController = async (req, res, next) => {
     try {
         const userId = req.user.userId;
+
         const [rows] = await pool.query(
             `SELECT u.*, r.code as referral_code, 
-                CASE 
-                    WHEN us.end_date < CURRENT_DATE THEN NULL 
-                    ELSE us.subscription_id 
-                END AS subscription_id,
-                CASE 
-                    WHEN us.end_date < CURRENT_DATE THEN NULL 
-                    ELSE us.start_date 
-                END AS start_date,
-                CASE 
-                    WHEN us.end_date < CURRENT_DATE THEN NULL 
-                    ELSE us.end_date 
-                END AS end_date,
-                CASE 
-                    WHEN us.end_date < CURRENT_DATE THEN NULL 
-                    ELSE s.type 
-                END AS subscription_name 
-                FROM users u 
-                LEFT JOIN referral_codes r ON u.user_id = r.user_id 
-                LEFT JOIN user_subscriptions us ON u.user_id = us.user_id 
-                LEFT JOIN subscriptions s ON us.subscription_id = s.id 
-                WHERE u.user_id = ? AND (us.createdAt IS NULL OR us.createdAt = (
-                    SELECT MAX(createdAt) 
-                    FROM user_subscriptions 
-                    WHERE user_id = u.user_id
-                ))`,
+                us.subscription_id, us.start_date, us.end_date,
+                s.type as subscription_name
+                FROM users u
+                LEFT JOIN referral_codes r ON u.user_id = r.user_id
+                LEFT JOIN user_subscriptions us ON u.user_id = us.user_id
+                LEFT JOIN subscriptions s ON us.subscription_id = s.id
+                WHERE u.user_id = ?
+                ORDER BY us.start_date DESC`,
             [userId]
         );
+
         if (!rows.length) throw new CustomError(404, 'User not found');
-        const user = rows[0];
+
+        let currentSubscription = null;
+        const upcomingSubscriptions = [];
+        const currentDate = new Date();
+
+        rows.forEach(row => {
+            const subscription = {
+                subscription_id: row.subscription_id,
+                subscription_name: row.subscription_name,
+                start_date: row.start_date,
+                end_date: row.end_date
+            };
+
+            if (new Date(row.start_date) <= currentDate && new Date(row.end_date) >= currentDate) {
+                currentSubscription = subscription;
+            } else if (new Date(row.end_date) > currentDate) {
+                upcomingSubscriptions.push(subscription);
+            }
+        });
+
+        const user = {
+            ...rows[0],
+            ...currentSubscription,
+            upcoming_subscriptions: upcomingSubscriptions
+        };
+
+
         const { password: _, ...userWithoutPassword } = user;
+
         res.json(new ApiResponse(200, userWithoutPassword));
     } catch (error) {
         next(error);
     }
 };
+
 
 export const requestOtpController = async (req, res, next) => {
     try {

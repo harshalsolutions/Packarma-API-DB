@@ -1,4 +1,3 @@
-import { handleError } from '../../utils/ErrorHandler.js';
 import CustomError from '../../utils/CustomError.js';
 import fs from 'fs';
 import path from 'path';
@@ -30,32 +29,16 @@ const addInvoiceToDatabase = async (connection, invoiceType, invoiceData) => {
         const [day, month, year] = invoiceData.invoice_date.split('/');
         const formattedDate = `${year}-${month}-${day}`;
 
-        let invoiceId;
-
-        if (invoiceType === 'credit') {
-            const query = `
-                INSERT INTO credit_invoice (user_id, no_of_credits, total_price, currency, invoice_date, invoice_link, transaction_id, customer_name, customer_gstno, address_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `;
-            const queryParams = [
-                invoiceData.userId, invoiceData.no_of_credits, invoiceData.total_price, invoiceData.currency,
-                formattedDate, invoiceData.invoice_link, invoiceData.transaction_id,
-                invoiceData.customer_name, invoiceData.customer_gstNo, invoiceData.customer_address_id
-            ];
-            const [result] = await connection.query(query, queryParams);
-
-        } else if (invoiceType === 'subscription') {
-            const query = `
-                INSERT INTO subscription_invoice (user_id, subscription_id, total_price, invoice_date, invoice_link, currency, transaction_id, customer_name, customer_gstno, address_id, invoice_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `;
-            const queryParams = [
-                invoiceData.userId, invoiceData.subscription_id, invoiceData.total_price, formattedDate,
-                invoiceData.invoice_link, invoiceData.currency, invoiceData.transaction_id,
-                invoiceData.customer_name, invoiceData.customer_gstNo, invoiceData.customer_address_id, invoiceData.invoice_no
-            ];
-            const [result] = await connection.query(query, queryParams);
-        }
+        const query = `
+            INSERT INTO customer_invoices (user_id, customer_name, customer_gstno, total_price, currency, invoice_date, invoice_link, transaction_id, address_id, subscription_id, invoice_no, no_of_credits, type)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        const queryParams = [
+            invoiceData.userId, invoiceData.customer_name, invoiceData.customer_gstNo, invoiceData.total_price,
+            invoiceData.currency, formattedDate, invoiceData.invoice_link, invoiceData.transaction_id,
+            invoiceData.customer_address_id, invoiceData.subscription_id, invoiceData.invoice_no, invoiceData.no_of_credits, invoiceType
+        ];
+        const [result] = await connection.query(query, queryParams);
 
         const productDetailsQuery = `
             INSERT INTO invoice_product_details (invoice_id, product_description, amount, discount, taxable_value, cgst_rate, cgst_amount, sgst_rate, sgst_amount, igst_rate, igst_amount, total_amount, type)
@@ -63,7 +46,7 @@ const addInvoiceToDatabase = async (connection, invoiceType, invoiceData) => {
         `;
         for (const product of invoiceData.products) {
             const productDetailsParams = [
-                invoiceData.invoice_no, product.description, product.amount, product.discount, product.taxable_value,
+                result.insertId, product.description, product.amount, product.discount, product.taxable_value,
                 product.cgst_rate, product.cgst_amount, product.sgst_rate, product.sgst_amount, product.igst_rate, product.igst_amount, product.total_amount, invoiceType
             ];
             await connection.query(productDetailsQuery, productDetailsParams);
@@ -76,9 +59,7 @@ const addInvoiceToDatabase = async (connection, invoiceType, invoiceData) => {
             if (!subscription.length) throw new CustomError(404, 'Subscription not found');
             const subscriptionDetails = subscription[0];
             const startDate = new Date();
-            const endDate = new Date(startDate);
-            endDate.setDate(endDate.getDate() + subscriptionDetails[0].duration);
-            await addUserSubscription(invoiceData.userId, invoiceData.subscription_id, startDate, endDate, invoiceData.invoice_no);
+            await addUserSubscription(invoiceData.userId, invoiceData.subscription_id, subscriptionDetails[0].duration, startDate, result.insertId);
         }
 
         if (invoiceType === 'credit') {
@@ -86,6 +67,9 @@ const addInvoiceToDatabase = async (connection, invoiceType, invoiceData) => {
         }
 
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') {
+            throw new CustomError(409, 'Duplicate entry for transaction ID');
+        }
         throw error;
     }
 };
@@ -122,11 +106,29 @@ const addUserCredits = async (userId, credits) => {
     }
 };
 
-const addUserSubscription = async (userId, subscriptionId, startDate, endDate, invoiceId) => {
+const addUserSubscription = async (userId, subscriptionId, duration, startDate, invoiceId) => {
     try {
         const connection = await pool.getConnection();
         await connection.beginTransaction();
         try {
+            const [existingSubscriptions] = await connection.query(
+                'SELECT end_date FROM user_subscriptions WHERE user_id = ? ORDER BY end_date DESC LIMIT 1',
+                [userId]
+            );
+
+            let endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + duration);
+
+            if (existingSubscriptions.length > 0) {
+                const lastEndDate = new Date(existingSubscriptions[0].end_date);
+                if (lastEndDate > startDate) {
+                    startDate = new Date(lastEndDate);
+                    startDate.setDate(startDate.getDate() + 1);
+                    endDate = new Date(startDate);
+                    endDate.setDate(endDate.getDate() + duration);
+                }
+            }
+
             await connection.query(
                 'INSERT INTO user_subscriptions (user_id, subscription_id, start_date, end_date, invoiceId) VALUES (?, ?, ?, ?, ?)',
                 [userId, subscriptionId, startDate, endDate, invoiceId]
@@ -162,8 +164,12 @@ export const generateInvoiceController = async (req, res, next) => {
             pool.query(`SELECT * FROM addresses WHERE id = ? LIMIT 1`, [customer_address_id])
         ]);
 
+        if (!address.length) {
+            throw new CustomError(500, 'Address not found');
+        }
+
         if (!invoiceDetails.length) {
-            throw new CustomError(500, 'Invoice details not found');
+            throw new CustomError(500, 'Packarma Invoice details not found');
         }
         const details = invoiceDetails[0];
         const invoice_no = result[0].count ? parseInt(result[0].count) + 1 : 1;
@@ -300,7 +306,7 @@ export const generateInvoiceController = async (req, res, next) => {
 
     } catch (error) {
         await connection.rollback();
-        res.status(500).json(new ApiResponse(500, error.message, 'An error occurred'));
+        res.status(500).json(new ApiResponse(500, {}, error.message));
     } finally {
         connection.release();
     }
@@ -326,7 +332,7 @@ export const getInvoicesController = async (req, res, next) => {
         }
 
         query += `
-            FROM ${type === 'credit' ? 'credit_invoice' : 'subscription_invoice'} i
+            FROM customer_invoices i
             JOIN users u ON i.user_id = u.user_id
             JOIN addresses a ON i.address_id = a.id
             LEFT JOIN invoice_product_details ipd ON i.id = ipd.invoice_id AND ipd.type = ?
@@ -336,9 +342,9 @@ export const getInvoicesController = async (req, res, next) => {
             query += `JOIN subscriptions s ON i.subscription_id = s.id `;
         }
 
-        query += `WHERE i.user_id = ?`;
+        query += `WHERE i.user_id = ? AND i.type = ?`;
 
-        const invoices = await connection.query(query, [type, userId]);
+        const invoices = await connection.query(query, [type, userId, type]);
 
         const formattedInvoices = invoices[0].map(invoice => {
             const formattedInvoice = {
@@ -428,7 +434,7 @@ export const getInvoiceByIdController = async (req, res, next) => {
         }
 
         query += `
-            FROM ${type === 'credit' ? 'credit_invoice' : 'subscription_invoice'} i
+            FROM customer_invoices i
             JOIN users u ON i.user_id = u.user_id
             JOIN addresses a ON i.address_id = a.id
             LEFT JOIN invoice_product_details ipd ON i.id = ipd.invoice_id AND ipd.type = ?
@@ -438,9 +444,9 @@ export const getInvoiceByIdController = async (req, res, next) => {
             query += `JOIN subscriptions s ON i.subscription_id = s.id `;
         }
 
-        query += `WHERE i.id = ?`;
+        query += `WHERE i.id = ? AND i.type = ?`;
 
-        const [invoices] = await connection.query(query, [type, id]);
+        const [invoices] = await connection.query(query, [type, id, type]);
 
         if (invoices.length === 0) {
             return res.status(404).json(new ApiResponse(404, {}, 'Invoice not found'));

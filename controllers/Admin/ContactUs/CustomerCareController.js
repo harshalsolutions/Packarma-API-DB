@@ -20,7 +20,9 @@ export const getCustomerCareController = async (req, res, next) => {
 
         const [enquiries] = await pool.query(query, queryParams);
 
-        if (!enquiries.length) throw new CustomError(404, 'No help and support messages found');
+        if (!enquiries.length) {
+            return res.json(new ApiResponse(404, {}, 'No help and support messages found'));
+        }
 
         const [[{ totalCount }]] = await pool.query(`SELECT COUNT(*) as totalCount FROM help_support WHERE name LIKE ? OR phone_number LIKE ?`, queryParams);
         const totalPages = Math.ceil(totalCount / limit);

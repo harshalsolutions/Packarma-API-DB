@@ -51,8 +51,10 @@ export const getAllSubCategoriesController = async (req, res, next) => {
         }
 
         if (pagination === 'true') {
-            query += ' ORDER BY subcategories.createdAt DESC LIMIT ? OFFSET ?';
+            query += ' ORDER BY subcategories.sequence LIMIT ? OFFSET ?';
             queryParams.push(parseInt(limit), offset);
+        } else {
+            query += ' ORDER BY subcategories.sequence';
         }
 
         const [rows] = await pool.query(query, queryParams);
@@ -93,13 +95,13 @@ export const getAllSubCategoriesController = async (req, res, next) => {
 
 export const createSubCategoryController = async (req, res, next) => {
     try {
-        const { category_id, name } = req.body;
+        const { category_id, name, sequence } = req.body;
         let image = null;
         if (req.file) {
             image = `/media/subcategories/${req.file.filename}`;
         }
 
-        const query = 'INSERT INTO subcategories (category_id, name, image) VALUES (?, ?, ?)';
+        const query = 'INSERT INTO subcategories (category_id, name, image, sequence) VALUES (?, ?, ?, ?)';
         await pool.query(query, [category_id, name.trim(), image]);
 
         res.status(201).json(new ApiResponse(201, null, 'Subcategory created successfully'));

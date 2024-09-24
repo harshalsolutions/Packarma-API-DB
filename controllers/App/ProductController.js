@@ -7,8 +7,8 @@ export const getCategoryController = async (req, res, next) => {
         const { status } = req.query;
 
         let query = `
-            SELECT c.id AS category_id, c.name AS category_name, c.image AS category_image,
-                   s.id AS subcategory_id, s.name AS subcategory_name, s.image AS subcategory_image
+            SELECT c.id AS category_id, c.name AS category_name, c.image AS category_image, c.sequence AS category_sequence,
+                   s.id AS subcategory_id, s.name AS subcategory_name, s.image AS subcategory_image, s.sequence AS subcategory_sequence
             FROM subcategories s
             JOIN categories c ON s.category_id = c.id
         `;
@@ -20,21 +20,21 @@ export const getCategoryController = async (req, res, next) => {
             queryParams.push(status, status);
         }
 
-        query += ' ORDER BY c.name, s.name';
+        query += ' ORDER BY c.sequence, s.sequence';
 
         const [rows] = await pool.query(query, queryParams);
 
         if (!rows.length) throw new CustomError(404, 'No categories found');
 
         const categoriesMap = rows.reduce((acc, row) => {
-            const { category_id, category_name, category_image, category_status, subcategory_id, subcategory_name, subcategory_image, subcategory_status } = row;
+            const { category_id, category_name, category_image, category_sequence, subcategory_id, subcategory_name, subcategory_image, subcategory_sequence } = row;
 
             if (!acc[category_id]) {
                 acc[category_id] = {
                     category_id,
                     category_name,
                     category_image,
-                    category_status,
+                    category_sequence,
                     subcategories: []
                 };
             }
@@ -44,14 +44,18 @@ export const getCategoryController = async (req, res, next) => {
                     subcategory_id,
                     subcategory_name,
                     subcategory_image,
-                    subcategory_status
+                    subcategory_sequence
                 });
             }
 
             return acc;
         }, {});
 
-        const formattedCategories = Object.values(categoriesMap);
+        const formattedCategories = Object.values(categoriesMap).sort((a, b) => a.category_sequence - b.category_sequence);
+
+        formattedCategories.forEach(category => {
+            category.subcategories.sort((a, b) => a.subcategory_sequence - b.subcategory_sequence);
+        });
 
         res.json(new ApiResponse(200, formattedCategories, 'Categories fetched successfully'));
     } catch (error) {
@@ -472,7 +476,8 @@ export const getSubCategoryByPackagingTreatmentController = async (req, res, nex
             SELECT DISTINCT s.*
             FROM subcategories s
             JOIN product p ON s.id = p.sub_category_id
-            WHERE p.packaging_treatment_id = ?;
+            WHERE p.packaging_treatment_id = ?
+            ORDER BY s.sequence;  // Added ORDER BY clause
         `;
 
         const [rows] = await connection.query(selectQuery, [id]);

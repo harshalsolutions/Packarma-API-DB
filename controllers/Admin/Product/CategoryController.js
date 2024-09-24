@@ -36,10 +36,10 @@ export const getAllCategoriesController = async (req, res, next) => {
         }
 
         if (pagination === 'true') {
-            query += ' ORDER BY createdAt DESC LIMIT ? OFFSET ?';
+            query += ' ORDER BY sequence LIMIT ? OFFSET ?';
             queryParams.push(parseInt(limit), offset);
         } else {
-            query += ' ORDER BY createdAt DESC';
+            query += ' ORDER BY sequence';
         }
 
         const [rows] = await pool.query(query, queryParams);
@@ -76,14 +76,14 @@ export const getAllCategoriesController = async (req, res, next) => {
 
 export const createCategoryController = async (req, res, next) => {
     try {
-        const { name } = req.body;
+        const { name, sequence } = req.body;
         let image = null;
         if (req.file) {
             image = `/media/categories/${req.file.filename}`;
         }
 
-        const query = 'INSERT INTO categories (name, image) VALUES (?, ?)';
-        await pool.query(query, [name.trim(), image]);
+        const query = 'INSERT INTO categories (name, image, sequence) VALUES (?, ?, ?)';
+        await pool.query(query, [name.trim(), image, sequence]);
 
         res.status(201).json(new ApiResponse(201, null, 'Category created successfully'));
     } catch (error) {

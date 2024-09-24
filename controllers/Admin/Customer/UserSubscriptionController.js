@@ -22,16 +22,16 @@ export const getAllUserSubscriptionsController = async (req, res, next) => {
             a.city, 
             a.pincode, 
             a.phone_number AS address_phone_number,
-            si.id AS invoice_id, 
-            si.customer_name, 
-            si.customer_gstno, 
-            si.total_price, 
-            si.currency, 
-            si.invoice_link, 
-            si.transaction_id, 
-            si.invoice_date, 
-            si.createdAt AS invoice_createdAt, 
-            si.updatedAt AS invoice_updatedAt, 
+            ci.id AS invoice_id, 
+            ci.customer_name, 
+            ci.customer_gstno, 
+            ci.total_price, 
+            ci.currency, 
+            ci.invoice_link, 
+            ci.transaction_id, 
+            ci.invoice_date, 
+            ci.createdAt AS invoice_createdAt, 
+            ci.updatedAt AS invoice_updatedAt, 
             s.type AS subscription_type, 
             s.credit_amount, 
             s.duration, 
@@ -55,15 +55,15 @@ export const getAllUserSubscriptionsController = async (req, res, next) => {
         FROM 
             users u
         JOIN 
-            subscription_invoice si ON u.user_id = si.user_id
+            customer_invoices ci ON u.user_id = ci.user_id
         JOIN 
-            subscriptions s ON si.subscription_id = s.id
+            subscriptions s ON ci.subscription_id = s.id
         JOIN 
-            addresses a ON si.address_id = a.id
+            addresses a ON ci.address_id = a.id
         JOIN 
-            invoice_product_details ipd ON si.invoice_id = ipd.invoice_id
+            invoice_product_details ipd ON ci.id = ipd.invoice_id
         JOIN 
-            user_subscriptions us ON si.invoice_id = us.invoiceId
+            user_subscriptions us ON ci.id = us.invoiceId
         `;
 
         let whereClauses = [];
@@ -74,7 +74,7 @@ export const getAllUserSubscriptionsController = async (req, res, next) => {
         }
 
         if (start_date && end_date) {
-            whereClauses.push(`(si.invoice_date BETWEEN ? AND ?)`);
+            whereClauses.push(`(ci.invoice_date BETWEEN ? AND ?)`);
             queryParams.push(start_date, end_date);
         }
 
@@ -87,7 +87,7 @@ export const getAllUserSubscriptionsController = async (req, res, next) => {
             query += ` WHERE ` + whereClauses.join(' AND ');
         }
 
-        query += ` ORDER BY si.invoice_date DESC LIMIT ? OFFSET ?`;
+        query += ` ORDER BY ci.invoice_date DESC LIMIT ? OFFSET ?`;
         queryParams.push(parseInt(limit), parseInt(offset));
 
         const [invoices] = await connection.query(query, queryParams);
@@ -95,10 +95,11 @@ export const getAllUserSubscriptionsController = async (req, res, next) => {
         let countQuery = `
         SELECT COUNT(*) as totalCount
         FROM users u
-        JOIN subscription_invoice si ON u.user_id = si.user_id
-        JOIN subscriptions s ON si.subscription_id = s.id
-        JOIN addresses a ON si.address_id = a.id
-        JOIN invoice_product_details ipd ON si.invoice_id = ipd.invoice_id
+        JOIN customer_invoices ci ON u.user_id = ci.user_id
+        JOIN subscriptions s ON ci.subscription_id = s.id
+        JOIN addresses a ON ci.address_id = a.id
+        JOIN invoice_product_details ipd ON ci.id = ipd.invoice_id
+        JOIN user_subscriptions us ON ci.id = us.invoiceId
         `;
 
         if (whereClauses.length > 0) {
@@ -196,32 +197,34 @@ export const exportAllSubscriptionController = async (req, res, next) => {
         const { link } = req.body;
         let query = `
         SELECT 
+            ci.id,
             u.user_id, 
             u.firstname, 
             u.lastname, 
             s.type AS subscription_type, 
             us.start_date,
             us.end_date,
-            si.transaction_id, 
-            si.invoice_link, 
-            si.invoice_date,
-            si.total_price, 
-            si.currency
+            ci.transaction_id, 
+            ci.invoice_link, 
+            ci.invoice_date,
+            ci.total_price, 
+            ci.currency
         FROM 
             users u
         JOIN 
-            subscription_invoice si ON u.user_id = si.user_id
+            customer_invoices ci ON u.user_id = ci.user_id
         JOIN 
-            subscriptions s ON si.subscription_id = s.id
+            subscriptions s ON ci.subscription_id = s.id
         JOIN 
-            user_subscriptions us ON si.invoice_id = us.invoiceId
+            user_subscriptions us ON ci.id = us.invoiceId
         `;
         const [subscriptionsRows] = await pool.query(query);
 
         if (!subscriptionsRows.length) throw new CustomError(404, 'No subscriptions found');
 
         const csvData = subscriptionsRows.map(subscription => ({
-            id: subscription.user_id,
+            id: subscription.id,
+            user_id: subscription.user_id,
             user_name: subscription.firstname + " " + subscription.lastname,
             subscription_type: subscription.subscription_type,
             subscription_start_date: formatDateTime(subscription.start_date),
@@ -238,6 +241,7 @@ export const exportAllSubscriptionController = async (req, res, next) => {
 
         worksheet.columns = [
             { header: 'ID', key: 'id', width: 10 },
+            { header: 'User ID', key: 'user_id', width: 10 },
             { header: 'User Name', key: 'user_name', width: 30 },
             { header: 'Subscription Type', key: 'subscription_type', width: 30 },
             { header: 'Subscription Start Date', key: 'subscription_start_date', width: 20 },

@@ -248,7 +248,7 @@ export const generateInvoiceController = async (req, res, next) => {
             fs.mkdirSync(pdfFolder);
         }
 
-        const pdfFilePath = path.join(pdfFolder, `invoice_${invoice_no}.pdf`);
+        const pdfFilePath = path.join(pdfFolder, `invoice_${transaction_id}.pdf`);
         const browser = await getBrowserInstance();
         const page = await browser.newPage();
         await page.setContent(populatedHtml, { waitUntil: 'networkidle0' });

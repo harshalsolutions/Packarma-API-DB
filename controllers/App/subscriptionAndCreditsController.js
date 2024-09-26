@@ -92,3 +92,38 @@ export const getSubscriptionsController = async (req, res, next) => {
         next(new CustomError(500, error.message));
     }
 }
+
+export const addFreeTrailController = async (req, res, next) => {
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        const userId = req.user.userId;
+
+        const [subscriptionData] = await connection.query(`SELECT * FROM subscriptions WHERE id = ?`, [1]);
+        if (subscriptionData.length === 0) {
+            throw new Error('Subscription not found');
+        }
+
+        const { duration } = subscriptionData[0];
+
+        const startDate = new Date();
+
+        const endDate = new Date();
+        endDate.setDate(startDate.getDate() + duration);
+
+        await connection.query(
+            `INSERT INTO user_subscriptions (user_id, subscription_id, start_date, end_date) VALUES (?, ?, ?, ?)`,
+            [userId, 1, startDate, endDate]
+        );
+
+        await connection.commit();
+
+        res.json(new ApiResponse(200, null, 'Free trial added successfully'));
+    } catch (error) {
+        await connection.rollback();
+        next(new CustomError(500, error.message));
+    } finally {
+        connection.release();
+    }
+};

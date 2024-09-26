@@ -134,6 +134,18 @@ const addUserSubscription = async (userId, subscriptionId, duration, startDate, 
                 [userId, subscriptionId, startDate, endDate, invoiceId]
             );
 
+            const [referral] = await connection.query(
+                'SELECT id, subscription_completed FROM referrals WHERE referred_user_id = ? AND subscription_completed = 0',
+                [userId]
+            );
+
+            if (referral.length > 0) {
+                await connection.query(
+                    'UPDATE referrals SET subscription_completed = 1 WHERE id = ?',
+                    [referral[0].id]
+                );
+            }
+
             await connection.commit();
         } catch (error) {
             await connection.rollback();

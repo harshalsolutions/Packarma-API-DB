@@ -16,15 +16,15 @@ const generateToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET, {
 
 export const registerController = async (req, res, next) => {
     try {
-        const { firstname, lastname, email, password, referralCode, type = "normal" } = req.body;
+        const { firstname, lastname, email, password, referralCode, phone_number, type = "normal" } = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);
         const connection = await pool.getConnection();
         await connection.beginTransaction();
 
         try {
             const [userResult] = await connection.query(
-                'INSERT INTO users (firstname, lastname, email, password, type) VALUES (?, ?, ?, ?, ?)',
-                [firstname, lastname, email, hashedPassword, type]
+                'INSERT INTO users (firstname, lastname, email, password, type, phone_number) VALUES (?, ?, ?, ?, ?)',
+                [firstname, lastname, email, hashedPassword, type, phone_number]
             );
             const userId = userResult.insertId;
             const newReferralCode = generateReferralCode(10);

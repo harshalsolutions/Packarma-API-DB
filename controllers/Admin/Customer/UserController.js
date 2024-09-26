@@ -60,10 +60,15 @@ export const getAllUsersController = async (req, res, next) => {
         const [users] = await pool.query(query, queryParams);
 
         let countQuery = `
-            SELECT COUNT(*) as totalCount
-            FROM users AS u
-            LEFT JOIN user_subscriptions AS us ON u.user_id = us.user_id 
-              AND (us.end_date > NOW() OR us.end_date IS NULL)
+        SELECT COUNT(*) as totalCount
+        FROM users AS u
+        LEFT JOIN referral_codes AS r ON u.referral_code_id = r.id
+        LEFT JOIN (
+            SELECT * FROM user_subscriptions 
+            WHERE start_date <= NOW() AND end_date >= NOW()
+            ORDER BY start_date ASC
+        ) AS us ON u.user_id = us.user_id
+        LEFT JOIN subscriptions AS s ON us.subscription_id = s.id
             WHERE 1 = 1
         `;
         const countParams = [];
@@ -214,14 +219,13 @@ export const AddCreditController = async (req, res, next) => {
     }
 }
 
-
 export const exportUsersDataController = async (req, res, next) => {
     try {
-        const { link } = req.body;
+        const { link, name, phone_number, email, active_subscription, user_type } = req.body;
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Users Data');
 
-        const [users] = await pool.query(`
+        let query = `
             SELECT u.*, r.code, us.subscription_id, us.start_date, us.end_date, s.type AS subscription_name
             FROM users AS u
             LEFT JOIN referral_codes AS r ON u.referral_code_id = r.id
@@ -231,7 +235,42 @@ export const exportUsersDataController = async (req, res, next) => {
                 ORDER BY start_date ASC
             ) AS us ON u.user_id = us.user_id
             LEFT JOIN subscriptions AS s ON us.subscription_id = s.id
-        `, []);
+            WHERE 1 = 1
+        `;
+        const queryParams = [];
+        if (name) {
+            query += ' AND (u.firstname LIKE ? OR u.lastname LIKE ?)';
+            queryParams.push(`%${name}%`, `%${name}%`);
+        }
+        if (phone_number) {
+            query += ' AND u.phone_number LIKE ?';
+            queryParams.push(`%${phone_number}%`);
+        }
+
+        if (email) {
+            query += ' AND u.email LIKE ?';
+            queryParams.push(`%${email}%`);
+        }
+
+        if (active_subscription) {
+            if (active_subscription === 'Active') {
+                query += ' AND us.subscription_id IS NOT NULL AND us.end_date > CURDATE()';
+            } else if (active_subscription === 'Inactive') {
+                query += ' AND (us.subscription_id IS NULL OR us.end_date <= CURDATE())';
+            }
+        }
+
+        if (user_type) {
+            if (user_type === 'Normal') {
+                query += ' AND u.user_id NOT IN (SELECT referred_user_id FROM referrals WHERE account_created = 1)';
+            } else if (user_type === 'Referred') {
+                query += ' AND u.referral_code_id IN (SELECT id FROM referral_codes WHERE user_id IN (SELECT referred_user_id FROM referrals WHERE account_created = 1))';
+            }
+        }
+
+        query += ' ORDER BY u.user_id DESC';
+
+        const [users] = await pool.query(query, queryParams);
 
         const csvData = users.map(user => ({
             user_id: user.user_id,

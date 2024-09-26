@@ -111,8 +111,9 @@ export const getAllCreditPurchaseController = async (req, res, next) => {
 
 export const exportCreditPurchaseController = async (req, res, next) => {
     const connection = await pool.getConnection();
-    const { link } = req.body
+    const { link, search } = req.body
     try {
+        const queryParams = [];
         let query = `
             SELECT 
                 i.id, i.user_id, i.customer_name, i.total_price, i.currency, i.invoice_date, i.invoice_link,
@@ -124,7 +125,13 @@ export const exportCreditPurchaseController = async (req, res, next) => {
             WHERE i.type = 'credit'
         `;
 
-        const invoices = await connection.query(query);
+        if (search) {
+            query += ` AND (u.firstname LIKE ? OR u.lastname LIKE ?)`;
+            const searchValue = `%${search}%`;
+            queryParams.push(searchValue, searchValue);
+        }
+
+        const invoices = await connection.query(query, queryParams);
 
         const csvData = invoices[0].map(invoice => ({
             id: invoice.id,

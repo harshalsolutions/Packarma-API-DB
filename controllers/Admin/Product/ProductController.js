@@ -59,7 +59,7 @@ export const getAllProductsController = async (req, res, next) => {
             const countParams = [];
             if (conditions.length > 0) {
                 countQuery += ` WHERE ${conditions.join(' AND ')}`;
-                countParams.push(...queryParams.slice(0, queryParams.length - 2)); // Avoid limit and offset
+                countParams.push(...queryParams.slice(0, queryParams.length - 2));
             }
 
             const [totalCount] = await pool.query(countQuery, countParams);
@@ -169,8 +169,9 @@ export const deleteProductController = async (req, res, next) => {
 
 export const exportAllProductsController = async (req, res, next) => {
     try {
-        const { link } = req.body;
-        const [productRows] = await pool.query(`
+        const { status, category_id, sub_category_id, product_form_id, packaging_treatment_id, productName, link } = req.body;
+
+        let query = `
             SELECT 
                 p.id,
                 p.product_name,
@@ -195,7 +196,41 @@ export const exportAllProductsController = async (req, res, next) => {
                 packaging_treatment pt ON p.packaging_treatment_id = pt.id
             JOIN 
                 measurement_unit mu ON p.measurement_unit_id = mu.id
-        `);
+        `;
+
+        const queryParams = [];
+        const conditions = [];
+
+        if (category_id) {
+            conditions.push('p.category_id = ?');
+            queryParams.push(category_id);
+        }
+        if (sub_category_id) {
+            conditions.push('p.sub_category_id = ?');
+            queryParams.push(sub_category_id);
+        }
+        if (product_form_id) {
+            conditions.push('p.product_form_id = ?');
+            queryParams.push(product_form_id);
+        }
+        if (packaging_treatment_id) {
+            conditions.push('p.packaging_treatment_id = ?');
+            queryParams.push(packaging_treatment_id);
+        }
+        if (productName) {
+            conditions.push('p.product_name LIKE ?');
+            queryParams.push(`%${productName}%`);
+        }
+        if (status) {
+            conditions.push('p.status = ?');
+            queryParams.push(status);
+        }
+
+        if (conditions.length > 0) {
+            query += ` WHERE ${conditions.join(' AND ')}`;
+        }
+
+        const [productRows] = await pool.query(query, queryParams);
 
         if (!productRows.length) throw new CustomError(404, 'No products found');
 
@@ -226,12 +261,8 @@ export const exportAllProductsController = async (req, res, next) => {
             { header: 'Packaging Treatment Name', key: 'packaging_treatment_name', width: 30 },
             { header: 'Measurement Unit', key: 'measurement_unit', width: 15 },
             { header: 'Status', key: 'status', width: 15 },
-            {
-                header: 'Created At', key: 'createdAt', width: 20
-            },
-            {
-                header: 'Updated At', key: 'updatedAt', width: 20
-            },
+            { header: 'Created At', key: 'createdAt', width: 20 },
+            { header: 'Updated At', key: 'updatedAt', width: 20 },
         ];
 
         worksheet.addRows(csvData);

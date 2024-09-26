@@ -134,29 +134,103 @@ export const getAllCustomerEnquiryController = async (req, res, next) => {
 export const exportCustomerEnquiryController = async (req, res, next) => {
     const connection = await pool.getConnection();
     try {
+        const {
+            userId,
+            userName,
+            status,
+            product,
+            category,
+            subCategory,
+            fromDate,
+            toDate
+        } = req.body;
+
         let query = `
-            SELECT 
-                sh.id, sh.search_time,
-                u.firstname, u.lastname,
-                p.product_name, 
-                c.name AS category_name, 
-                sc.name AS subcategory_name, 
-                pt.name AS packaging_type_name, 
-                ps.display_shelf_life_days, 
-                ps.product_min_weight, 
-                ps.product_max_weight, 
-                sh.weight_by_user
+            SELECT sh.*,
+            ps.name, ps.image, ps.structure_type, ps.sequence, ps.storage_condition_id, ps.display_shelf_life_days, ps.product_id, ps.product_category_id, ps.product_form_id, 
+            ps.packaging_treatment_id, ps.packing_type_id, pt.name AS packing_type_name, ps.packaging_machine_id, ps.packaging_material_id, ps.product_min_weight, ps.product_max_weight, 
+            ps.min_order_quantity, ps.min_order_quantity_unit_id, ps.status, 
+            u.firstname, u.lastname,
+            p.product_name, p.id AS product_id, c.name AS category_name, sc.id AS subcategory_id, sc.name AS subcategory_name, pf.name AS product_form_name, pt.name AS packaging_treatment_name
             FROM search_history sh
-            JOIN users u ON sh.user_id = u.user_id
             JOIN packaging_solution ps ON sh.packaging_solution_id = ps.id
             JOIN product p ON ps.product_id = p.id
             JOIN categories c ON p.category_id = c.id
             JOIN subcategories sc ON p.sub_category_id = sc.id
+            JOIN product_form pf ON ps.product_form_id = pf.id
             JOIN packaging_treatment pt ON ps.packaging_treatment_id = pt.id
-            ORDER BY sh.search_time DESC, sh.id DESC
+            JOIN users u ON sh.user_id = u.user_id
+            WHERE 1 = 1
         `;
 
-        const invoices = await connection.query(query);
+        let countQuery = `
+            SELECT COUNT(*) as totalCount 
+            FROM search_history sh
+            JOIN packaging_solution ps ON sh.packaging_solution_id = ps.id
+            JOIN product p ON ps.product_id = p.id
+            JOIN categories c ON p.category_id = c.id
+            JOIN subcategories sc ON p.sub_category_id = sc.id
+            JOIN product_form pf ON ps.product_form_id = pf.id
+            JOIN packaging_treatment pt ON ps.packaging_treatment_id = pt.id
+            JOIN users u ON sh.user_id = u.user_id
+            WHERE 1 = 1
+        `;
+
+        const queryParams = [];
+        const countParams = [];
+
+        if (userId) {
+            query += ' AND sh.user_id = ?';
+            countQuery += ' AND sh.user_id = ?';
+            queryParams.push(userId);
+            countParams.push(userId);
+        }
+
+        if (userName) {
+            query += ' AND CONCAT(u.firstname, \' \', u.lastname) LIKE ?';
+            countQuery += ' AND CONCAT(u.firstname, \' \', u.lastname) LIKE ?';
+            queryParams.push(`%${userName}%`);
+            countParams.push(`%${userName}%`);
+        }
+
+        if (status) {
+            query += ' AND sh.status = ?';
+            countQuery += ' AND sh.status = ?';
+            queryParams.push(status);
+            countParams.push(status);
+        }
+
+        if (product) {
+            query += ' AND ps.product_id LIKE ?';
+            countQuery += ' AND ps.product_id LIKE ?';
+            queryParams.push(`%${product}%`);
+            countParams.push(`%${product}%`);
+        }
+
+        if (category) {
+            query += ' AND ps.product_category_id = ?';
+            countQuery += ' AND ps.product_category_id = ?';
+            queryParams.push(category);
+            countParams.push(category);
+        }
+
+        if (subCategory) {
+            query += ' AND sc.id = ?';
+            countQuery += ' AND sc.id = ?';
+            queryParams.push(subCategory);
+            countParams.push(subCategory);
+        }
+
+        if (fromDate && toDate) {
+            query += ' AND sh.search_time BETWEEN ? AND ?';
+            countQuery += ' AND sh.search_time BETWEEN ? AND ?';
+            queryParams.push(fromDate, toDate);
+            countParams.push(fromDate, toDate);
+        }
+
+        query += ' ORDER BY sh.search_time DESC, sh.id DESC';
+
+        const invoices = await connection.query(query, queryParams);
 
         const csvData = invoices[0].map(invoice => ({
             id: invoice.id,

@@ -287,19 +287,27 @@ export const deletePackagingSolutionController = async (req, res, next) => {
 
 export const exportAllPackagingSolutionController = async (req, res, next) => {
     try {
-        const { link } = req.body;
-        const [packagingSolutionRows] = await pool.query(`
-            SELECT 
-                ps.*,
-                sc.name AS storage_condition_name,
-                p.product_name,
-                c.name AS category_name,
-                pf.name AS product_form_name,
-                pt.name AS packaging_treatment_name,
-                pk.name AS packing_type_name,
-                pm.name AS packaging_machine_name,
-                pmat.material_name AS packaging_material_name,
-                mu.name AS min_order_quantity_unit_name
+        const { link, name,
+            structure_type,
+            storage_condition_id,
+            product_name,
+            product_form_name,
+            packaging_treatment_name,
+            packing_type_name,
+            packaging_machine_name,
+            packaging_material_name,
+            status } = req.body;
+        let query = `SELECT 
+            ps.*, 
+            sc.name AS storage_condition_name,
+            p.product_name,
+            c.name AS category_name,
+            pf.name AS product_form_name,
+            pt.name AS packaging_treatment_name,
+            pk.name AS packing_type_name,
+            pm.name AS packaging_machine_name,
+            pmat.material_name AS packaging_material_name,
+            mu.name AS min_order_quantity_unit_name
             FROM 
                 packaging_solution ps
             LEFT JOIN 
@@ -319,8 +327,66 @@ export const exportAllPackagingSolutionController = async (req, res, next) => {
             LEFT JOIN 
                 packaging_material pmat ON ps.packaging_material_id = pmat.id
             LEFT JOIN 
-                measurement_unit mu ON ps.min_order_quantity_unit_id = mu.id
-        `);
+                measurement_unit mu ON ps.min_order_quantity_unit_id = mu.id`;
+
+        const queryParams = [];
+        const conditions = [];
+
+        if (name) {
+            conditions.push('ps.name LIKE ?');
+            queryParams.push(`%${name}%`);
+        }
+
+        if (structure_type) {
+            conditions.push('ps.structure_type LIKE ?');
+            queryParams.push(`%${structure_type}%`);
+        }
+
+        if (storage_condition_id) {
+            conditions.push('ps.storage_condition_id = ?');
+            queryParams.push(storage_condition_id);
+        }
+
+        if (product_name) {
+            conditions.push('p.product_name LIKE ?');
+            queryParams.push(`%${product_name}%`);
+        }
+
+        if (product_form_name) {
+            conditions.push('pf.name LIKE ?');
+            queryParams.push(`%${product_form_name}%`);
+        }
+
+        if (packaging_treatment_name) {
+            conditions.push('pt.name LIKE ?');
+            queryParams.push(`%${packaging_treatment_name}%`);
+        }
+
+        if (packing_type_name) {
+            conditions.push('pk.name LIKE ?');
+            queryParams.push(`%${packing_type_name}%`);
+        }
+
+        if (packaging_machine_name) {
+            conditions.push('pm.name LIKE ?');
+            queryParams.push(`%${packaging_machine_name}%`);
+        }
+
+        if (packaging_material_name) {
+            conditions.push('pmat.material_name LIKE ?');
+            queryParams.push(`%${packaging_material_name}%`);
+        }
+
+        if (status) {
+            conditions.push('ps.status = ?');
+            queryParams.push(status);
+        }
+
+        if (conditions.length > 0) {
+            query += ' WHERE ' + conditions.join(' AND ');
+        }
+
+        const [packagingSolutionRows] = await pool.query(query, queryParams);
 
         if (!packagingSolutionRows.length) throw new CustomError(404, 'No packaging solutions found');
 

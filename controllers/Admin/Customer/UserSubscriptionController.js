@@ -194,8 +194,7 @@ export const getAllSubscriptionController = async (req, res, next) => {
 
 export const exportAllSubscriptionController = async (req, res, next) => {
     try {
-        const { name, start_date, end_date, subscription_type } = req.query;
-        const { link } = req.body;
+        const { name, start_date, end_date, subscription_type, link } = req.body;
         const queryParams = [];
         let whereClauses = [];
 
@@ -243,7 +242,7 @@ export const exportAllSubscriptionController = async (req, res, next) => {
         }
         query += ` ORDER BY ci.id DESC`;
 
-        const [subscriptionsRows] = await pool.query(query);
+        const [subscriptionsRows] = await pool.query(query, queryParams);
 
         if (!subscriptionsRows.length) throw new CustomError(404, 'No subscriptions found');
 

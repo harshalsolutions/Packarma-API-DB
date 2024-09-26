@@ -113,11 +113,12 @@ export const getProductsController = async (req, res, next) => {
                 p.sub_category_id,
                 sc.name AS subcategory_name,
                 p.product_form_id,
-                pf.name AS product_form_name,
+                pf.name AS product_form_name,s
                 p.packaging_treatment_id,
                 pt.name AS packaging_treatment_name,
                 p.measurement_unit_id,
                 mu.name AS measurement_unit_name,
+                mu.symbol AS measurement_unit_symbol,
                 p.product_image,
                 p.status,
                 p.createdAt,
@@ -128,7 +129,7 @@ export const getProductsController = async (req, res, next) => {
             JOIN product_form pf ON p.product_form_id = pf.id
             JOIN packaging_treatment pt ON p.packaging_treatment_id = pt.id
             JOIN measurement_unit mu ON p.measurement_unit_id = mu.id
-            WHERE p.sub_category_id = ?
+            WHERE p.sub_category_id = ? AND p.packaging_treatment_id = 4
         `;
 
         const queryParams = [sub_category_id];
@@ -477,7 +478,7 @@ export const getSubCategoryByPackagingTreatmentController = async (req, res, nex
             FROM subcategories s
             JOIN product p ON s.id = p.sub_category_id
             WHERE p.packaging_treatment_id = ?
-            ORDER BY s.sequence;  // Added ORDER BY clause
+            ORDER BY s.sequence;  
         `;
 
         const [rows] = await connection.query(selectQuery, [id]);

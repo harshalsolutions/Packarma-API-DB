@@ -101,26 +101,6 @@ export const updateCategoryController = async (req, res, next) => {
         delete updateData.type;
 
         if (req.files) {
-            const [existingCategoryRows] = await pool.query('SELECT image, unselected FROM categories WHERE id = ?', [id]);
-            if (!existingCategoryRows.length) throw new CustomError(404, 'Category not found');
-
-            const oldImagePath = existingCategoryRows[0].image;
-            const oldUnselectedPath = existingCategoryRows[0].unselected;
-
-            if (oldImagePath) {
-                const absoluteImagePath = path.join(process.cwd(), oldImagePath);
-                unlink(absoluteImagePath, (err) => {
-                    if (err) console.error(`Error deleting file: ${err.message}`);
-                });
-            }
-
-            if (oldUnselectedPath) {
-                const absoluteUnselectedPath = path.join(process.cwd(), oldUnselectedPath);
-                unlink(absoluteUnselectedPath, (err) => {
-                    if (err) console.error(`Error deleting file: ${err.message}`);
-                });
-            }
-
             if (req.files['image']) {
                 updateData.image = `/media/categories/${req.files['image'][0].filename}`;
             }
@@ -143,19 +123,12 @@ export const updateCategoryController = async (req, res, next) => {
     }
 };
 
+
 export const deleteCategoryController = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const [existingCategoryRows] = await pool.query('SELECT image FROM categories WHERE id = ?', [id]);
+        const [existingCategoryRows] = await pool.query('SELECT id FROM categories WHERE id = ?', [id]);
         if (!existingCategoryRows.length) throw new CustomError(404, 'Category not found');
-
-        const oldFilePath = existingCategoryRows[0].image;
-        if (oldFilePath) {
-            const absolutePath = path.join(process.cwd(), oldFilePath);
-            unlink(absolutePath, (err) => {
-                if (err) console.error(`Error deleting file: ${err.message}`);
-            });
-        }
 
         await pool.query('DELETE FROM categories WHERE id = ?', [id]);
         res.json(new ApiResponse(200, null, 'Category deleted successfully'));

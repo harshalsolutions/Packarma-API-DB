@@ -342,7 +342,7 @@ export const getInvoicesController = async (req, res, next) => {
             query += `JOIN subscriptions s ON i.subscription_id = s.id `;
         }
 
-        query += `WHERE i.user_id = ? AND i.type = ?`;
+        query += `WHERE i.user_id = ? AND i.type = ? ORDER BY i.id DESC;`;
 
         const invoices = await connection.query(query, [type, userId, type]);
 

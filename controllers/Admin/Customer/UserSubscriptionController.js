@@ -87,7 +87,7 @@ export const getAllUserSubscriptionsController = async (req, res, next) => {
             query += ` WHERE ` + whereClauses.join(' AND ');
         }
 
-        query += ` ORDER BY ci.invoice_date DESC LIMIT ? OFFSET ?`;
+        query += ` ORDER BY ci.id DESC LIMIT ? OFFSET ?`;
         queryParams.push(parseInt(limit), parseInt(offset));
 
         const [invoices] = await connection.query(query, queryParams);
@@ -194,7 +194,11 @@ export const getAllSubscriptionController = async (req, res, next) => {
 
 export const exportAllSubscriptionController = async (req, res, next) => {
     try {
+        const { name, start_date, end_date, subscription_type } = req.query;
         const { link } = req.body;
+        const queryParams = [];
+        let whereClauses = [];
+
         let query = `
         SELECT 
             ci.id,
@@ -218,6 +222,27 @@ export const exportAllSubscriptionController = async (req, res, next) => {
         JOIN 
             user_subscriptions us ON ci.id = us.invoiceId
         `;
+
+        if (name) {
+            whereClauses.push(`(u.firstname LIKE ? OR u.lastname LIKE ? OR u.email LIKE ?)`);
+            queryParams.push(`%${name}%`, `%${name}%`, `%${name}%`);
+        }
+
+        if (start_date && end_date) {
+            whereClauses.push(`(ci.invoice_date BETWEEN ? AND ?)`);
+            queryParams.push(start_date, end_date);
+        }
+
+        if (subscription_type) {
+            whereClauses.push(`s.type = ?`);
+            queryParams.push(subscription_type);
+        }
+
+        if (whereClauses.length > 0) {
+            query += ` WHERE ` + whereClauses.join(' AND ');
+        }
+        query += ` ORDER BY ci.id DESC`;
+
         const [subscriptionsRows] = await pool.query(query);
 
         if (!subscriptionsRows.length) throw new CustomError(404, 'No subscriptions found');
@@ -264,4 +289,5 @@ export const exportAllSubscriptionController = async (req, res, next) => {
         next(error);
     }
 };
+
 

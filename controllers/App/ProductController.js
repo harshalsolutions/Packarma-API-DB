@@ -113,7 +113,7 @@ export const getProductsController = async (req, res, next) => {
                 p.sub_category_id,
                 sc.name AS subcategory_name,
                 p.product_form_id,
-                pf.name AS product_form_name,s
+                pf.name AS product_form_name,
                 p.packaging_treatment_id,
                 pt.name AS packaging_treatment_name,
                 p.measurement_unit_id,

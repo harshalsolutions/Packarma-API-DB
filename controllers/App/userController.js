@@ -23,7 +23,7 @@ export const registerController = async (req, res, next) => {
 
         try {
             const [userResult] = await connection.query(
-                'INSERT INTO users (firstname, lastname, email, password, type, phone_number) VALUES (?, ?, ?, ?, ?)',
+                'INSERT INTO users (firstname, lastname, email, password, type, phone_number) VALUES (?, ?, ?, ?, ?, ?)',
                 [firstname, lastname, email, hashedPassword, type, phone_number]
             );
             const userId = userResult.insertId;
@@ -315,7 +315,6 @@ export const requestPasswordResetOtpController = async (req, res, next) => {
     try {
         const { email } = req.body;
         const [rows] = await pool.query('SELECT user_id, email FROM users WHERE email = ?', [email]);
-
         if (!rows.length) throw new CustomError(404, 'User not found');
 
         const user = rows[0];
@@ -323,7 +322,7 @@ export const requestPasswordResetOtpController = async (req, res, next) => {
 
         await pool.query('DELETE FROM otp WHERE user_id = ? AND otp_type = ?', [user.user_id, otpType]);
 
-        const otp = otpGenerator();
+        const otp = generateOTP();
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
         await pool.query(

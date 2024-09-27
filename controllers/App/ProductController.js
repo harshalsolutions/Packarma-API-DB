@@ -129,7 +129,7 @@ export const getProductsController = async (req, res, next) => {
             JOIN product_form pf ON p.product_form_id = pf.id
             JOIN packaging_treatment pt ON p.packaging_treatment_id = pt.id
             JOIN measurement_unit mu ON p.measurement_unit_id = mu.id
-            WHERE p.sub_category_id = ? AND p.packaging_treatment_id = 4
+            WHERE p.sub_category_id = ?
         `;
 
         const queryParams = [sub_category_id];
@@ -336,7 +336,7 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
             packaging_material pm ON ps.packaging_material_id = pm.id
         JOIN 
             packaging_machine pc ON ps.packaging_machine_id = pc.id
-        JOIN 
+        LEFT JOIN 
             measurement_unit mu ON ps.min_order_quantity_unit_id = mu.id
         JOIN 
             storage_condition sc ON ps.storage_condition_id = sc.id
@@ -350,7 +350,6 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
             AND pk.status = 'active'
             AND pm.status = 'active'
             AND pc.status = 'active'
-            AND mu.status = 'active'
             AND sc.status = 'active'
     `;
 

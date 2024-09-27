@@ -1,6 +1,5 @@
 import ApiResponse from '../../utils/ApiResponse.js';
 import pool from '../../config/database.js';
-import bcrypt from 'bcryptjs';
 import generateOTP from "../../utils/otpGenerator.js";
 import sendOtpEmail from "../../utils/emailSender.js";
 import CustomError from '../../utils/CustomError.js';
@@ -8,16 +7,15 @@ import dotenv from 'dotenv';
 import jwt from "jsonwebtoken";
 import { generateReferralCode } from '../../utils/generateReferalCode.js';
 import { handleError } from "../../utils/ErrorHandler.js"
-
+import crypto from 'crypto';
 dotenv.config();
-
 
 const generateToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
 export const registerController = async (req, res, next) => {
     try {
         const { firstname, lastname, email, password, referralCode, phone_number, type = "normal" } = req.body;
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = crypto.createHash('md5').update(email + password).digest('hex');
         const connection = await pool.getConnection();
         await connection.beginTransaction();
 
@@ -33,7 +31,6 @@ export const registerController = async (req, res, next) => {
                     'SELECT id FROM referral_codes WHERE code = ?',
                     [referralCode]
                 );
-
                 if (referralCodeResult.length > 0) {
                     const referralCodeId = referralCodeResult[0].id;
                     await connection.query(
@@ -66,22 +63,23 @@ export const registerController = async (req, res, next) => {
     }
 };
 
-
 export const loginController = async (req, res, next) => {
     try {
         if (!req.body.email || !req.body.password) throw new CustomError(400, 'Email and password are required');
         const { email, password } = req.body;
+
         const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
         if (!rows.length) throw new CustomError(404, 'User not found');
 
         const user = rows[0];
-
         if (user.block) throw new CustomError(403, 'User is blocked');
 
-        if (!(await bcrypt.compare(password, user.password))) throw new CustomError(401, 'Invalid credentials');
+        const md5HashedPassword = crypto.createHash('md5').update(email + password).digest('hex');
+        if (md5HashedPassword !== user.password) throw new CustomError(401, 'Invalid credentials');
 
         const token = generateToken(user.user_id);
         const { password: _, ...userWithoutPassword } = user;
+
         res.json(new ApiResponse(200, { user: userWithoutPassword, token }, 'Login successful'));
     } catch (error) {
         next(error);
@@ -360,7 +358,8 @@ export const resetPasswordController = async (req, res, next) => {
                 throw new CustomError(400, 'Invalid or expired OTP');
             }
 
-            const hashedPassword = await bcrypt.hash(newPassword, 10);
+            const hashedPassword = crypto.createHash('md5').update(email + newPassword).digest('hex');
+
             await connection.query(
                 'UPDATE users SET password = ?, updatedAt = CURRENT_TIMESTAMP WHERE email = ?',
                 [hashedPassword, email]
@@ -384,7 +383,6 @@ export const resetPasswordController = async (req, res, next) => {
     }
 };
 
-
 export const updatePasswordController = async (req, res, next) => {
     try {
         const { currentPassword, newPassword } = req.body;
@@ -403,12 +401,14 @@ export const updatePasswordController = async (req, res, next) => {
 
             const { password: hashedPassword } = rows[0];
 
-            const isPasswordValid = await bcrypt.compare(currentPassword, hashedPassword);
-            if (!isPasswordValid) {
+            const md5HashedCurrentPassword = crypto.createHash('md5').update(req.user.email + currentPassword).digest('hex');
+
+            if (md5HashedCurrentPassword !== hashedPassword) {
                 throw new CustomError(400, 'Current password is incorrect');
             }
 
-            const newHashedPassword = await bcrypt.hash(newPassword, 10);
+            const newHashedPassword = crypto.createHash('md5').update(req.user.email + newPassword).digest('hex');
+
             await connection.query(
                 'UPDATE users SET password = ?, updatedAt = CURRENT_TIMESTAMP WHERE user_id = ?',
                 [newHashedPassword, userId]
@@ -426,6 +426,7 @@ export const updatePasswordController = async (req, res, next) => {
         handleError(error, next);
     }
 };
+
 
 
 export const freeCreditDocumentController = async (req, res, next) => {

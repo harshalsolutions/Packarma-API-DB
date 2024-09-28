@@ -481,18 +481,54 @@ export const getSearchHistoryController = async (req, res, next) => {
     try {
         await connection.beginTransaction();
         const userId = req.user.userId;
-        const selectQuery = `
-            SELECT sh.*, ps.*, u.firstname, u.lastname, 
-            c.name AS category_name, sc.name AS subcategory_name, sc.id AS subcategory_id, p.product_name, pt.name AS packing_type_name
-            FROM search_history sh
-            JOIN packaging_solution ps ON sh.packaging_solution_id = ps.id
-            JOIN users u ON sh.user_id = u.user_id
-            JOIN product p ON ps.product_id = p.id
-            JOIN categories c ON p.category_id = c.id
-            JOIN subcategories sc ON p.sub_category_id = sc.id
-            JOIN packing_type pt ON ps.packing_type_id = pt.id
-            WHERE sh.user_id = ?
-            ORDER BY sh.search_time DESC
+        const selectQuery = `   
+                SELECT 
+                sh.*,
+                ps.name,
+                ps.structure_type,
+                ps.sequence,
+                ps.storage_condition_id,
+                ps.display_shelf_life_days,
+                ps.product_id,
+                ps.product_category_id,
+                ps.product_form_id,
+                ps.packaging_treatment_id,
+                ps.packing_type_id,
+                ps.packaging_machine_id,
+                ps.packaging_material_id,
+                ps.product_min_weight,
+                ps.product_max_weight,
+                ps.min_order_quantity,
+                ps.min_order_quantity_unit_id,
+                ps.image,
+                ps.status,
+                u.firstname,
+                u.lastname,
+                c.name AS category_name,
+                sc.name AS subcategory_name,
+                sc.id AS subcategory_id,
+                p.product_name,
+                pt.name AS packing_type_name
+            FROM 
+                search_history sh
+            JOIN 
+                packaging_solution ps ON sh.packaging_solution_id = ps.id
+            JOIN 
+                users u ON sh.user_id = u.user_id
+            JOIN 
+                product p ON ps.product_id = p.id
+            JOIN 
+                categories c ON p.category_id = c.id
+            JOIN 
+                subcategories sc ON p.sub_category_id = sc.id
+            JOIN 
+                packing_type pt ON ps.packing_type_id = pt.id
+            WHERE 
+                sh.user_id = ? 
+            ORDER BY 
+                sh.search_time DESC;
+
+
         `;
 
         const [rows] = await connection.query(selectQuery, [userId]);

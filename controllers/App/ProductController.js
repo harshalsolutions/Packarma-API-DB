@@ -405,61 +405,34 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
 
         const packagingSolutionId = rows[0].id;
 
-        if (product_weight !== null) {
-            const [searchHistoryRows] = await connection.query(
-                'SELECT * FROM search_history WHERE user_id = ? AND packaging_solution_id = ? AND weight_by_user = ?',
-                [userId, packagingSolutionId, product_weight]
-            );
 
-            if (!searchHistoryRows.length) {
-                const insertQuery = `
-                    INSERT INTO search_history (user_id, packaging_solution_id, weight_by_user)
-                    VALUES (?, ?, ?)
-                `;
-                await connection.query(insertQuery, [userId, packagingSolutionId, product_weight]);
+        const [searchHistoryRows] = await connection.query(
+            'SELECT * FROM search_history WHERE user_id = ? AND packaging_solution_id = ?',
+            [userId, packagingSolutionId]
+        );
 
-                const [creditRows] = await connection.query('SELECT credits FROM users WHERE user_id = ?', [userId]);
-
-                if (!creditRows.length) throw new CustomError(404, 'User not found');
-
-                const currentCredits = creditRows[0].credits;
-                const newCredits = currentCredits - 1;
-
-                await connection.query('UPDATE users SET credits = ?, updatedAt = CURRENT_TIMESTAMP WHERE user_id = ?', [newCredits, userId]);
-
-                await connection.query(
-                    'INSERT INTO credit_history (user_id, change_amount, description) VALUES (?, ?, ?)',
-                    [userId, -1, 'Credit deducted for packaging solution search']
-                );
-            }
-        } else {
-            const [searchHistoryRows] = await connection.query(
-                'SELECT * FROM search_history WHERE user_id = ? AND packaging_solution_id = ?',
-                [userId, packagingSolutionId]
-            );
-
-            if (!searchHistoryRows.length) {
-                const insertQuery = `
+        if (!searchHistoryRows.length) {
+            const insertQuery = `
                     INSERT INTO search_history (user_id, packaging_solution_id)
                     VALUES (?, ?)
                 `;
-                await connection.query(insertQuery, [userId, packagingSolutionId]);
+            await connection.query(insertQuery, [userId, packagingSolutionId]);
 
-                const [creditRows] = await connection.query('SELECT credits FROM users WHERE user_id = ?', [userId]);
+            const [creditRows] = await connection.query('SELECT credits FROM users WHERE user_id = ?', [userId]);
 
-                if (!creditRows.length) throw new CustomError(404, 'User not found');
+            if (!creditRows.length) throw new CustomError(404, 'User not found');
 
-                const currentCredits = creditRows[0].credits;
-                const newCredits = currentCredits - 1;
+            const currentCredits = creditRows[0].credits;
+            const newCredits = currentCredits - 1;
 
-                await connection.query('UPDATE users SET credits = ?, updatedAt = CURRENT_TIMESTAMP WHERE user_id = ?', [newCredits, userId]);
+            await connection.query('UPDATE users SET credits = ?, updatedAt = CURRENT_TIMESTAMP WHERE user_id = ?', [newCredits, userId]);
 
-                await connection.query(
-                    'INSERT INTO credit_history (user_id, change_amount, description) VALUES (?, ?, ?)',
-                    [userId, -1, 'Credit deducted for packaging solution search']
-                );
-            }
+            await connection.query(
+                'INSERT INTO credit_history (user_id, change_amount, description) VALUES (?, ?, ?)',
+                [userId, -1, 'Credit deducted for packaging solution search']
+            );
         }
+
 
         await connection.commit();
 

@@ -292,7 +292,10 @@ export const getProductWeightOptionsController = async (req, res, next) => {
 };
 
 export const searchPackagingSolutionsController = async (req, res, next) => {
+    const connection = await pool.getConnection();
     try {
+        await connection.beginTransaction();
+
         const {
             category_id,
             subcategory_id,
@@ -304,6 +307,7 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
         } = req.body;
 
         const { limit = 10 } = req.query;
+        const userId = req.user.userId;
 
         let query = `
         SELECT 
@@ -393,15 +397,53 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
         query += ' ORDER BY ps.id LIMIT ?';
         queryParams.push(parseInt(limit));
 
-        const [rows] = await pool.query(query, queryParams);
+        const [rows] = await connection.query(query, queryParams);
 
-        if (!rows.length) throw new CustomError(404, 'No packaging solutions found');
+        if (!rows.length) {
+            throw new CustomError(404, 'No packaging solutions found');
+        }
+
+        const packagingSolutionId = rows[0].id;
+
+        const [searchHistoryRows] = await connection.query(
+            'SELECT * FROM search_history WHERE user_id = ? AND packaging_solution_id = ? AND weight_by_user = ?',
+            [userId, packagingSolutionId, product_weight]
+        );
+
+        if (!searchHistoryRows.length) {
+            const insertQuery = `
+                INSERT INTO search_history (user_id, packaging_solution_id, weight_by_user)
+                VALUES (?, ?, ?)
+            `;
+            await connection.query(insertQuery, [userId, packagingSolutionId, product_weight]);
+
+            const [creditRows] = await connection.query('SELECT credits FROM users WHERE user_id = ?', [userId]);
+
+            if (!creditRows.length) throw new CustomError(404, 'User not found');
+
+            const currentCredits = creditRows[0].credits;
+            const newCredits = currentCredits - 1;
+
+            await connection.query('UPDATE users SET credits = ?, updatedAt = CURRENT_TIMESTAMP WHERE user_id = ?', [newCredits, userId]);
+
+            await connection.query(
+                'INSERT INTO credit_history (user_id, change_amount, description) VALUES (?, ?, ?)',
+                [userId, -1, 'Credit deducted for packaging solution search']
+            );
+        }
+
+        await connection.commit();
 
         res.json(new ApiResponse(200, rows, 'Packaging solutions fetched successfully'));
+
     } catch (error) {
+        await connection.rollback();
         next(new CustomError(500, error.message));
+    } finally {
+        connection.release();
     }
 };
+
 
 export const addSearchHistoryController = async (req, res, next) => {
     const connection = await pool.getConnection();

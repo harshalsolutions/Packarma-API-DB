@@ -59,7 +59,7 @@ const addInvoiceToDatabase = async (connection, invoiceType, invoiceData) => {
             if (!subscription.length) throw new CustomError(404, 'Subscription not found');
             const subscriptionDetails = subscription[0];
             const startDate = new Date();
-            await addUserSubscription(invoiceData.userId, invoiceData.subscription_id, subscriptionDetails[0].duration, startDate, result.insertId);
+            await addUserSubscription(invoiceData.userId, invoiceData.subscription_id, subscriptionDetails[0].duration, startDate, result.insertId, subscriptionDetails[0].credit_amount, subscriptionDetails[0].type);
         }
 
         if (invoiceType === 'credit') {
@@ -106,7 +106,7 @@ const addUserCredits = async (userId, credits) => {
     }
 };
 
-const addUserSubscription = async (userId, subscriptionId, duration, startDate, invoiceId) => {
+const addUserSubscription = async (userId, subscriptionId, duration, startDate, invoiceId, credits, type) => {
     try {
         const connection = await pool.getConnection();
         await connection.beginTransaction();
@@ -145,6 +145,19 @@ const addUserSubscription = async (userId, subscriptionId, duration, startDate, 
                     [referral[0].id]
                 );
             }
+
+            const [rows] = await connection.query('SELECT credits FROM users WHERE user_id = ?', [userId]);
+            if (!rows.length) throw new CustomError(404, 'User not found');
+
+            const currentCredits = rows[0].credits;
+            const newCredits = currentCredits + credits;
+
+            await connection.query('UPDATE users SET credits = ?, updatedAt = CURRENT_TIMESTAMP WHERE user_id = ?', [newCredits, userId]);
+
+            await connection.query(
+                'INSERT INTO credit_history (user_id, change_amount, description) VALUES (?, ?, ?)',
+                [userId, credits, `${type} Subscription purchased, ${credits} credits`]
+            );
 
             await connection.commit();
         } catch (error) {

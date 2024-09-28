@@ -13,8 +13,7 @@ router.get('/packing-types', getPackingTypesController);
 router.get('/shelf-life-options', getShelfLifeOptionsController);
 router.get('/product-weight-options', getProductWeightOptionsController);
 
-
-router.post('/search-solution', searchPackagingSolutionsController);
+router.post('/search-solution', authMiddleware, searchPackagingSolutionsController);
 
 router.get('/subcategory-by-treatment/:id', getSubCategoryByPackagingTreatmentController);
 

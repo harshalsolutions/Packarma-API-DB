@@ -118,17 +118,6 @@ export const updateProductController = async (req, res, next) => {
         delete updateData.type;
 
         if (req.file) {
-            const [existingProductRows] = await pool.query('SELECT product_image FROM product WHERE id = ?', [id]);
-            if (!existingProductRows.length) throw new CustomError(404, 'Product not found');
-
-            const oldFilePath = existingProductRows[0].product_image;
-            if (oldFilePath) {
-                const absolutePath = path.join(process.cwd(), oldFilePath);
-                unlink(absolutePath, (err) => {
-                    if (err) console.error(`Error deleting file: ${err.message}`);
-                });
-            }
-
             updateData.product_image = `/media/product/${req.file.filename}`;
         }
 
@@ -150,14 +139,6 @@ export const deleteProductController = async (req, res, next) => {
         const { id } = req.params;
         const [existingProductRows] = await pool.query('SELECT product_image FROM product WHERE id = ?', [id]);
         if (!existingProductRows.length) throw new CustomError(404, 'Product not found');
-
-        const oldFilePath = existingProductRows[0].product_image;
-        if (oldFilePath) {
-            const absolutePath = path.join(process.cwd(), oldFilePath);
-            unlink(absolutePath, (err) => {
-                if (err) console.error(`Error deleting file: ${err.message}`);
-            });
-        }
 
         await pool.query('DELETE FROM product WHERE id = ?', [id]);
         res.json(new ApiResponse(200, null, 'Product deleted successfully'));

@@ -3,6 +3,7 @@ import pool from "../../../config/database.js";
 import CustomError from '../../../utils/CustomError.js';
 import ExcelJS from 'exceljs';
 import { formatDateTime } from "../../../utils/dateFormatter.js";
+import path from "path"
 
 export const getPackagingSolutionController = async (req, res, next) => {
     try {
@@ -234,19 +235,9 @@ export const updatePackagingSolutionController = async (req, res, next) => {
         const updateData = req.body;
         delete updateData.type;
 
-        console.log(updateData)
-
         if (req.file) {
             const [existingPackagingSolutionRows] = await pool.query('SELECT image FROM packaging_solution WHERE id = ?', [id]);
             if (!existingPackagingSolutionRows.length) throw new CustomError(404, 'Packaging Solution not found');
-
-            const oldFilePath = existingPackagingSolutionRows[0].image;
-            if (oldFilePath) {
-                const absolutePath = path.join(process.cwd(), oldFilePath);
-                unlink(absolutePath, (err) => {
-                    if (err) console.error(`Error deleting file: ${err.message}`);
-                });
-            }
 
             updateData.image = `/media/packagingsolution/${req.file.filename}`;
         }
@@ -269,14 +260,6 @@ export const deletePackagingSolutionController = async (req, res, next) => {
         const { id } = req.params;
         const [existingPackagingSolutionRows] = await pool.query('SELECT image FROM packaging_solution WHERE id = ?', [id]);
         if (!existingPackagingSolutionRows.length) throw new CustomError(404, 'Packaging Solution not found');
-
-        const oldFilePath = existingPackagingSolutionRows[0].image;
-        if (oldFilePath) {
-            const absolutePath = path.join(process.cwd(), oldFilePath);
-            unlink(absolutePath, (err) => {
-                if (err) console.error(`Error deleting file: ${err.message}`);
-            });
-        }
 
         await pool.query('DELETE FROM packaging_solution WHERE id = ?', [id]);
         res.json(new ApiResponse(200, null, 'Packaging Solution deleted successfully'));

@@ -117,17 +117,6 @@ export const updateSubCategoryController = async (req, res, next) => {
         const updateData = req.body;
         delete updateData.type;
         if (req.file) {
-            const [existingSubCategoryRows] = await pool.query('SELECT image FROM subcategories WHERE id = ?', [id]);
-            if (!existingSubCategoryRows.length) throw new CustomError(404, 'Subcategory not found');
-
-            const oldFilePath = existingSubCategoryRows[0].image;
-            if (oldFilePath) {
-                const absolutePath = path.join(process.cwd(), oldFilePath);
-                unlink(absolutePath, (err) => {
-                    if (err) console.error(`Error deleting file: ${err.message}`);
-                });
-            }
-
             updateData.image = `/media/subcategories/${req.file.filename}`;
         }
 
@@ -149,14 +138,6 @@ export const deleteSubCategoryController = async (req, res, next) => {
         const { id } = req.params;
         const [existingSubCategoryRows] = await pool.query('SELECT image FROM subcategories WHERE id = ?', [id]);
         if (!existingSubCategoryRows.length) throw new CustomError(404, 'Subcategory not found');
-
-        const oldFilePath = existingSubCategoryRows[0].image;
-        if (oldFilePath) {
-            const absolutePath = path.join(process.cwd(), oldFilePath);
-            unlink(absolutePath, (err) => {
-                if (err) console.error(`Error deleting file: ${err.message}`);
-            });
-        }
 
         await pool.query('DELETE FROM subcategories WHERE id = ?', [id]);
         res.json(new ApiResponse(200, null, 'Subcategory deleted successfully'));

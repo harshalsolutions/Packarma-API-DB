@@ -89,17 +89,6 @@ export const updatePackagingTreatmentController = async (req, res, next) => {
         const updateData = req.body;
         delete updateData.type;
         if (req.file) {
-            const [existingPackagingTreatmentRows] = await pool.query('SELECT image FROM packaging_treatment WHERE id = ?', [id]);
-            if (!existingPackagingTreatmentRows.length) throw new CustomError(404, 'Packaging Treatment not found');
-
-            const oldFilePath = existingPackagingTreatmentRows[0].image;
-            if (oldFilePath) {
-                const absolutePath = path.join(process.cwd(), oldFilePath);
-                unlink(absolutePath, (err) => {
-                    if (err) console.error(`Error deleting file: ${err.message}`);
-                });
-            }
-
             updateData.image = `/media/packagingtreatment/${req.file.filename}`;
         }
 

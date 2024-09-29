@@ -58,11 +58,11 @@ export const getCreditPriceByIdController = async (req, res, next) => {
 
 export const createCreditPriceController = async (req, res, next) => {
     try {
-        const { price, percentage, currency, status } = req.body;
+        const { price, percentage, currency, status, country } = req.body;
 
         const query = `
-            INSERT INTO credit_prices (price, percentage, currency, status)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO credit_prices (price, percentage, currency, status, country)
+            VALUES (?, ?, ?, ?, ?)
         `;
         const [result] = await pool.query(query, [price, percentage, currency, status]);
 
@@ -76,14 +76,14 @@ export const createCreditPriceController = async (req, res, next) => {
 export const updateCreditPriceController = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { price, percentage, currency, status } = req.body;
+        const { price, percentage, currency, status, country } = req.body;
 
         const query = `
             UPDATE credit_prices 
-            SET price = ?, percentage = ?, currency = ?, status = ?, updatedAt = CURRENT_TIMESTAMP
+            SET price = ?, percentage = ?, currency = ?, status = ?, country = ? , updatedAt = CURRENT_TIMESTAMP
             WHERE id = ?
         `;
-        const [result] = await pool.query(query, [price, percentage, currency, status, id]);
+        const [result] = await pool.query(query, [price, percentage, currency, status, country, id]);
 
         if (result.affectedRows === 0) throw new CustomError(404, 'Credit Price not found');
 

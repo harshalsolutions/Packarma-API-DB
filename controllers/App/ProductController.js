@@ -290,7 +290,6 @@ export const getProductWeightOptionsController = async (req, res, next) => {
         next(new CustomError(500, error.message));
     }
 };
-
 export const searchPackagingSolutionsController = async (req, res, next) => {
     const connection = await pool.getConnection();
     try {
@@ -306,7 +305,6 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
             min_order_quantity_unit_id
         } = req.body;
 
-        const { limit = 10 } = req.query;
         const userId = req.user.userId;
 
         let query = `
@@ -394,8 +392,7 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
             queryParams.push(product_weight, product_weight);
         }
 
-        query += ' ORDER BY ps.id LIMIT ?';
-        queryParams.push(parseInt(limit));
+        query += ' ORDER BY ps.id';
 
         const [rows] = await connection.query(query, queryParams);
 
@@ -405,24 +402,65 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
 
         const packagingSolutionId = rows[0].id;
 
+        const queryConditions = [];
+        const searchHistoryParams = [userId, packagingSolutionId];
 
-        const [searchHistoryRows] = await connection.query(
-            'SELECT * FROM search_history WHERE user_id = ? AND packaging_solution_id = ?',
-            [userId, packagingSolutionId]
-        );
+        if (product_weight) {
+            queryConditions.push('weight_by_user = ?');
+            searchHistoryParams.push(product_weight);
+        }
+
+        if (category_id) {
+            queryConditions.push('category_id = ?');
+            searchHistoryParams.push(category_id);
+        }
+
+        if (subcategory_id) {
+            queryConditions.push('subcategory_id = ?');
+            searchHistoryParams.push(subcategory_id);
+        }
+
+        if (product_id) {
+            queryConditions.push('product_id = ?');
+            searchHistoryParams.push(product_id);
+        }
+
+        if (packing_type_id) {
+            queryConditions.push('packing_type_id = ?');
+            searchHistoryParams.push(packing_type_id);
+        }
+
+        if (shelf_life_days) {
+            queryConditions.push('shelf_life_days = ?');
+            searchHistoryParams.push(shelf_life_days);
+        }
+
+        if (min_order_quantity_unit_id) {
+            queryConditions.push('min_order_quantity_unit_id = ?');
+            searchHistoryParams.push(min_order_quantity_unit_id);
+        }
+
+        const searchHistoryQuery = `
+            SELECT * FROM search_history 
+            WHERE user_id = ? 
+            AND packaging_solution_id = ? 
+            ${queryConditions.length ? 'AND ' + queryConditions.join(' AND ') : ''}
+        `;
+
+
+        const [searchHistoryRows] = await connection.query(searchHistoryQuery, searchHistoryParams);
+
 
         if (!searchHistoryRows.length) {
-            const insertQuery = `
-                    INSERT INTO search_history (user_id, packaging_solution_id)
-                    VALUES (?, ?)
-                `;
-            await connection.query(insertQuery, [userId, packagingSolutionId]);
-
             const [creditRows] = await connection.query('SELECT credits FROM users WHERE user_id = ?', [userId]);
-
             if (!creditRows.length) throw new CustomError(404, 'User not found');
 
             const currentCredits = creditRows[0].credits;
+
+            if (currentCredits < 1) {
+                throw new CustomError(403, 'Insufficient credits to perform search');
+            }
+
             const newCredits = currentCredits - 1;
 
             await connection.query('UPDATE users SET credits = ?, updatedAt = CURRENT_TIMESTAMP WHERE user_id = ?', [newCredits, userId]);
@@ -431,8 +469,24 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
                 'INSERT INTO credit_history (user_id, change_amount, description) VALUES (?, ?, ?)',
                 [userId, -1, 'Credit deducted for packaging solution search']
             );
-        }
 
+            const insertQuery = `
+                INSERT INTO search_history (user_id, packaging_solution_id, weight_by_user, search_time, category_id, subcategory_id, product_id, packing_type_id, shelf_life_days, min_order_quantity_unit_id)
+                VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?)
+            `;
+
+            await connection.query(insertQuery, [
+                userId,
+                packagingSolutionId,
+                product_weight || null,
+                category_id || null,
+                subcategory_id || null,
+                product_id || null,
+                packing_type_id || null,
+                shelf_life_days || null,
+                min_order_quantity_unit_id || null
+            ]);
+        }
 
         await connection.commit();
 
@@ -445,7 +499,6 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
         connection.release();
     }
 };
-
 
 
 export const addSearchHistoryController = async (req, res, next) => {

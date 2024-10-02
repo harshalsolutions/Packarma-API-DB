@@ -364,18 +364,8 @@ export const getSubCategoryByPackagingTreatmentController = async (req, res, nex
 
     try {
         const selectQuery = `
-            SELECT DISTINCT  
-            c.id AS category_id, 
-            c.name AS category_name, 
-            c.image AS category_image, 
-            c.status AS category_status,
-            s.id AS subcategory_id, 
-            s.name AS subcategory_name, 
-            s.image AS subcategory_image, 
-            s.status AS subcategory_status,
-            s.sequence AS subcategory_sequence
+            SELECT DISTINCT s.*
             FROM subcategories s
-            JOIN categories c ON s.category_id = c.id
             JOIN product p ON s.id = p.sub_category_id
             WHERE p.packaging_treatment_id = ?
             ORDER BY s.sequence;  

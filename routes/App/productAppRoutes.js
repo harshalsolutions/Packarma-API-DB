@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { addSearchHistoryController, getCategoryController, getPackagingTreatmentsController, getPackingTypesController, getProductsController, getProductWeightOptionsController, getSearchHistoryController, getShelfLifeOptionsController, getSubCategoryByPackagingTreatmentController, searchPackagingSolutionsController, searchProductSuggestionsController } from '../../controllers/App/ProductController.js';
+import { getCategoryController, getPackagingTreatmentsController, getPackingTypesController, getProductsController, getProductWeightOptionsController, getSearchHistoryController, getShelfLifeOptionsController, getSubCategoryByPackagingTreatmentController, searchPackagingSolutionsController, searchProductSuggestionsController } from '../../controllers/App/ProductController.js';
 import authMiddleware from "../../middlewares/authMiddleware.js"
 
 const router = Router();
@@ -18,6 +18,5 @@ router.post('/search-solution', authMiddleware, searchPackagingSolutionsControll
 router.get('/subcategory-by-treatment/:id', getSubCategoryByPackagingTreatmentController);
 
 router.get('/search-history', authMiddleware, getSearchHistoryController);
-router.post('/search-history', authMiddleware, addSearchHistoryController);
 
 export default router;

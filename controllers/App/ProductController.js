@@ -307,6 +307,8 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
 
         const userId = req.user.userId;
 
+        const ALL_PACKAGING_TYPE_ID = 4;
+
         let query = `
         SELECT 
             ps.*, 
@@ -353,7 +355,7 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
             AND pm.status = 'active'
             AND pc.status = 'active'
             AND sc.status = 'active'
-    `;
+        `;
 
         const queryParams = [];
 
@@ -372,7 +374,7 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
             queryParams.push(product_id);
         }
 
-        if (packing_type_id && packing_type_id !== 1) {
+        if (packing_type_id && packing_type_id !== ALL_PACKAGING_TYPE_ID) {
             query += ' AND ps.packing_type_id = ?';
             queryParams.push(packing_type_id);
         }
@@ -400,58 +402,35 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
             throw new CustomError(404, 'No packaging solutions found');
         }
 
-        const packagingSolutionId = rows[0].id;
+        const packagingSolutionIds = rows.map(row => row.id);
 
-        const queryConditions = [];
-        const searchHistoryParams = [userId, packagingSolutionId];
+        let deductCredit = true;
 
-        if (product_weight) {
-            queryConditions.push('weight_by_user = ?');
-            searchHistoryParams.push(product_weight);
+        if (packing_type_id === ALL_PACKAGING_TYPE_ID) {
+            const [existingSearchHistory] = await connection.query(`
+                SELECT * FROM search_history 
+                WHERE user_id = ? 
+                AND packing_type_id = ?
+                AND packaging_solution_id IN (?)
+            `, [userId, ALL_PACKAGING_TYPE_ID, packagingSolutionIds]);
+
+            if (existingSearchHistory.length > 0) {
+                deductCredit = false;
+            }
+        } else {
+            const [allTypeSearchHistory] = await connection.query(`
+                SELECT * FROM search_history 
+                WHERE user_id = ?
+                AND packing_type_id = ?
+                AND packaging_solution_id IN (?)
+            `, [userId, ALL_PACKAGING_TYPE_ID, packagingSolutionIds]);
+
+            if (allTypeSearchHistory.length > 0) {
+                deductCredit = false;
+            }
         }
 
-        if (category_id) {
-            queryConditions.push('category_id = ?');
-            searchHistoryParams.push(category_id);
-        }
-
-        if (subcategory_id) {
-            queryConditions.push('subcategory_id = ?');
-            searchHistoryParams.push(subcategory_id);
-        }
-
-        if (product_id) {
-            queryConditions.push('product_id = ?');
-            searchHistoryParams.push(product_id);
-        }
-
-        if (packing_type_id) {
-            queryConditions.push('packing_type_id = ?');
-            searchHistoryParams.push(packing_type_id);
-        }
-
-        if (shelf_life_days) {
-            queryConditions.push('shelf_life_days = ?');
-            searchHistoryParams.push(shelf_life_days);
-        }
-
-        if (min_order_quantity_unit_id) {
-            queryConditions.push('min_order_quantity_unit_id = ?');
-            searchHistoryParams.push(min_order_quantity_unit_id);
-        }
-
-        const searchHistoryQuery = `
-            SELECT * FROM search_history 
-            WHERE user_id = ? 
-            AND packaging_solution_id = ? 
-            ${queryConditions.length ? 'AND ' + queryConditions.join(' AND ') : ''}
-        `;
-
-
-        const [searchHistoryRows] = await connection.query(searchHistoryQuery, searchHistoryParams);
-
-
-        if (!searchHistoryRows.length) {
+        if (deductCredit) {
             const [creditRows] = await connection.query('SELECT credits FROM users WHERE user_id = ?', [userId]);
             if (!creditRows.length) throw new CustomError(404, 'User not found');
 
@@ -469,15 +448,15 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
                 'INSERT INTO credit_history (user_id, change_amount, description) VALUES (?, ?, ?)',
                 [userId, -1, 'Credit deducted for packaging solution search']
             );
+        }
 
-            const insertQuery = `
+        for (const id of packagingSolutionIds) {
+            await connection.query(`
                 INSERT INTO search_history (user_id, packaging_solution_id, weight_by_user, search_time, category_id, subcategory_id, product_id, packing_type_id, shelf_life_days, min_order_quantity_unit_id)
                 VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?)
-            `;
-
-            await connection.query(insertQuery, [
+            `, [
                 userId,
-                packagingSolutionId,
+                id,
                 product_weight || null,
                 category_id || null,
                 subcategory_id || null,
@@ -501,33 +480,6 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
 };
 
 
-export const addSearchHistoryController = async (req, res, next) => {
-    const connection = await pool.getConnection();
-    try {
-        await connection.beginTransaction();
-        const userId = req.user.userId;
-        const { packaging_solution_id, weight_by_user } = req.body;
-
-        const insertQuery = `
-            INSERT INTO search_history (user_id, packaging_solution_id, weight_by_user)
-            VALUES (?, ?, ?)
-        `;
-
-        const [result] = await connection.query(insertQuery, [userId, packaging_solution_id, weight_by_user]);
-
-        if (result.affectedRows === 0) {
-            throw new CustomError(400, 'Failed to add search history');
-        }
-
-        await connection.commit();
-        res.json(new ApiResponse(201, null, 'Search history added successfully'));
-    } catch (error) {
-        await connection.rollback();
-        next(new CustomError(500, error.message));
-    } finally {
-        connection.release();
-    }
-};
 
 export const getSearchHistoryController = async (req, res, next) => {
     const connection = await pool.getConnection();

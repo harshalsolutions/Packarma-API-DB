@@ -451,20 +451,42 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
         }
 
         for (const id of packagingSolutionIds) {
-            await connection.query(`
-                INSERT INTO search_history (user_id, packaging_solution_id, weight_by_user, search_time, category_id, subcategory_id, product_id, packing_type_id, shelf_life_days, min_order_quantity_unit_id)
-                VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?)
+            const [existingHistory] = await connection.query(`
+                SELECT 1 FROM search_history 
+                WHERE user_id = ? 
+                AND packaging_solution_id = ?
+                AND (category_id = ? OR ? IS NULL)
+                AND (subcategory_id = ? OR ? IS NULL)
+                AND (product_id = ? OR ? IS NULL)
+                AND (packing_type_id = ? OR ? IS NULL)
+                AND (shelf_life_days = ? OR ? IS NULL)
+                AND (min_order_quantity_unit_id = ? OR ? IS NULL)
             `, [
-                userId,
-                id,
-                product_weight || null,
-                category_id || null,
-                subcategory_id || null,
-                product_id || null,
-                packing_type_id || null,
-                shelf_life_days || null,
-                min_order_quantity_unit_id || null
+                userId, id,
+                category_id, category_id,
+                subcategory_id, subcategory_id,
+                product_id, product_id,
+                packing_type_id, packing_type_id,
+                shelf_life_days, shelf_life_days,
+                min_order_quantity_unit_id, min_order_quantity_unit_id
             ]);
+
+            if (!existingHistory.length) {
+                await connection.query(`
+                    INSERT INTO search_history (user_id, packaging_solution_id, weight_by_user, search_time, category_id, subcategory_id, product_id, packing_type_id, shelf_life_days, min_order_quantity_unit_id)
+                    VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?)
+                `, [
+                    userId,
+                    id,
+                    product_weight || null,
+                    category_id || null,
+                    subcategory_id || null,
+                    product_id || null,
+                    packing_type_id || null,
+                    shelf_life_days || null,
+                    min_order_quantity_unit_id || null
+                ]);
+            }
         }
 
         await connection.commit();
@@ -530,10 +552,7 @@ export const getSearchHistoryController = async (req, res, next) => {
                 packing_type pt ON ps.packing_type_id = pt.id
             WHERE 
                 sh.user_id = ? 
-            ORDER BY 
-                sh.search_time DESC;
-
-
+            ORDER BY sh.search_time DESC, sh.id DESC;
         `;
 
         const [rows] = await connection.query(selectQuery, [userId]);

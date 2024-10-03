@@ -7,7 +7,7 @@ export const getCategoryController = async (req, res, next) => {
         const { status } = req.query;
 
         let query = `
-            SELECT c.id AS category_id, c.name AS category_name, c.image AS category_image, c.sequence AS category_sequence,
+            SELECT c.id AS category_id, c.name AS category_name, c.unselected AS unselected_category_image, c.image AS category_image, c.sequence AS category_sequence,
                    s.id AS subcategory_id, s.name AS subcategory_name, s.image AS subcategory_image, s.sequence AS subcategory_sequence
             FROM subcategories s
             JOIN categories c ON s.category_id = c.id
@@ -27,12 +27,13 @@ export const getCategoryController = async (req, res, next) => {
         if (!rows.length) throw new CustomError(404, 'No categories found');
 
         const categoriesMap = rows.reduce((acc, row) => {
-            const { category_id, category_name, category_image, category_sequence, subcategory_id, subcategory_name, subcategory_image, subcategory_sequence } = row;
+            const { category_id, category_name, category_image, unselected_category_image, category_sequence, subcategory_id, subcategory_name, subcategory_image, subcategory_sequence } = row;
 
             if (!acc[category_id]) {
                 acc[category_id] = {
                     category_id,
                     category_name,
+                    unselected_category_image,
                     category_image,
                     category_sequence,
                     subcategories: []

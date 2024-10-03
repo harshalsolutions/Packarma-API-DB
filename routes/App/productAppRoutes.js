@@ -1,6 +1,7 @@
 import { Router } from 'express';
-import { getCategoryController, getPackagingTreatmentsController, getPackingTypesController, getProductsController, getProductWeightOptionsController, getSearchHistoryController, getShelfLifeOptionsController, getSubCategoryByPackagingTreatmentController, searchPackagingSolutionsController, searchProductSuggestionsController } from '../../controllers/App/ProductController.js';
+import { getCategoryController, getPackagingTreatmentsController, getPackingTypesController, getProductsController, getProductWeightOptionsController, getSearchHistoryController, getShelfLifeOptionsController, getSubCategoryByPackagingTreatmentController, searchProductSuggestionsController } from '../../controllers/App/ProductController.js';
 import authMiddleware from "../../middlewares/authMiddleware.js"
+import { searchPackagingSolutionsController } from '../../controllers/App/SearchSolutionController.js';
 
 const router = Router();
 

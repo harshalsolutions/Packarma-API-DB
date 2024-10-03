@@ -397,7 +397,8 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
             product_id,
             packing_type_id,
             shelf_life_days,
-            product_weight,
+            product_min_weight,
+            product_max_weight,
             min_order_quantity_unit_id
         } = req.body;
 
@@ -488,9 +489,9 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
             queryParams.push(shelf_life_days);
         }
 
-        if (product_weight) {
-            query += ' AND ps.product_min_weight <= ? AND ps.product_max_weight >= ?';
-            queryParams.push(product_weight, product_weight);
+        if (product_min_weight && product_max_weight) {
+            query += ' AND ps.product_min_weight >= ? AND ps.product_max_weight <= ?';
+            queryParams.push(product_min_weight, product_max_weight);
         }
 
         query += ' ORDER BY ps.id';
@@ -560,6 +561,8 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
                 AND (packing_type_id = ? OR ? IS NULL)
                 AND (shelf_life_days = ? OR ? IS NULL)
                 AND (min_order_quantity_unit_id = ? OR ? IS NULL)
+                AND (product_min_weight = ? OR ? IS NULL)
+                AND (product_max_weight = ? OR ? IS NULL)
             `, [
                 userId, id,
                 category_id, category_id,
@@ -567,26 +570,31 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
                 product_id, product_id,
                 currentPackingTypeId, currentPackingTypeId,
                 shelf_life_days, shelf_life_days,
-                min_order_quantity_unit_id, min_order_quantity_unit_id
+                min_order_quantity_unit_id, min_order_quantity_unit_id,
+                product_min_weight, product_min_weight,
+                product_max_weight, product_max_weight
             ]);
 
             if (!existingHistory.length) {
                 await connection.query(`
-                    INSERT INTO search_history (user_id, packaging_solution_id, weight_by_user, search_time, category_id, subcategory_id, product_id, packing_type_id, shelf_life_days, min_order_quantity_unit_id)
-                    VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO search_history 
+                    (user_id, packaging_solution_id, search_time, category_id, subcategory_id, product_id, packing_type_id, shelf_life_days, min_order_quantity_unit_id, product_min_weight, product_max_weight)
+                    VALUES (?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?, ?, ?)
                 `, [
                     userId,
                     id,
-                    product_weight || null,
                     category_id || null,
                     subcategory_id || null,
                     product_id || null,
                     currentPackingTypeId || null,
                     shelf_life_days || null,
-                    min_order_quantity_unit_id || null
+                    min_order_quantity_unit_id || null,
+                    product_min_weight || null,
+                    product_max_weight || null
                 ]);
             }
         }
+
 
         await connection.commit();
         let message = deductCredit ? "Packaging solutions fetched successfully and credit deducted" : "Packaging solutions fetched successfully"

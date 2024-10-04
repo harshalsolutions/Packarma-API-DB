@@ -4,7 +4,7 @@ import CustomError from '../../utils/CustomError.js';
 
 export const getCategoryController = async (req, res, next) => {
     try {
-        const { status } = req.query;
+        const { status = "active" } = req.query;
 
         let query = `
             SELECT c.id AS category_id, c.name AS category_name, c.unselected AS unselected_category_image, c.image AS category_image, c.sequence AS category_sequence,
@@ -66,7 +66,7 @@ export const getCategoryController = async (req, res, next) => {
 
 export const getPackagingTreatmentsController = async (req, res, next) => {
     try {
-        const { status, featured } = req.query;
+        const { status = "active", featured } = req.query;
 
         let query = 'SELECT * FROM packaging_treatment';
         const queryParams = [];
@@ -99,7 +99,7 @@ export const getPackagingTreatmentsController = async (req, res, next) => {
 
 export const getProductsController = async (req, res, next) => {
     try {
-        const { sub_category_id, status } = req.query;
+        const { sub_category_id, status = "active" } = req.query;
 
         if (!sub_category_id) {
             throw new CustomError(400, 'Subcategory ID is required');
@@ -205,7 +205,7 @@ export const searchProductSuggestionsController = async (req, res, next) => {
 
 export const getPackingTypesController = async (req, res, next) => {
     try {
-        const { status } = req.query;
+        const { status = "active" } = req.query;
 
         let query = `
             SELECT id AS packing_type_id, name AS packing_type_name, short_description

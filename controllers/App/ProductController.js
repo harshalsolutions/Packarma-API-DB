@@ -311,8 +311,6 @@ export const getSearchHistoryController = async (req, res, next) => {
                 ps.packing_type_id,
                 ps.packaging_machine_id,
                 ps.packaging_material_id,
-                ps.product_min_weight,
-                ps.product_max_weight,
                 ps.min_order_quantity,
                 ps.min_order_quantity_unit_id,
                 ps.image,

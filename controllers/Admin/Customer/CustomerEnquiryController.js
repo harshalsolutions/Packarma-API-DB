@@ -23,7 +23,7 @@ export const getAllCustomerEnquiryController = async (req, res, next) => {
         let query = `
             SELECT sh.*,
             ps.name, ps.image, ps.structure_type, ps.sequence, ps.storage_condition_id, ps.display_shelf_life_days, ps.product_id, ps.product_category_id, ps.product_form_id, 
-            ps.packaging_treatment_id, ps.packing_type_id, pt.name AS packing_type_name, ps.packaging_machine_id, ps.packaging_material_id, ps.product_min_weight, ps.product_max_weight, 
+            ps.packaging_treatment_id, ps.packing_type_id, pt.name AS packing_type_name, ps.packaging_machine_id, ps.packaging_material_id, ps.product_min_weight as original_product_min_weight, ps.product_max_weight as original_product_max_weight, 
             ps.min_order_quantity, ps.min_order_quantity_unit_id, ps.status, 
             u.firstname, u.lastname,
             p.product_name, p.id AS product_id, c.name AS category_name, sc.id AS subcategory_id, sc.name AS subcategory_name, pf.name AS product_form_name, pt.name AS packaging_treatment_name

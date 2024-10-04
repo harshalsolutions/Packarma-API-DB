@@ -84,10 +84,14 @@ const buildSearchQuery = (params) => {
         query += ' AND ps.display_shelf_life_days >= ?';
         queryParams.push(params.shelf_life_days);
     }
+    if (params.product_min_weight != null) {
+        query += ' AND ps.product_min_weight >= ?';
+        queryParams.push(params.product_min_weight);
+    }
 
-    if (params.product_min_weight && params.product_max_weight) {
-        query += ' AND ps.product_min_weight >= ? AND ps.product_max_weight <= ?';
-        queryParams.push(params.product_min_weight, params.product_max_weight);
+    if (params.product_max_weight != null) {
+        query += ' AND ps.product_max_weight <= ?';
+        queryParams.push(params.product_max_weight);
     }
 
     query += ' ORDER BY ps.id';
@@ -120,6 +124,7 @@ const checkExistingSearch = async (connection, userId, params, packagingSolution
         packagingSolutionIds
     ]);
 
+
     return existingSearchHistory.map(row => row.packing_type_id);
 };
 
@@ -148,7 +153,6 @@ const insertSearchHistory = async (connection, userId, packagingSolutions, param
         if (params.currentPackingTypeId === ALL_PACKAGING_TYPE_ID && existingPackingTypeIds.includes(solution.packing_type_id)) {
             continue;
         }
-
         await connection.query(`
             INSERT INTO search_history 
             (user_id, packaging_solution_id, search_time, category_id, subcategory_id, product_id, packing_type_id, shelf_life_days, min_order_quantity_unit_id, product_min_weight, product_max_weight)
@@ -156,15 +160,16 @@ const insertSearchHistory = async (connection, userId, packagingSolutions, param
         `, [
             userId,
             solution.id,
-            params.category_id || null,
-            params.subcategory_id || null,
-            params.product_id || null,
+            params.category_id !== undefined ? params.category_id : null,
+            params.subcategory_id !== undefined ? params.subcategory_id : null,
+            params.product_id !== undefined ? params.product_id : null,
             solution.packing_type_id,
-            params.shelf_life_days || null,
-            params.min_order_quantity_unit_id || null,
-            params.product_min_weight || null,
-            params.product_max_weight || null
+            params.shelf_life_days !== undefined ? params.shelf_life_days : null,
+            params.min_order_quantity_unit_id !== undefined ? params.min_order_quantity_unit_id : null,
+            params.product_min_weight !== undefined ? params.product_min_weight : null,
+            params.product_max_weight !== undefined ? params.product_max_weight : null
         ]);
+
     }
 };
 
@@ -179,10 +184,11 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
             product_id,
             packing_type_id,
             shelf_life_days,
+            min_order_quantity_unit_id,
             product_min_weight,
-            product_max_weight,
-            min_order_quantity_unit_id
+            product_max_weight
         } = req.body;
+
 
         const userId = req.user.userId;
 

@@ -272,7 +272,7 @@ export const getProductWeightOptionsController = async (req, res, next) => {
         let query = `
             SELECT DISTINCT product_min_weight, product_max_weight
             FROM packaging_solution
-            WHERE product_id = ? AND packing_type_id = 1
+            WHERE product_id = ? AND packing_type_id = 1 AND status = "active"
             ORDER BY product_min_weight
         `;
 

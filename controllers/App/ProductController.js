@@ -242,7 +242,7 @@ export const getShelfLifeOptionsController = async (req, res, next) => {
         let query = `
             SELECT DISTINCT display_shelf_life_days
             FROM packaging_solution
-            WHERE product_id = ?
+            WHERE product_id = ? AND packing_type_id = 1
             ORDER BY display_shelf_life_days
         `;
 

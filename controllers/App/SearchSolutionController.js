@@ -139,8 +139,6 @@ const insertSearchHistory = async (connection, userId, packagingSolutions, param
     }
 };
 
-
-
 const buildSearchQuery = (params) => {
     let query = `
     SELECT 
@@ -245,6 +243,8 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
             product_min_weight,
             product_max_weight
         } = req.body;
+
+        console.log(req.body)
 
         const userId = req.user.userId;
 

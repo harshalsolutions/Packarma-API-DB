@@ -190,18 +190,27 @@ const buildSearchQuery = (params) => {
 
     const queryParams = [];
 
-    if (params.currentPackingTypeId === 1) {
+    if (params.currentPackingTypeId === 1 || params.currentPackingTypeId === 4) {
         if (params.shelf_life_days) {
             query += ' AND ps.display_shelf_life_days >= ?';
             queryParams.push(params.shelf_life_days);
         }
+
+        if (params.product_min_weight === 0 && params.product_max_weight === 0) {
+            params.product_min_weight = null;
+            params.product_max_weight = null;
+        }
+
         if (params.product_min_weight != null) {
             query += ' AND ps.product_min_weight >= ?';
             queryParams.push(params.product_min_weight);
         }
-        if (params.product_max_weight != null) {
+
+        if (params.product_max_weight != null && params.product_max_weight !== 0) {
             query += ' AND ps.product_max_weight <= ?';
             queryParams.push(params.product_max_weight);
+        } else if (params.product_max_weight === 0) {
+            params.product_max_weight = null;
         }
     }
 
@@ -228,6 +237,7 @@ const buildSearchQuery = (params) => {
     query += ' ORDER BY ps.id';
     return { query, queryParams };
 };
+
 
 export const searchPackagingSolutionsController = async (req, res, next) => {
     const connection = await pool.getConnection();

@@ -102,10 +102,11 @@ export const createSubCategoryController = async (req, res, next) => {
         }
 
         const query = 'INSERT INTO subcategories (category_id, name, image, sequence) VALUES (?, ?, ?, ?)';
-        await pool.query(query, [category_id, name.trim(), image]);
+        await pool.query(query, [category_id, name.trim(), image, sequence]);
 
         res.status(201).json(new ApiResponse(201, null, 'Subcategory created successfully'));
     } catch (error) {
+        console.log(error)
         if (error.code === 'ER_DUP_ENTRY') return next(new CustomError(409, 'Already Created!!'));
         next(new CustomError(500, error.message));
     }

@@ -74,6 +74,10 @@ export const loginController = async (req, res, next) => {
         const user = rows[0];
         if (user.block) throw new CustomError(403, 'User is blocked');
 
+        if (!user.email_verified) {
+            throw new CustomError(403, 'Please verify your email before logging in.');
+        }
+
         const md5HashedPassword = crypto.createHash('md5').update(email + password).digest('hex');
         if (md5HashedPassword !== user.password) throw new CustomError(401, 'Invalid credentials');
 

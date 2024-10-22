@@ -54,6 +54,8 @@ import InvoiceDetailsRoutes from "./routes/Admin/Settings/InvoiceDetailsRoutes.j
 import CustomerCareRoutes from "./routes/Admin/ContactUs/CustomerCareRoutes.js"
 import externalAdminRoutes from "./routes/Admin/externalAdminRoutes.js"
 import dashboardAdminRoutes from "./routes/Admin/dashboardAdminRoutes.js"
+import ReferAndEarnTAndCRoutes from "./routes/Admin/Settings/ReferAndEarnT&CRoutes.js"
+import ReferAndEarnTAndCBenefits from "./routes/Admin/Settings/ReferAndEarnBenefitsRoutes.js"
 
 export const app = express();
 export const __filename = fileURLToPath(import.meta.url);
@@ -157,7 +159,9 @@ const generalSettingsRoutes = [
     AboutUsRoutes,
     SocialLinkAdminRoutes,
     AppDetailsAdminRoutes,
-    InvoiceDetailsRoutes
+    InvoiceDetailsRoutes,
+    ReferAndEarnTAndCRoutes,
+    ReferAndEarnTAndCBenefits
 ];
 
 generalSettingsRoutes.forEach(route => app.use('/api/admin/general-settings', authMiddleware, route));

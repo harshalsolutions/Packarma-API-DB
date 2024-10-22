@@ -54,12 +54,24 @@ export const registerController = async (req, res, next) => {
             res.status(201).json(new ApiResponse(201, { referralCode: newReferralCode }, 'User registered successfully'));
         } catch (error) {
             await connection.rollback();
+            if (error.code === 'ER_DUP_ENTRY') {
+                const errorMessage = error.message.toLowerCase();
+
+                if (errorMessage.includes('email')) {
+                    throw new CustomError(409, 'Email address is already registered');
+                } else if (errorMessage.includes('phone_number')) {
+                    throw new CustomError(409, 'Phone number is already registered');
+                } else {
+                    throw new CustomError(409, 'A duplicate entry was detected');
+                }
+            }
+
             throw error;
         } finally {
             connection.release();
         }
     } catch (error) {
-        handleError(error, next);
+        next(error)
     }
 };
 

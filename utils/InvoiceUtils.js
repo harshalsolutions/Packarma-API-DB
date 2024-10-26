@@ -1,3 +1,5 @@
+import { currencyData } from "../currency.js";
+
 const units = [
     '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
     'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'
@@ -21,11 +23,27 @@ export const convertToWords = (num) => {
     return convertToWords(Math.floor(num / 1000000000)) + ' Billion' + (num % 1000000000 !== 0 ? ' ' + convertToWords(num % 1000000000) : '');
 }
 
-export const totalInWords = (num) => {
-    const [integerPart, decimalPart] = num.toFixed(2).split('.');
-    let result = convertToWords(parseInt(integerPart)) + ' Rupees';
-    if (parseInt(decimalPart) > 0) {
-        result += ' and ' + convertToWords(parseInt(decimalPart)) + ' Paise';
+export const totalInWords = (num, currency = 'INR') => {
+    const validNum = parseFloat(num);
+    if (isNaN(validNum)) {
+        throw new Error("Invalid number input for totalInWords");
     }
+
+    const [integerPart, decimalPart] = validNum.toFixed(2).split('.');
+    const currencyInfo = currencyData[currency];
+
+    if (!currencyInfo) {
+        throw new Error(`Currency code ${currency} is not supported.`);
+    }
+
+    const mainCurrencyName = parseInt(integerPart) === 1 ? currencyInfo.name : currencyInfo.name_plural;
+    const fractionalCurrencyName = parseInt(decimalPart) === 1 ? currencyInfo.name : currencyInfo.name_plural;
+
+    let result = convertToWords(parseInt(integerPart)) + ` ${mainCurrencyName}`;
+
+    if (parseInt(decimalPart) > 0) {
+        result += ' and ' + convertToWords(parseInt(decimalPart)) + ` ${fractionalCurrencyName}`;
+    }
+
     return result;
 }

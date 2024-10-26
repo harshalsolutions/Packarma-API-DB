@@ -321,6 +321,7 @@ export const getSearchHistoryController = async (req, res, next) => {
                 sc.name AS subcategory_name,
                 sc.id AS subcategory_id,
                 p.product_name,
+                p.product_image,
                 pt.name AS packing_type_name
             FROM 
                 search_history sh

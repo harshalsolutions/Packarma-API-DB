@@ -450,7 +450,7 @@ export const freeCreditDocumentController = async (req, res, next) => {
     const userId = req.user.userId;
 
     try {
-        const { email_domain, gst_number } = req.body;
+        const { email_domain, gst_number, phone_number } = req.body;
         let gst_document_link = null;
         if (req.file) {
             gst_document_link = `/media/${req.body.type}/${req.file.filename}`;
@@ -472,6 +472,10 @@ export const freeCreditDocumentController = async (req, res, next) => {
         if (gst_document_link) {
             query += 'gst_document_link = ?, ';
             updateData.push(gst_document_link);
+        }
+        if (phone_number) {
+            query += 'phone_number = ?, ';
+            updateData.push(phone_number);
         }
 
         query = query.slice(0, -2);

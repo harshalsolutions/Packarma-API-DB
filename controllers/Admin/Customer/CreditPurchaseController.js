@@ -27,7 +27,7 @@ export const getAllCreditPurchaseController = async (req, res, next) => {
             queryParams.push(searchValue, searchValue);
         }
 
-        query += ` LIMIT ? OFFSET ?`;
+        query += `ORDER BY i.id DESC LIMIT ? OFFSET ?`;
         queryParams.push(parseInt(limit), parseInt((page - 1) * limit));
 
         const invoices = await connection.query(query, queryParams);

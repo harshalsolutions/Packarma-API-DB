@@ -205,28 +205,29 @@ export const getFreeTrailSubscriptionDataController = async (
   try {
     const query = `
         SELECT 
-            u.user_id, 
-            u.firstname, 
-            u.lastname, 
-            u.email,
-            s.id AS subscription_id,
-            s.type AS subscription_type, 
-            s.credit_amount, 
-            s.duration, 
-            s.benefits, 
-            s.sequence, 
-            s.createdAt AS subscription_createdAt, 
-            s.updatedAt AS subscription_updatedAt,
-            us.start_date,
-            us.end_date
-        FROM 
-            users u
-        JOIN 
-            user_subscriptions us ON u.user_id = us.user_id
-        JOIN 
-            subscriptions s ON us.id = s.id
-        WHERE 
-            s.id = ?
+        u.user_id, 
+        u.firstname, 
+        u.lastname, 
+        u.email,
+        s.id AS subscription_id,
+        s.type AS subscription_type, 
+        s.credit_amount, 
+        s.duration, 
+        s.benefits, 
+        s.sequence, 
+        s.createdAt AS subscription_createdAt, 
+        s.updatedAt AS subscription_updatedAt,
+        us.start_date,
+        us.end_date
+    FROM 
+        user_subscriptions us
+    JOIN 
+        users u ON us.user_id = u.user_id
+    JOIN 
+        subscriptions s ON us.subscription_id = s.id
+    WHERE 
+        s.id = ?
+
         LIMIT ${limit} OFFSET ${offset}
       `;
 

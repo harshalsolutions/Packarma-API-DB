@@ -379,6 +379,7 @@ export const generateInvoiceController = async (req, res, next) => {
 
   } catch (error) {
     await connection.rollback();
+    console.log(error)
     res.status(500).json(new ApiResponse(500, {}, error.message));
   } finally {
     connection.release();

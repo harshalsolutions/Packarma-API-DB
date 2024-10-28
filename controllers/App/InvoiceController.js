@@ -337,7 +337,7 @@ export const generateInvoiceController = async (req, res, next) => {
         no_of_credits,
         total_price: parsedTotal,
         currency,
-        invoice_date: today,
+        invoice_date,
         invoice_link: pdfDownloadLink,
         transaction_id,
         customer_name,

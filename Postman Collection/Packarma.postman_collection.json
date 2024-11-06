@@ -1,0 +1,1854 @@
+{
+	"info": {
+		"_postman_id": "712ca626-6b4d-4338-a5d1-aeabb1dd8776",
+		"name": "Packarma",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "37817796",
+		"_collection_link": "https://packarma.postman.co/workspace/Packarma-Workspace~a594c641-f398-4019-b792-d09ba7011421/collection/37817796-712ca626-6b4d-4338-a5d1-aeabb1dd8776?action=share&source=collection_link&creator=37817796"
+	},
+	"item": [
+		{
+			"name": "App",
+			"item": [
+				{
+					"name": "Users",
+					"item": [
+						{
+							"name": "Verify Email",
+							"item": [
+								{
+									"name": "Request Verify OTP",
+									"request": {
+										"auth": {
+											"type": "bearer"
+										},
+										"method": "POST",
+										"header": [
+											{
+												"key": "",
+												"value": "",
+												"type": "text",
+												"disabled": true
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"email\":\"krishjotaniya71@gmail.com\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{APP_BACKEND_LINK}}/users/otp/request",
+											"host": [
+												"{{APP_BACKEND_LINK}}"
+											],
+											"path": [
+												"users",
+												"otp",
+												"request"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Verify OTP",
+									"request": {
+										"auth": {
+											"type": "noauth"
+										},
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"otp\":\"102172\",\r\n    \"email\":\"krishjotaniya71@gmail.com\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{APP_BACKEND_LINK}}/users/otp/verify",
+											"host": [
+												"{{APP_BACKEND_LINK}}"
+											],
+											"path": [
+												"users",
+												"otp",
+												"verify"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Forget Password",
+							"item": [
+								{
+									"name": "Request Password Reset",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"email\":\"krishjotaniya71@gmail.com\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{APP_BACKEND_LINK}}/users/password/otp/request",
+											"host": [
+												"{{APP_BACKEND_LINK}}"
+											],
+											"path": [
+												"users",
+												"password",
+												"otp",
+												"request"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Reset Password",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTcyNTg0Mzk3MCwiZXhwIjoxNzI2NDQ4NzcwfQ.RHK8NgZrBjkUBrh79x1T9eS6odcO7S-hXpMWZEuNPjY ",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"newPassword\":\"test123\",\r\n    \"otp\":\"937436\",\r\n    \"email\":\"krishjotaniya71@gmail.com\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{APP_BACKEND_LINK}}/users/password/reset",
+											"host": [
+												"{{APP_BACKEND_LINK}}"
+											],
+											"path": [
+												"users",
+												"password",
+												"reset"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Auth Firebase User",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\":\"krishtest2@gmail.com\", \r\n    \"type\":\"google\", \r\n    \"uid\":\"123456789010\", \r\n    \"firstname\":\"Krish\", \r\n    \"lastname\":\"Jotaniya\",\r\n    \"referralCode\":\"\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/users/auth-firebase",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"users",
+										"auth-firebase"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Login User",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\":\"krishjotaniya71@gmail.com\",\r\n    \"password\":\"krish123\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/users/login",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"users",
+										"login"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Register User",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"firstname\":\"Neel\",\r\n    \"lastname\":\"Jotaniya\",\r\n    \"email\":\"krishjotaniya71@gmail.com\",\r\n    \"password\":\"neel123\",\r\n    \"phone_number\":\"+918160704091\",\r\n    \"referralCode\":\"\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/users/register",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"users",
+										"register"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get User Details",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{USER_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/users/me",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"users",
+										"me"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update User",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{USER_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"lastname\":\"Jotaniya\",\r\n    \"email_domain\":\"krish@jotaniya.com\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/users/update-user",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"users",
+										"update-user"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Password",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{USER_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTcyNTg0Mzk3MCwiZXhwIjoxNzI2NDQ4NzcwfQ.RHK8NgZrBjkUBrh79x1T9eS6odcO7S-hXpMWZEuNPjY ",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"currentPassword\":\"krish123\",\r\n    \"newPassword\":\"krish1234\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/users/password/update",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"users",
+										"password",
+										"update"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add GST Document and Data",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{USER_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTcyNTg0Mzk3MCwiZXhwIjoxNzI2NDQ4NzcwfQ.RHK8NgZrBjkUBrh79x1T9eS6odcO7S-hXpMWZEuNPjY ",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "email_domain",
+											"value": "hello@krish.com",
+											"type": "text"
+										},
+										{
+											"key": "gst_number",
+											"value": "35798672939t786CK",
+											"type": "text"
+										},
+										{
+											"key": "phone_number",
+											"value": "1234567890",
+											"type": "text"
+										},
+										{
+											"key": "type",
+											"value": "gst_document",
+											"type": "text"
+										},
+										{
+											"key": "gst_document",
+											"type": "file",
+											"src": "/C:/Users/jotan/Downloads/invoice_testinvoice1.pdf"
+										}
+									],
+									"options": {
+										"formdata": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/users/free-credit",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"users",
+										"free-credit"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add Help and Support",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{USER_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"name\":\"Krish\",\r\n    \"phone_number\":\"1234567890\", \r\n    \"issue\":\"Not Working Credits System!\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/users/add-help-support",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"users",
+										"add-help-support"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Banner",
+					"item": [
+						{
+							"name": "Get All Banner",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/banners/get-banners",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"banners",
+										"get-banners"
+									],
+									"query": [
+										{
+											"key": "status",
+											"value": "inactive",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Log Banner Activity",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQwLCJpYXQiOjE3MjYyMTAxNDQsImV4cCI6MTcyNjgxNDk0NH0.STrM_JgcKNVNYsJBeNk3BJryLXKOCnK6EXogdWWNyB4",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQwLCJpYXQiOjE3MjU5ODc0MzAsImV4cCI6MTcyNjU5MjIzMH0.DoInvbc6D1zcOKTdnIYwlt7oh7MiSUHC78ZNySGIWlo",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"bannerId\":2,\r\n    \"activityType\":\"click\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/banners/log-activity",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"banners",
+										"log-activity"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Advertisements",
+					"item": [
+						{
+							"name": "Get All Advertisements",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/advertisements/get-advertisements?status=active",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"advertisements",
+										"get-advertisements"
+									],
+									"query": [
+										{
+											"key": "status",
+											"value": "active"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Log Advertisement Activity",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQwLCJpYXQiOjE3MjYyMTAxNDQsImV4cCI6MTcyNjgxNDk0NH0.STrM_JgcKNVNYsJBeNk3BJryLXKOCnK6EXogdWWNyB4",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTcyNTg0Mzk3MCwiZXhwIjoxNzI2NDQ4NzcwfQ.RHK8NgZrBjkUBrh79x1T9eS6odcO7S-hXpMWZEuNPjY ",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"advertisementId\":2,\r\n    \"activityType\":\"view\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/advertisements/log-activity",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"advertisements",
+										"log-activity"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Products",
+					"item": [
+						{
+							"name": "Get Category and SubCategory",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/product/category?status=active",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"product",
+										"category"
+									],
+									"query": [
+										{
+											"key": "status",
+											"value": "active"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Home Page Packaging Treatments",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/product/packaging-treatments",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"product",
+										"packaging-treatments"
+									],
+									"query": [
+										{
+											"key": "status",
+											"value": "active",
+											"disabled": true
+										},
+										{
+											"key": "featured",
+											"value": "true",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Subcategory By Treatment",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/product/subcategory-by-treatment/:id",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"product",
+										"subcategory-by-treatment",
+										":id"
+									],
+									"query": [
+										{
+											"key": "status",
+											"value": "active",
+											"disabled": true
+										},
+										{
+											"key": "featured",
+											"value": "true",
+											"disabled": true
+										}
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "2"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Product",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/product/get-products?status=active&sub_category_id=1",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"product",
+										"get-products"
+									],
+									"query": [
+										{
+											"key": "status",
+											"value": "active"
+										},
+										{
+											"key": "sub_category_id",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Shelf Life",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/product/shelf-life-options?product_id=82",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"product",
+										"shelf-life-options"
+									],
+									"query": [
+										{
+											"key": "product_id",
+											"value": "82"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Packaging Types",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/product/packing-types?status=active",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"product",
+										"packing-types"
+									],
+									"query": [
+										{
+											"key": "status",
+											"value": "active"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Weight Options",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/product/product-weight-options?product_id=82",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"product",
+										"product-weight-options"
+									],
+									"query": [
+										{
+											"key": "product_id",
+											"value": "82"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Product Suggestion Search",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/product/product-suggestions?query=a&limit=5&product=true",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"product",
+										"product-suggestions"
+									],
+									"query": [
+										{
+											"key": "query",
+											"value": "a"
+										},
+										{
+											"key": "limit",
+											"value": "5"
+										},
+										{
+											"key": "product",
+											"value": "true"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search Solution",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{USER_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "",
+										"value": "",
+										"type": "text",
+										"disabled": true
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"category_id\": 1,\r\n    \"subcategory_id\":7,\r\n    \"product_id\":65,\r\n    \"packing_type_id\":1,\r\n    \"product_min_weight\":null,\r\n    \"product_max_weight\":null,\r\n    \"shelf_life_days\":null\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/product/search-solution",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"product",
+										"search-solution"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Referral",
+					"item": [
+						{
+							"name": "Get User By Referral Code",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/referral/get-users/:referralCode",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"referral",
+										"get-users",
+										":referralCode"
+									],
+									"variable": [
+										{
+											"key": "referralCode",
+											"value": "G4EXZZMNRS"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Redeem Request",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTcyNjMxNjE0NiwiZXhwIjoxNzI2OTIwOTQ2fQ.jDoCBuzfdeQ3wIaDQroX8aZ6N_kSbH13_PjgF2AuwmA",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"referralCode\":\"2PbjLQjMq9\",\r\n    \"user_id\":\"45\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/referral/redeem-request",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"referral",
+										"redeem-request"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Check Referral Code",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/referral/check-code/:referralCode",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"referral",
+										"check-code",
+										":referralCode"
+									],
+									"variable": [
+										{
+											"key": "referralCode",
+											"value": "zkeTNVsExO"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Status of Task",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"account_created\":false, \r\n    \"subscription_completed\":true\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/referral/update-referral-status/:referralCode",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"referral",
+										"update-referral-status",
+										":referralCode"
+									],
+									"variable": [
+										{
+											"key": "referralCode",
+											"value": "SuklWKPrRy"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Subscriptions and Credits",
+					"item": [
+						{
+							"name": "Modify Credits",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{USER_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTcyNTg0Mzk3MCwiZXhwIjoxNzI2NDQ4NzcwfQ.RHK8NgZrBjkUBrh79x1T9eS6odcO7S-hXpMWZEuNPjY ",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"credits\": 43,\r\n    \"description\":\"43 Added for Testing\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/users/modify-credits",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"users",
+										"modify-credits"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Credit History",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{USER_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTcyNTg0Mzk3MCwiZXhwIjoxNzI2NDQ4NzcwfQ.RHK8NgZrBjkUBrh79x1T9eS6odcO7S-hXpMWZEuNPjY ",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/users/credit-history",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"users",
+										"credit-history"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add Free Trial",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{USER_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/subscription/add-free-trial",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"subscription",
+										"add-free-trial"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Subscriptions Data",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/subscription/get-subscriptions",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"subscription",
+										"get-subscriptions"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Address",
+					"item": [
+						{
+							"name": "Get Address",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{USER_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTcyNTg0Mzk3MCwiZXhwIjoxNzI2NDQ4NzcwfQ.RHK8NgZrBjkUBrh79x1T9eS6odcO7S-hXpMWZEuNPjY ",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/address/get-address",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"address",
+										"get-address"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add Address",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{USER_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"address_name\": \"Address 2\",\r\n    \"address\": \"123 Baker Street\",\r\n    \"city\": \"London\",\r\n    \"pincode\": \"NW1 6XE\",\r\n    \"county\": \"Greater London\",\r\n    \"phone_number\": \"+44 20 1234 5678\",\r\n    \"state\":\"Test\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/address/add-address",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"address",
+										"add-address"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Address",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{USER_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTcyNTg0Mzk3MCwiZXhwIjoxNzI2NDQ4NzcwfQ.RHK8NgZrBjkUBrh79x1T9eS6odcO7S-hXpMWZEuNPjY ",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"address\": \"123 Baker Street\",\r\n    \"city\": \"London\",\r\n    \"pincode\": \"NW1 6XE\",\r\n    \"county\": \"Greater London\",\r\n    \"phone_number\": \"+44 20 1234 5678\",\r\n    \"state\": \"England\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/address/update-address/:address_id",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"address",
+										"update-address",
+										":address_id"
+									],
+									"variable": [
+										{
+											"key": "address_id",
+											"value": "3",
+											"type": "string"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add Address Copy",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{USER_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"address_name\":\"Address 1\", \r\n    \"address\":\"Heritage Residency Opp Uma Bhavan\", \r\n    \"state\":\"Gujarat\", \r\n    \"city\":\"City\", \r\n    \"pincode\":\"123456\",\r\n    \"phone_number\":\"+91 8160706091\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/address/add-address",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"address",
+										"add-address"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Address",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTcyNTg0Mzk3MCwiZXhwIjoxNzI2NDQ4NzcwfQ.RHK8NgZrBjkUBrh79x1T9eS6odcO7S-hXpMWZEuNPjY ",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/address/delete-address/:address_id",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"address",
+										"delete-address",
+										":address_id"
+									],
+									"variable": [
+										{
+											"key": "address_id",
+											"value": "1",
+											"type": "string"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Search History",
+					"item": [
+						{
+							"name": "Get Search History",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{USER_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/product/search-history",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"product",
+										"search-history"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Invoice",
+					"item": [
+						{
+							"name": "Create Invoice",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{USER_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"customer_name\": \"Krish Jotaniya\",\r\n  \"customer_gstNo\": \"\",\r\n  \"transaction_id\": \"sf\",\r\n  \"customer_address_id\":3,\r\n  \"subscription_id\": 5,\r\n  \"currency\": \"USD\",\r\n  \"no_of_credits\":10,\r\n  \"products\": [\r\n    {\r\n      \"description\": \"Test Credit\",\r\n      \"amount\": \"100\",\r\n      \"discount\": 0\r\n    }\r\n  ]\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/invoice/create-invoice/:invoice_type",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"invoice",
+										"create-invoice",
+										":invoice_type"
+									],
+									"variable": [
+										{
+											"key": "invoice_type",
+											"value": "subscription"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Invoice by Id",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{USER_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/invoice/get-invoice/:id?type=subscription",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"invoice",
+										"get-invoice",
+										":id"
+									],
+									"query": [
+										{
+											"key": "type",
+											"value": "subscription"
+										}
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get All Invoice",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{USER_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/invoice/get-invoices?type=subscription",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"invoice",
+										"get-invoices"
+									],
+									"query": [
+										{
+											"key": "type",
+											"value": "subscription"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Payment",
+					"item": [
+						{
+							"name": "Create Order",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQwLCJpYXQiOjE3MjY5ODcyNDgsImV4cCI6MTcyNzU5MjA0OH0.iJ3-6sTBP475nRNr5BPKr-V2mkeiJnmzwSGkT5Qsg3A",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTcyNTg0Mzk3MCwiZXhwIjoxNzI2NDQ4NzcwfQ.RHK8NgZrBjkUBrh79x1T9eS6odcO7S-hXpMWZEuNPjY ",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"amount\":200,\r\n    \"currency\": \"INR\"\r\n }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/payment/create-order",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"payment",
+										"create-order"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Verify Payment",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQwLCJpYXQiOjE3MjY5ODcyNDgsImV4cCI6MTcyNzU5MjA0OH0.iJ3-6sTBP475nRNr5BPKr-V2mkeiJnmzwSGkT5Qsg3A",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTcyNTg0Mzk3MCwiZXhwIjoxNzI2NDQ4NzcwfQ.RHK8NgZrBjkUBrh79x1T9eS6odcO7S-hXpMWZEuNPjY ",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"razorpay_payment_id\": \"pay_29QQoUBi66xm2f\",\r\n  \"razorpay_order_id\": \"order_9A33XWu170gUtm\",\r\n  \"razorpay_signature\": \"9ef4dffbfd84f1318f6739a3ce19f9d85851857ae648f114332d8401e0949a3d\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/payment/verify-payment",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"payment",
+										"verify-payment"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "App Data",
+					"item": [
+						{
+							"name": "T&C",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/data/terms-and-conditions",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"data",
+										"terms-and-conditions"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Refer And Earn Beneftis",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/data/refer-and-earn/benefits",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"data",
+										"refer-and-earn",
+										"benefits"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Refer And Earn T&C",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/data/refer-and-earn/terms-and-condition",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"data",
+										"refer-and-earn",
+										"terms-and-condition"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "About Us",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/data/about-us",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"data",
+										"about-us"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Privacy Policy",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/data/privacy-policy",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"data",
+										"privacy-policy"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Credit Prices",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{APP_BACKEND_LINK}}/data/credit-prices?status=active",
+									"host": [
+										"{{APP_BACKEND_LINK}}"
+									],
+									"path": [
+										"data",
+										"credit-prices"
+									],
+									"query": [
+										{
+											"key": "status",
+											"value": "active"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Add Admin",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\":\"Krish Jotaniya\",\r\n    \"emailid\":\"krishjotaniya71@gmail.com\",\r\n    \"password\":\"123456\",\r\n    \"phonenumber\":\"1234567890\",\r\n    \"country_code\":\"+91\", \r\n    \"address\":\"Heritage Residency\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{ADMIN_BACKEND_LINK}}/auth/add",
+							"host": [
+								"{{ADMIN_BACKEND_LINK}}"
+							],
+							"path": [
+								"auth",
+								"add"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

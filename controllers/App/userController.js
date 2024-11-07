@@ -289,6 +289,10 @@ export const getUserController = async (req, res, next) => {
       }
     });
 
+    upcomingSubscriptions.sort(
+      (a, b) => new Date(a.start_date) - new Date(b.start_date)
+    );
+
     const user = {
       ...rows[0],
       ...currentSubscription,

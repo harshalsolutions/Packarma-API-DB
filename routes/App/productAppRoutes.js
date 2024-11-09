@@ -15,30 +15,14 @@ import { searchPackagingSolutionsController } from "../../controllers/App/Search
 
 const router = Router();
 
-router.get("/category", authMiddleware, getCategoryController);
-router.get(
-  "/packaging-treatments",
-  authMiddleware,
-  getPackagingTreatmentsController
-);
+router.get("/category", getCategoryController);
+router.get("/packaging-treatments", getPackagingTreatmentsController);
 
-router.get("/get-products", authMiddleware, getProductsController);
-router.get(
-  "/product-suggestions",
-  authMiddleware,
-  searchProductSuggestionsController
-);
-router.get("/packing-types", authMiddleware, getPackingTypesController);
-router.get(
-  "/shelf-life-options",
-  authMiddleware,
-  getShelfLifeOptionsController
-);
-router.get(
-  "/product-weight-options",
-  authMiddleware,
-  getProductWeightOptionsController
-);
+router.get("/get-products", getProductsController);
+router.get("/product-suggestions", searchProductSuggestionsController);
+router.get("/packing-types", getPackingTypesController);
+router.get("/shelf-life-options", getShelfLifeOptionsController);
+router.get("/product-weight-options", getProductWeightOptionsController);
 
 router.post(
   "/search-solution",
@@ -48,7 +32,6 @@ router.post(
 
 router.get(
   "/subcategory-by-treatment/:id",
-  authMiddleware,
   getSubCategoryByPackagingTreatmentController
 );
 

@@ -4,7 +4,7 @@ import { getAllBannerController } from "../../controllers/Admin/Master/bannerCon
 import { logBannerActivityController } from "../../controllers/App/BannerActivity.js";
 const router = express.Router();
 
-router.get("/get-banners", authMiddleware, getAllBannerController);
+router.get("/get-banners", getAllBannerController);
 router.patch("/log-activity", authMiddleware, logBannerActivityController); //add views and click
 
 export default router;

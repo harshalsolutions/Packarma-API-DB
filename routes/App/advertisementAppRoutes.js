@@ -5,11 +5,7 @@ import { logAdvertisementActivityController } from "../../controllers/App/Advert
 
 const router = express.Router();
 
-router.get(
-  "/get-advertisements",
-  authMiddleware,
-  getAllAdvertisementController
-);
+router.get("/get-advertisements", getAllAdvertisementController);
 router.patch(
   "/log-activity",
   authMiddleware,

@@ -33,7 +33,7 @@ router.post("/otp/verify", verifyOtpController);
 router.post("/password/otp/request", requestPasswordResetOtpController);
 router.post("/password/reset", resetPasswordController);
 
-router.post("/add-help-support", authMiddleware, addHelpSupportController);
+router.post("/add-help-support", addHelpSupportController);
 
 router.use(authMiddleware);
 
@@ -44,11 +44,10 @@ router.post("/password/update", updatePasswordController);
 router.post(
   "/free-credit",
   upload.single("gst_document"),
-  authMiddleware,
   freeCreditDocumentController
 );
 
-router.post("/modify-credits", authMiddleware, modifyCredits);
-router.get("/credit-history", authMiddleware, getCreditHistory);
+router.post("/modify-credits", modifyCredits);
+router.get("/credit-history", getCreditHistory);
 
 export default router;

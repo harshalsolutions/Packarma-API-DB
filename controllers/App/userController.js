@@ -293,10 +293,17 @@ export const getUserController = async (req, res, next) => {
       (a, b) => new Date(b.start_date) - new Date(a.start_date)
     );
 
+    const [trialRows] = await pool.query(
+      `SELECT 1 FROM user_subscriptions 
+       WHERE user_id = ? AND subscription_id = 1 LIMIT 1`,
+      [userId]
+    );
+
     const user = {
       ...rows[0],
       ...currentSubscription,
       upcoming_subscriptions: upcomingSubscriptions,
+      free_trial_redeem: trialRows.length > 0,
     };
 
     const { password: _, ...userWithoutPassword } = user;

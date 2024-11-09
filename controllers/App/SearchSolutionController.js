@@ -1,146 +1,174 @@
-import pool from '../../config/database.js';
-import ApiResponse from '../../utils/ApiResponse.js';
-import CustomError from '../../utils/CustomError.js';
+import pool from "../../config/database.js";
+import ApiResponse from "../../utils/ApiResponse.js";
+import CustomError from "../../utils/CustomError.js";
 
 const ALL_PACKAGING_TYPE_ID = 4;
 
+const checkExistingSearch = async (
+  connection,
+  userId,
+  params,
+  packagingSolutionIds
+) => {
+  try {
+    const conditions = [];
+    const queryParams = [userId];
 
-const checkExistingSearch = async (connection, userId, params, packagingSolutionIds) => {
-    try {
-        const conditions = [];
-        const queryParams = [userId];
+    conditions.push("user_id = ?");
 
-        conditions.push('user_id = ?');
+    if (params.category_id) {
+      conditions.push("category_id = ?");
+      queryParams.push(params.category_id);
+    } else {
+      conditions.push("category_id IS NULL");
+    }
 
-        if (params.category_id) {
-            conditions.push('category_id = ?');
-            queryParams.push(params.category_id);
-        } else {
-            conditions.push('category_id IS NULL');
-        }
+    if (params.subcategory_id) {
+      conditions.push("subcategory_id = ?");
+      queryParams.push(params.subcategory_id);
+    } else {
+      conditions.push("subcategory_id IS NULL");
+    }
 
-        if (params.subcategory_id) {
-            conditions.push('subcategory_id = ?');
-            queryParams.push(params.subcategory_id);
-        } else {
-            conditions.push('subcategory_id IS NULL');
-        }
+    if (params.product_id) {
+      conditions.push("product_id = ?");
+      queryParams.push(params.product_id);
+    } else {
+      conditions.push("product_id IS NULL");
+    }
 
-        if (params.product_id) {
-            conditions.push('product_id = ?');
-            queryParams.push(params.product_id);
-        } else {
-            conditions.push('product_id IS NULL');
-        }
+    if (params.currentPackingTypeId === 1) {
+      if (params.shelf_life_days != null) {
+        conditions.push("shelf_life_days = ?");
+        queryParams.push(params.shelf_life_days);
+      } else {
+        conditions.push("shelf_life_days IS NULL");
+      }
 
-        if (params.currentPackingTypeId === 1) {
-            if (params.shelf_life_days != null) {
-                conditions.push('shelf_life_days = ?');
-                queryParams.push(params.shelf_life_days);
-            } else {
-                conditions.push('shelf_life_days IS NULL');
-            }
+      if (params.product_min_weight != null) {
+        conditions.push("product_min_weight = ?");
+        queryParams.push(params.product_min_weight);
+      } else {
+        conditions.push("product_min_weight IS NULL");
+      }
 
-            if (params.product_min_weight != null) {
-                conditions.push('product_min_weight = ?');
-                queryParams.push(params.product_min_weight);
-            } else {
-                conditions.push('product_min_weight IS NULL');
-            }
+      if (params.product_max_weight != null) {
+        conditions.push("product_max_weight = ?");
+        queryParams.push(params.product_max_weight);
+      } else {
+        conditions.push("product_max_weight IS NULL");
+      }
+    } else if (
+      params.currentPackingTypeId === 2 ||
+      params.currentPackingTypeId === 3
+    ) {
+      conditions.push("shelf_life_days IS NULL");
+      conditions.push("product_min_weight IS NULL");
+      conditions.push("product_max_weight IS NULL");
+    }
 
-            if (params.product_max_weight != null) {
-                conditions.push('product_max_weight = ?');
-                queryParams.push(params.product_max_weight);
-            } else {
-                conditions.push('product_max_weight IS NULL');
-            }
-        } else if (params.currentPackingTypeId === 2 || params.currentPackingTypeId === 3) {
-            conditions.push('shelf_life_days IS NULL');
-            conditions.push('product_min_weight IS NULL');
-            conditions.push('product_max_weight IS NULL');
-        }
+    conditions.push("packaging_solution_id IN (?)");
+    queryParams.push(packagingSolutionIds);
 
-        conditions.push('packaging_solution_id IN (?)');
-        queryParams.push(packagingSolutionIds);
-
-        const query = `
+    const query = `
             SELECT DISTINCT packing_type_id
             FROM search_history 
-            WHERE ${conditions.join(' AND ')}
+            WHERE ${conditions.join(" AND ")}
         `;
 
-        const [existingSearchHistory] = await connection.query(query, queryParams);
-        return existingSearchHistory.map(row => row.packing_type_id);
-    } catch (error) {
-        throw new CustomError(500, 'Error fetching existing search history');
-    }
+    const [existingSearchHistory] = await connection.query(query, queryParams);
+    return existingSearchHistory.map((row) => row.packing_type_id);
+  } catch (error) {
+    throw new CustomError(500, "Error fetching existing search history");
+  }
 };
-
 
 const deductCredit = async (connection, userId) => {
-    try {
-        const [creditRows] = await connection.query('SELECT credits FROM users WHERE user_id = ?', [userId]);
-        if (!creditRows.length) throw new CustomError(404, 'User not found');
+  try {
+    const [creditRows] = await connection.query(
+      "SELECT credits FROM users WHERE user_id = ?",
+      [userId]
+    );
+    if (!creditRows.length) throw new CustomError(404, "User not found");
 
-        const currentCredits = creditRows[0].credits;
+    const currentCredits = creditRows[0].credits;
 
-        if (currentCredits < 1) {
-            throw new CustomError(403, 'Insufficient credits to perform search');
-        }
-
-        const newCredits = currentCredits - 1;
-
-        await connection.query('UPDATE users SET credits = ?, updatedAt = CURRENT_TIMESTAMP WHERE user_id = ?', [newCredits, userId]);
-
-        await connection.query(
-            'INSERT INTO credit_history (user_id, change_amount, description) VALUES (?, ?, ?)',
-            [userId, -1, 'Credit deducted for packaging solution search']
-        );
-    } catch (error) {
-        throw new CustomError(500, 'Error deducting credits');
+    if (currentCredits < 1) {
+      throw new CustomError(403, "Insufficient credits to perform search");
     }
+
+    const newCredits = currentCredits - 1;
+
+    await connection.query(
+      "UPDATE users SET credits = ?, updatedAt = CURRENT_TIMESTAMP WHERE user_id = ?",
+      [newCredits, userId]
+    );
+
+    await connection.query(
+      "INSERT INTO credit_history (user_id, change_amount, description) VALUES (?, ?, ?)",
+      [userId, -1, "Credit deducted for packaging solution search"]
+    );
+  } catch (error) {
+    throw new CustomError(500, "Error deducting credits");
+  }
 };
 
-const insertSearchHistory = async (connection, userId, packagingSolutions, params, existingPackingTypeIds) => {
-    try {
-        for (const solution of packagingSolutions) {
-            if (params.currentPackingTypeId === ALL_PACKAGING_TYPE_ID && existingPackingTypeIds.includes(solution.packing_type_id)) {
-                continue;
-            }
+const insertSearchHistory = async (
+  connection,
+  userId,
+  packagingSolutions,
+  params,
+  existingPackingTypeIds
+) => {
+  try {
+    for (const solution of packagingSolutions) {
+      if (
+        params.currentPackingTypeId === ALL_PACKAGING_TYPE_ID &&
+        existingPackingTypeIds.includes(solution.packing_type_id)
+      ) {
+        continue;
+      }
 
-            let insertParams = [
-                userId,
-                solution.id,
-                params.category_id !== undefined ? params.category_id : null,
-                params.subcategory_id !== undefined ? params.subcategory_id : null,
-                params.product_id !== undefined ? params.product_id : null,
-                solution.packing_type_id,
-            ];
+      let insertParams = [
+        userId,
+        solution.id,
+        params.category_id !== undefined ? params.category_id : null,
+        params.subcategory_id !== undefined ? params.subcategory_id : null,
+        params.product_id !== undefined ? params.product_id : null,
+        solution.packing_type_id,
+      ];
 
-            if (solution.packing_type_id === 1) {
-                insertParams.push(
-                    params.product_min_weight !== undefined ? params.product_min_weight : null,
-                    params.product_max_weight !== undefined ? params.product_max_weight : null,
-                    params.shelf_life_days !== undefined ? params.shelf_life_days : null
-                );
-            } else {
-                insertParams.push(null, null, null);
-            }
+      if (solution.packing_type_id === 1) {
+        insertParams.push(
+          params.product_min_weight !== undefined
+            ? params.product_min_weight
+            : null,
+          params.product_max_weight !== undefined
+            ? params.product_max_weight
+            : null,
+          params.shelf_life_days !== undefined ? params.shelf_life_days : null
+        );
+      } else {
+        insertParams.push(null, null, null);
+      }
 
-            await connection.query(`
+      await connection.query(
+        `
                 INSERT INTO search_history 
                 (user_id, packaging_solution_id, search_time, category_id, subcategory_id, product_id, packing_type_id, product_min_weight, product_max_weight, shelf_life_days)
                 VALUES (?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?, ?)
-            `, insertParams);
-        }
-    } catch (error) {
-        console.log(error);
-        throw new CustomError(500, 'Error inserting search history');
+            `,
+        insertParams
+      );
     }
+  } catch (error) {
+    console.log(error);
+    throw new CustomError(500, "Error inserting search history");
+  }
 };
 
 const buildSearchQuery = (params) => {
-    let query = `
+  let query = `
     SELECT 
         ps.*, 
         c.name AS category_name, c.image AS category_image,
@@ -188,127 +216,141 @@ const buildSearchQuery = (params) => {
         AND sc.status = 'active'
     `;
 
-    const queryParams = [];
+  const queryParams = [];
 
-    if (params.currentPackingTypeId === 1 || params.currentPackingTypeId === 4) {
-        if (params.shelf_life_days) {
-            query += ' AND ps.display_shelf_life_days >= ?';
-            queryParams.push(params.shelf_life_days);
-        }
-
-        if (params.product_min_weight === 0 && params.product_max_weight === 0) {
-            params.product_min_weight = null;
-            params.product_max_weight = null;
-        }
-
-        if (params.product_min_weight != null) {
-            query += ' AND ps.product_min_weight >= ?';
-            queryParams.push(params.product_min_weight);
-        }
-
-        if (params.product_max_weight != null && params.product_max_weight !== 0) {
-            query += ' AND ps.product_max_weight <= ?';
-            queryParams.push(params.product_max_weight);
-        } else if (params.product_max_weight === 0) {
-            params.product_max_weight = null;
-        }
+  if (params.currentPackingTypeId === 1 || params.currentPackingTypeId === 4) {
+    if (params.shelf_life_days) {
+      query += " AND ps.display_shelf_life_days >= ?";
+      queryParams.push(params.shelf_life_days);
     }
 
-    if (params.category_id) {
-        query += ' AND ps.product_category_id = ?';
-        queryParams.push(params.category_id);
+    if (params.product_min_weight === 0 && params.product_max_weight === 0) {
+      params.product_min_weight = null;
+      params.product_max_weight = null;
     }
 
-    if (params.subcategory_id) {
-        query += ' AND p.sub_category_id = ?';
-        queryParams.push(params.subcategory_id);
+    if (params.product_min_weight != null) {
+      query += " AND ps.product_min_weight >= ?";
+      queryParams.push(params.product_min_weight);
     }
 
-    if (params.product_id) {
-        query += ' AND ps.product_id = ?';
-        queryParams.push(params.product_id);
+    if (params.product_max_weight != null && params.product_max_weight !== 0) {
+      query += " AND ps.product_max_weight <= ?";
+      queryParams.push(params.product_max_weight);
+    } else if (params.product_max_weight === 0) {
+      params.product_max_weight = null;
     }
+  }
 
-    if (params.currentPackingTypeId && params.currentPackingTypeId !== ALL_PACKAGING_TYPE_ID) {
-        query += ' AND ps.packing_type_id = ?';
-        queryParams.push(params.currentPackingTypeId);
-    }
+  if (params.category_id) {
+    query += " AND ps.product_category_id = ?";
+    queryParams.push(params.category_id);
+  }
 
-    query += ' ORDER BY ps.id';
-    return { query, queryParams };
+  if (params.subcategory_id) {
+    query += " AND p.sub_category_id = ?";
+    queryParams.push(params.subcategory_id);
+  }
+
+  if (params.product_id) {
+    query += " AND ps.product_id = ?";
+    queryParams.push(params.product_id);
+  }
+
+  if (
+    params.currentPackingTypeId &&
+    params.currentPackingTypeId !== ALL_PACKAGING_TYPE_ID
+  ) {
+    query += " AND ps.packing_type_id = ?";
+    queryParams.push(params.currentPackingTypeId);
+  }
+
+  query += " ORDER BY ps.id";
+  return { query, queryParams };
 };
 
-
 export const searchPackagingSolutionsController = async (req, res, next) => {
-    const connection = await pool.getConnection();
-    try {
-        await connection.beginTransaction();
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
 
-        const {
-            category_id,
-            subcategory_id,
-            product_id,
-            packing_type_id,
-            shelf_life_days,
-            product_min_weight,
-            product_max_weight
-        } = req.body;
+    const {
+      category_id,
+      subcategory_id,
+      product_id,
+      packing_type_id,
+      shelf_life_days,
+      product_min_weight,
+      product_max_weight,
+    } = req.body;
 
-        console.log(req.body)
+    console.log(req.body);
 
-        const userId = req.user.userId;
+    const userId = req.user.userId;
 
-        const currentPackingTypeId = packing_type_id || ALL_PACKAGING_TYPE_ID;
+    const currentPackingTypeId = packing_type_id || ALL_PACKAGING_TYPE_ID;
 
-        const searchParams = {
-            category_id,
-            subcategory_id,
-            product_id,
-            currentPackingTypeId,
-            shelf_life_days,
-            product_min_weight,
-            product_max_weight
-        };
+    const searchParams = {
+      category_id,
+      subcategory_id,
+      product_id,
+      currentPackingTypeId,
+      shelf_life_days,
+      product_min_weight,
+      product_max_weight,
+    };
 
-        const { query, queryParams } = buildSearchQuery(searchParams);
+    const { query, queryParams } = buildSearchQuery(searchParams);
 
-        const [rows] = await connection.query(query, queryParams);
+    const [rows] = await connection.query(query, queryParams);
 
-        if (!rows.length) {
-            throw new CustomError(404, 'No packaging solutions found');
-        }
-
-        const packagingSolutionIds = rows.map(row => row.id);
-
-        const existingPackingTypeIds = await checkExistingSearch(connection, userId, searchParams, packagingSolutionIds);
-
-        let creditDeducted = false;
-
-        if (currentPackingTypeId === ALL_PACKAGING_TYPE_ID) {
-            const newPackingTypes = rows.filter(row => !existingPackingTypeIds.includes(row.packing_type_id));
-            if (newPackingTypes.length > 0) {
-                await insertSearchHistory(connection, userId, newPackingTypes, searchParams, existingPackingTypeIds);
-                await deductCredit(connection, userId);
-                creditDeducted = true;
-            }
-        } else if (!existingPackingTypeIds.includes(currentPackingTypeId)) {
-            await deductCredit(connection, userId);
-            await insertSearchHistory(connection, userId, rows, searchParams, []);
-            creditDeducted = true;
-        }
-
-        await connection.commit();
-        let message = "Packaging solutions fetched successfully,";
-        if (creditDeducted) {
-            message += " -1 Credit deducted";
-        }
-
-        res.json(new ApiResponse(200, rows, message));
-
-    } catch (error) {
-        await connection.rollback();
-        next(new CustomError(500, error.message));
-    } finally {
-        connection.release();
+    if (!rows.length) {
+      throw new CustomError(404, "No packaging solutions found");
     }
+
+    const packagingSolutionIds = rows.map((row) => row.id);
+
+    const existingPackingTypeIds = await checkExistingSearch(
+      connection,
+      userId,
+      searchParams,
+      packagingSolutionIds
+    );
+
+    let creditDeducted = false;
+
+    if (currentPackingTypeId === ALL_PACKAGING_TYPE_ID) {
+      const newPackingTypes = rows.filter(
+        (row) => !existingPackingTypeIds.includes(row.packing_type_id)
+      );
+      if (newPackingTypes.length > 0) {
+        await insertSearchHistory(
+          connection,
+          userId,
+          newPackingTypes,
+          searchParams,
+          existingPackingTypeIds
+        );
+        await deductCredit(connection, userId);
+        creditDeducted = true;
+      }
+    } else if (!existingPackingTypeIds.includes(currentPackingTypeId)) {
+      await deductCredit(connection, userId);
+      await insertSearchHistory(connection, userId, rows, searchParams, []);
+      creditDeducted = true;
+    }
+
+    await connection.commit();
+    let message = "Packaging solutions fetched successfully,";
+    if (creditDeducted) {
+      message += " -1 Credit deducted";
+    }
+
+    res.json(new ApiResponse(200, rows, message));
+  } catch (error) {
+    await connection.rollback();
+    next(new CustomError(500, error.message));
+  } finally {
+    connection.release();
+  }
 };

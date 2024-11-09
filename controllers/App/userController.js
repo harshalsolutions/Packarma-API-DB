@@ -10,8 +10,8 @@ import { handleError } from "../../utils/ErrorHandler.js";
 import crypto from "crypto";
 dotenv.config();
 
-const generateToken = (userId) =>
-  jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
+const generateToken = (userId, email) =>
+  jwt.sign({ userId, email }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
 export const registerController = async (req, res, next) => {
   try {
@@ -147,7 +147,7 @@ export const authenticateFirebaseController = async (req, res, next) => {
       if (user.type === "normal") {
         throw new CustomError(400, "User already registered with normal login");
       } else {
-        const token = generateToken(user.user_id);
+        const token = generateToken(user.user_id, email);
         const { password: _, ...userWithoutPassword } = user;
         return res.json(
           new ApiResponse(
@@ -196,7 +196,7 @@ export const authenticateFirebaseController = async (req, res, next) => {
           [newReferralCodeId, userId]
         );
 
-        const token = generateToken(userId);
+        const token = generateToken(userId, email);
         await connection.commit();
         res
           .status(201)

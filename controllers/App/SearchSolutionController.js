@@ -208,26 +208,37 @@ const buildSearchQuery = (params) => {
         AND c.id = ?
         AND s.id = ?
         AND p.id = ?
-        AND ps.display_shelf_life_days = ?
-        AND (
-            ps.packing_type_id != 1 
-            OR (
-                ps.display_shelf_life_days = ? 
-                AND ps.product_min_weight >= ? 
-                AND ps.product_max_weight <= ?
-            )
-        )
     `;
 
   const queryParams = [
     params.category_id,
     params.subcategory_id,
     params.product_id,
-    params.shelf_life_days,
-    params.shelf_life_days,
-    params.product_min_weight,
-    params.product_max_weight,
   ];
+  console.log({ params });
+  if (params.currentPackingTypeId !== 4) {
+    if (params.currentPackingTypeId === 1) {
+      query +=
+        " AND ps.packing_type_id = ? AND ps.display_shelf_life_days = ? AND ps.product_min_weight >= ? AND ps.product_max_weight <= ?";
+      queryParams.push(
+        params.currentPackingTypeId,
+        params.shelf_life_days,
+        params.product_min_weight,
+        params.product_max_weight
+      );
+    } else {
+      query += " AND ps.packing_type_id = ?";
+      queryParams.push(params.currentPackingTypeId);
+    }
+  } else {
+    query +=
+      " AND (ps.packing_type_id != 1 OR (ps.display_shelf_life_days = ? AND ps.product_min_weight >= ? AND ps.product_max_weight <= ?))";
+    queryParams.push(
+      params.shelf_life_days,
+      params.product_min_weight,
+      params.product_max_weight
+    );
+  }
 
   query += " ORDER BY ps.id";
   return { query, queryParams };

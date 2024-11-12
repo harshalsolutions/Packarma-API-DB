@@ -248,13 +248,34 @@ const buildSearchQuery = (params) => {
       queryParams.push(params.currentPackingTypeId);
     }
   } else {
-    query +=
-      " AND (ps.packing_type_id != 1 OR (ps.display_shelf_life_days = ? AND ps.product_min_weight >= ? AND ps.product_max_weight <= ?))";
-    queryParams.push(
-      params.shelf_life_days,
-      params.product_min_weight,
-      params.product_max_weight
-    );
+    let count = 0;
+    if (params.shelf_life_days) {
+      query += "AND (ps.display_shelf_life_days >= ?";
+      queryParams.push(params.shelf_life_days);
+      count += 1;
+    }
+
+    if (params.product_min_weight === 0 && params.product_max_weight === 0) {
+      params.product_min_weight = null;
+      params.product_max_weight = null;
+    }
+
+    if (params.product_min_weight != null) {
+      query += " AND ps.product_min_weight >= ?";
+      queryParams.push(params.product_min_weight);
+      count += 1;
+    }
+
+    if (params.product_max_weight != null && params.product_max_weight !== 0) {
+      query += " AND ps.product_max_weight <= ?)";
+      queryParams.push(params.product_max_weight);
+      count += 1;
+    } else if (params.product_max_weight === 0) {
+      params.product_max_weight = null;
+    }
+    if (count === 3) {
+      query += " OR (ps.packing_type_id != 1)";
+    }
   }
 
   query += " ORDER BY ps.id";

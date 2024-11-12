@@ -266,7 +266,7 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
   try {
     await connection.beginTransaction();
 
-    const {
+    let {
       category_id,
       subcategory_id,
       product_id,
@@ -292,6 +292,8 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
 
     if (product_min_weight === 0) product_min_weight = null;
     if (product_max_weight === 0) product_max_weight = null;
+
+    console.log(searchParams);
 
     const { query, queryParams } = buildSearchQuery(searchParams);
 

@@ -230,7 +230,6 @@ const buildSearchQuery = (params) => {
   ];
 
   query += " ORDER BY ps.id";
-  console.log({ query, queryParams });
   return { query, queryParams };
 };
 

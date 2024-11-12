@@ -276,8 +276,6 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
       product_max_weight,
     } = req.body;
 
-    console.log(req.body);
-
     const userId = req.user.userId;
 
     const currentPackingTypeId = packing_type_id || ALL_PACKAGING_TYPE_ID;
@@ -291,6 +289,9 @@ export const searchPackagingSolutionsController = async (req, res, next) => {
       product_min_weight,
       product_max_weight,
     };
+
+    if (product_min_weight === 0) product_min_weight = null;
+    if (product_max_weight === 0) product_max_weight = null;
 
     const { query, queryParams } = buildSearchQuery(searchParams);
 

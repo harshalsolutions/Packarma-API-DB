@@ -23,7 +23,7 @@ export const getAllCustomerEnquiryController = async (req, res, next) => {
         let query = `
             SELECT sh.*,
             ps.name, ps.image, ps.structure_type, ps.sequence, ps.storage_condition_id, ps.display_shelf_life_days, ps.product_id, ps.product_category_id, ps.product_form_id, 
-            ps.packaging_treatment_id, ps.packing_type_id, pt.name AS packing_type_name, ps.packaging_machine_id, ps.packaging_material_id, ps.product_min_weight as original_product_min_weight, ps.product_max_weight as original_product_max_weight, 
+            ps.packaging_treatment_id, ps.packing_type_id, pt.name AS packing_treatement_name, ptt.name AS packing_type_name, ps.packaging_machine_id, ps.packaging_material_id, ps.product_min_weight as original_product_min_weight, ps.product_max_weight as original_product_max_weight, 
             ps.min_order_quantity, ps.min_order_quantity_unit_id, ps.status, 
             u.firstname, u.lastname,
             p.product_name, p.id AS product_id, c.name AS category_name, sc.id AS subcategory_id, sc.name AS subcategory_name, pf.name AS product_form_name, pt.name AS packaging_treatment_name
@@ -33,6 +33,7 @@ export const getAllCustomerEnquiryController = async (req, res, next) => {
             JOIN categories c ON p.category_id = c.id
             JOIN subcategories sc ON p.sub_category_id = sc.id
             JOIN product_form pf ON ps.product_form_id = pf.id
+            JOIN packing_type ptt ON ps.packing_type_id = ptt.id
             JOIN packaging_treatment pt ON ps.packaging_treatment_id = pt.id
             JOIN users u ON sh.user_id = u.user_id
             WHERE 1 = 1
@@ -46,6 +47,7 @@ export const getAllCustomerEnquiryController = async (req, res, next) => {
             JOIN categories c ON p.category_id = c.id
             JOIN subcategories sc ON p.sub_category_id = sc.id
             JOIN product_form pf ON ps.product_form_id = pf.id
+            JOIN packing_type ptt ON ps.packing_type_id = ptt.id
             JOIN packaging_treatment pt ON ps.packaging_treatment_id = pt.id
             JOIN users u ON sh.user_id = u.user_id
             WHERE 1 = 1
@@ -148,7 +150,7 @@ export const exportCustomerEnquiryController = async (req, res, next) => {
         let query = `
             SELECT sh.*,
             ps.name, ps.image, ps.structure_type, ps.sequence, ps.storage_condition_id, ps.display_shelf_life_days, ps.product_id, ps.product_category_id, ps.product_form_id, 
-            ps.packaging_treatment_id, ps.packing_type_id, pt.name AS packing_type_name, ps.packaging_machine_id, ps.packaging_material_id, ps.product_min_weight, ps.product_max_weight, 
+            ps.packaging_treatment_id, ps.packing_type_id, pt.name AS packing_treatement_name, ptt.name AS packing_type_name, ps.packaging_machine_id, ps.packaging_material_id, ps.product_min_weight as original_product_min_weight, ps.product_max_weight as original_product_max_weight, 
             ps.min_order_quantity, ps.min_order_quantity_unit_id, ps.status, 
             u.firstname, u.lastname,
             p.product_name, p.id AS product_id, c.name AS category_name, sc.id AS subcategory_id, sc.name AS subcategory_name, pf.name AS product_form_name, pt.name AS packaging_treatment_name
@@ -158,6 +160,7 @@ export const exportCustomerEnquiryController = async (req, res, next) => {
             JOIN categories c ON p.category_id = c.id
             JOIN subcategories sc ON p.sub_category_id = sc.id
             JOIN product_form pf ON ps.product_form_id = pf.id
+            JOIN packing_type ptt ON ps.packing_type_id = ptt.id
             JOIN packaging_treatment pt ON ps.packaging_treatment_id = pt.id
             JOIN users u ON sh.user_id = u.user_id
             WHERE 1 = 1
@@ -170,6 +173,7 @@ export const exportCustomerEnquiryController = async (req, res, next) => {
             JOIN product p ON ps.product_id = p.id
             JOIN categories c ON p.category_id = c.id
             JOIN subcategories sc ON p.sub_category_id = sc.id
+            JOIN product_form pf ON ps.product_form_id = pf.id
             JOIN product_form pf ON ps.product_form_id = pf.id
             JOIN packaging_treatment pt ON ps.packaging_treatment_id = pt.id
             JOIN users u ON sh.user_id = u.user_id
@@ -238,9 +242,9 @@ export const exportCustomerEnquiryController = async (req, res, next) => {
             product_name: invoice.product_name,
             category_name: invoice.category_name,
             subcategory_name: invoice.subcategory_name,
-            packaging_type_name: invoice.packaging_type_name,
+            packaging_type_name: invoice.packing_type_name,
             shelf_life: invoice.display_shelf_life_days,
-            product_weight: `${invoice.product_min_weight} - ${invoice.product_max_weight}`,
+            product_weight: `${invoice.original_product_min_weight} - ${invoice.original_product_max_weight}`,
             weight_by_user: invoice.weight_by_user,
             searchtime: formatDateTime(invoice.search_time),
         }));
@@ -257,7 +261,6 @@ export const exportCustomerEnquiryController = async (req, res, next) => {
             { header: 'Packaging Type Name', key: 'packaging_type_name', width: 30 },
             { header: 'Shelf Life', key: 'shelf_life', width: 20 },
             { header: 'Product Weight', key: 'product_weight', width: 20 },
-            { header: 'Weight by User', key: 'weight_by_user', width: 20 },
             { header: 'Search Time', key: 'searchtime', width: 20 },
         ];
 

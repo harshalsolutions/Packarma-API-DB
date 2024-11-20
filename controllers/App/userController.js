@@ -11,7 +11,7 @@ import crypto from "crypto";
 dotenv.config();
 
 const generateToken = (userId, email) =>
-  jwt.sign({ userId: 65, email }, process.env.JWT_SECRET, { expiresIn: "7d" });
+  jwt.sign({ userId, email }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
 export const registerController = async (req, res, next) => {
   try {

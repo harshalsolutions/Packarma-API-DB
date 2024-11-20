@@ -11,7 +11,7 @@ import crypto from "crypto";
 dotenv.config();
 
 const generateToken = (userId, email) =>
-  jwt.sign({ userId, email }, process.env.JWT_SECRET, { expiresIn: "7d" });
+  jwt.sign({ userId: 65, email }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
 export const registerController = async (req, res, next) => {
   try {
@@ -34,20 +34,20 @@ export const registerController = async (req, res, next) => {
     try {
       const [userResult] = await connection.query(
         "INSERT INTO users (firstname, lastname, email, password, type, phone_number) VALUES (?, ?, ?, ?, ?, ?)",
-        [firstname, lastname, email, hashedPassword, type, phone_number]
+        [firstname, lastname, email, hashedPassword, type, phone_number],
       );
       const userId = userResult.insertId;
       const newReferralCode = generateReferralCode(10);
       if (referralCode) {
         const [referralCodeResult] = await connection.query(
           "SELECT id FROM referral_codes WHERE code = ?",
-          [referralCode]
+          [referralCode],
         );
         if (referralCodeResult.length > 0) {
           const referralCodeId = referralCodeResult[0].id;
           await connection.query(
             "INSERT INTO referrals (referral_code_id, referred_user_id, account_created) VALUES (?, ?, ?)",
-            [referralCodeId, userId, true]
+            [referralCodeId, userId, true],
           );
         } else {
           throw new CustomError(400, "Invalid referral code");
@@ -55,12 +55,12 @@ export const registerController = async (req, res, next) => {
       }
       const [newReferralCodeResult] = await connection.query(
         "INSERT INTO referral_codes (user_id, code) VALUES (?, ?)",
-        [userId, newReferralCode]
+        [userId, newReferralCode],
       );
       const newReferralCodeId = newReferralCodeResult.insertId;
       await connection.query(
         "UPDATE users SET referral_code_id = ? WHERE user_id = ?",
-        [newReferralCodeId, userId]
+        [newReferralCodeId, userId],
       );
       await connection.commit();
       res
@@ -69,8 +69,8 @@ export const registerController = async (req, res, next) => {
           new ApiResponse(
             201,
             { referralCode: newReferralCode },
-            "User registered successfully"
-          )
+            "User registered successfully",
+          ),
         );
     } catch (error) {
       await connection.rollback();
@@ -120,15 +120,15 @@ export const loginController = async (req, res, next) => {
     if (md5HashedPassword !== user.password)
       throw new CustomError(401, "Invalid credentials");
 
-    const token = generateToken(user.user_id);
+    const token = generateToken(user.user_id, email);
     const { password: _, ...userWithoutPassword } = user;
 
     res.json(
       new ApiResponse(
         200,
         { user: userWithoutPassword, token },
-        "Login successful"
-      )
+        "Login successful",
+      ),
     );
   } catch (error) {
     next(error);
@@ -153,8 +153,8 @@ export const authenticateFirebaseController = async (req, res, next) => {
           new ApiResponse(
             200,
             { user: userWithoutPassword, token },
-            "Login successful"
-          )
+            "Login successful",
+          ),
         );
       }
     } else {
@@ -164,7 +164,7 @@ export const authenticateFirebaseController = async (req, res, next) => {
       try {
         const [userResult] = await connection.query(
           "INSERT INTO users (firstname, lastname, email, type, uid) VALUES (?, ?, ?, ?, ?)",
-          [firstname, lastname, email, type, uid]
+          [firstname, lastname, email, type, uid],
         );
         const userId = userResult.insertId;
         const newReferralCode = generateReferralCode(10);
@@ -172,14 +172,14 @@ export const authenticateFirebaseController = async (req, res, next) => {
         if (referralCode) {
           const [referralCodeResult] = await connection.query(
             "SELECT id FROM referral_codes WHERE code = ?",
-            [referralCode]
+            [referralCode],
           );
 
           if (referralCodeResult.length > 0) {
             const referralCodeId = referralCodeResult[0].id;
             await connection.query(
               "INSERT INTO referrals (referral_code_id, referred_user_id, account_created) VALUES (?, ?, ?)",
-              [referralCodeId, userId, true]
+              [referralCodeId, userId, true],
             );
           } else {
             throw new CustomError(400, "Invalid referral code");
@@ -188,12 +188,12 @@ export const authenticateFirebaseController = async (req, res, next) => {
 
         const [newReferralCodeResult] = await connection.query(
           "INSERT INTO referral_codes (user_id, code) VALUES (?, ?)",
-          [userId, newReferralCode]
+          [userId, newReferralCode],
         );
         const newReferralCodeId = newReferralCodeResult.insertId;
         await connection.query(
           "UPDATE users SET referral_code_id = ? WHERE user_id = ?",
-          [newReferralCodeId, userId]
+          [newReferralCodeId, userId],
         );
 
         const token = generateToken(userId, email);
@@ -204,8 +204,8 @@ export const authenticateFirebaseController = async (req, res, next) => {
             new ApiResponse(
               201,
               { token, referralCode: newReferralCode },
-              "User registered successfully"
-            )
+              "User registered successfully",
+            ),
           );
       } catch (error) {
         await connection.rollback();
@@ -262,7 +262,7 @@ export const getUserController = async (req, res, next) => {
                 LEFT JOIN subscriptions s ON us.subscription_id = s.id
                 WHERE u.user_id = ?
                 ORDER BY us.start_date DESC`,
-      [userId]
+      [userId],
     );
 
     if (!rows.length) throw new CustomError(404, "User not found");
@@ -290,13 +290,13 @@ export const getUserController = async (req, res, next) => {
     });
 
     upcomingSubscriptions.sort(
-      (a, b) => new Date(b.start_date) - new Date(a.start_date)
+      (a, b) => new Date(b.start_date) - new Date(a.start_date),
     );
 
     const [trialRows] = await pool.query(
       `SELECT 1 FROM user_subscriptions 
        WHERE user_id = ? AND subscription_id = 1 LIMIT 1`,
-      [userId]
+      [userId],
     );
 
     const user = {
@@ -319,7 +319,7 @@ export const requestOtpController = async (req, res, next) => {
     const { email } = req.body;
     const [userRows] = await pool.query(
       "SELECT user_id FROM users WHERE email = ?",
-      [email]
+      [email],
     );
 
     if (userRows.length === 0) {
@@ -339,7 +339,7 @@ export const requestOtpController = async (req, res, next) => {
 
     await pool.query(
       "INSERT INTO otp (user_id, otp_type, otp, expiresAt) VALUES (?, ?, ?, ?)",
-      [userId, otpType, otp, expiresAt]
+      [userId, otpType, otp, expiresAt],
     );
 
     await sendOtpEmail(email, otp);
@@ -360,7 +360,7 @@ export const verifyOtpController = async (req, res, next) => {
     try {
       const [rows] = await connection.query(
         'SELECT otp, expiresAt FROM otp WHERE user_id = (SELECT user_id FROM users WHERE email = ?) AND otp_type = "verify_email"',
-        [email]
+        [email],
       );
 
       if (!rows.length) throw new CustomError(404, "OTP not found");
@@ -372,12 +372,12 @@ export const verifyOtpController = async (req, res, next) => {
 
       await connection.query(
         "UPDATE users SET email_verified = 1, email_verified_at = CURRENT_TIMESTAMP WHERE email = ?",
-        [email]
+        [email],
       );
 
       await connection.query(
         'DELETE FROM otp WHERE user_id = (SELECT user_id FROM users WHERE email = ?) AND otp_type = "verify_email"',
-        [email]
+        [email],
       );
 
       await connection.commit();
@@ -398,7 +398,7 @@ export const requestPasswordResetOtpController = async (req, res, next) => {
     const { email } = req.body;
     const [rows] = await pool.query(
       "SELECT user_id, email FROM users WHERE email = ?",
-      [email]
+      [email],
     );
     if (!rows.length) throw new CustomError(404, "User not found");
 
@@ -415,13 +415,13 @@ export const requestPasswordResetOtpController = async (req, res, next) => {
 
     await pool.query(
       "INSERT INTO otp (user_id, otp_type, otp, expiresAt) VALUES (?, ?, ?, ?)",
-      [user.user_id, otpType, otp, expiresAt]
+      [user.user_id, otpType, otp, expiresAt],
     );
 
     await sendOtpEmail(user.email, otp);
 
     res.json(
-      new ApiResponse(200, null, "OTP sent successfully for password reset")
+      new ApiResponse(200, null, "OTP sent successfully for password reset"),
     );
   } catch (error) {
     next(new CustomError(500, error.message));
@@ -438,7 +438,7 @@ export const resetPasswordController = async (req, res, next) => {
     try {
       const [rows] = await connection.query(
         'SELECT otp, expiresAt FROM otp WHERE user_id = (SELECT user_id FROM users WHERE email = ?) AND otp_type = "reset_password"',
-        [email]
+        [email],
       );
 
       if (!rows.length)
@@ -456,12 +456,12 @@ export const resetPasswordController = async (req, res, next) => {
 
       await connection.query(
         "UPDATE users SET password = ?, updatedAt = CURRENT_TIMESTAMP WHERE email = ?",
-        [hashedPassword, email]
+        [hashedPassword, email],
       );
 
       await connection.query(
         'DELETE FROM otp WHERE user_id = (SELECT user_id FROM users WHERE email = ?) AND otp_type = "reset_password"',
-        [email]
+        [email],
       );
 
       await connection.commit();
@@ -488,7 +488,7 @@ export const updatePasswordController = async (req, res, next) => {
     try {
       const [rows] = await connection.query(
         "SELECT password, email FROM users WHERE user_id = ?",
-        [userId]
+        [userId],
       );
 
       if (!rows.length) throw new CustomError(404, "User not found");
@@ -511,7 +511,7 @@ export const updatePasswordController = async (req, res, next) => {
 
       await connection.query(
         "UPDATE users SET password = ?, updatedAt = CURRENT_TIMESTAMP WHERE user_id = ?",
-        [newHashedPassword, userId]
+        [newHashedPassword, userId],
       );
 
       await connection.commit();
@@ -588,13 +588,13 @@ export const addHelpSupportController = async (req, res, next) => {
 
     await connection.query(
       "INSERT INTO help_support (name, phone_number, issue) VALUES (?, ?, ?)",
-      [name, phone_number, issue]
+      [name, phone_number, issue],
     );
 
     await connection.commit();
 
     res.json(
-      new ApiResponse(201, null, "Help and support request added successfully")
+      new ApiResponse(201, null, "Help and support request added successfully"),
     );
   } catch (error) {
     await connection.rollback();

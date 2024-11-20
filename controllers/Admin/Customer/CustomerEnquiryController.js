@@ -29,8 +29,8 @@ export const getAllCustomerEnquiryController = async (req, res, next) => {
             u.firstname, u.lastname,
             p.product_name, p.id AS product_id, c.name AS category_name, sc.id AS subcategory_id, sc.name AS subcategory_name, pf.name AS product_form_name, pt.name AS packaging_treatment_name
             FROM search_history sh
-            LEFT JOIN packaging_solution ps ON sh.packaging_solution_id = ps.id
-            LEFT JOIN product p ON ps.product_id = p.id
+            JOIN packaging_solution ps ON sh.packaging_solution_id = ps.id
+            JOIN product p ON ps.product_id = p.id
             LEFT JOIN categories c ON p.category_id = c.id
             LEFT JOIN subcategories sc ON p.sub_category_id = sc.id
             LEFT JOIN product_form pf ON ps.product_form_id = pf.id

@@ -30,7 +30,7 @@ export const getAllCustomerEnquiryController = async (req, res, next) => {
             p.product_name, p.id AS product_id, c.name AS category_name, sc.id AS subcategory_id, sc.name AS subcategory_name, pf.name AS product_form_name, pt.name AS packaging_treatment_name
             FROM search_history sh
             JOIN packaging_solution ps ON sh.packaging_solution_id = ps.id
-            JOIN product p ON ps.product_id = p.id
+            LEFT JOIN product p ON ps.product_id = p.id
             LEFT JOIN categories c ON p.category_id = c.id
             LEFT JOIN subcategories sc ON p.sub_category_id = sc.id
             LEFT JOIN product_form pf ON ps.product_form_id = pf.id
@@ -43,7 +43,7 @@ export const getAllCustomerEnquiryController = async (req, res, next) => {
     let countQuery = `
             SELECT COUNT(*) as totalCount 
             FROM search_history sh
-            LEFT JOIN packaging_solution ps ON sh.packaging_solution_id = ps.id
+            JOIN packaging_solution ps ON sh.packaging_solution_id = ps.id
             LEFT JOIN product p ON ps.product_id = p.id
             LEFT JOIN categories c ON p.category_id = c.id
             LEFT JOIN subcategories sc ON p.sub_category_id = sc.id
@@ -172,13 +172,13 @@ export const exportCustomerEnquiryController = async (req, res, next) => {
             p.product_name, p.id AS product_id, c.name AS category_name, sc.id AS subcategory_id, sc.name AS subcategory_name, pf.name AS product_form_name, pt.name AS packaging_treatment_name
             FROM search_history sh
             JOIN packaging_solution ps ON sh.packaging_solution_id = ps.id
-            JOIN product p ON ps.product_id = p.id
-            JOIN categories c ON p.category_id = c.id
-            JOIN subcategories sc ON p.sub_category_id = sc.id
-            JOIN product_form pf ON ps.product_form_id = pf.id
-            JOIN packing_type ptt ON ps.packing_type_id = ptt.id
-            JOIN packaging_treatment pt ON ps.packaging_treatment_id = pt.id
-            JOIN users u ON sh.user_id = u.user_id
+            LEFT JOIN product p ON ps.product_id = p.id
+            LEFT JOIN categories c ON p.category_id = c.id
+            LEFT JOIN subcategories sc ON p.sub_category_id = sc.id
+            LEFT JOIN product_form pf ON ps.product_form_id = pf.id
+            LEFT JOIN packing_type ptt ON ps.packing_type_id = ptt.id
+            LEFT JOIN packaging_treatment pt ON ps.packaging_treatment_id = pt.id
+            LEFT JOIN users u ON sh.user_id = u.user_id
             WHERE 1 = 1
         `;
 
@@ -186,13 +186,13 @@ export const exportCustomerEnquiryController = async (req, res, next) => {
             SELECT COUNT(*) as totalCount 
             FROM search_history sh
             JOIN packaging_solution ps ON sh.packaging_solution_id = ps.id
-            JOIN product p ON ps.product_id = p.id
-            JOIN categories c ON p.category_id = c.id
-            JOIN subcategories sc ON p.sub_category_id = sc.id
-            JOIN product_form pf ON ps.product_form_id = pf.id
-            JOIN product_form pf ON ps.product_form_id = pf.id
-            JOIN packaging_treatment pt ON ps.packaging_treatment_id = pt.id
-            JOIN users u ON sh.user_id = u.user_id
+            LEFT JOIN product p ON ps.product_id = p.id
+            LEFT JOIN categories c ON p.category_id = c.id
+            LEFT JOIN subcategories sc ON p.sub_category_id = sc.id
+            LEFT JOIN product_form pf ON ps.product_form_id = pf.id
+            LEFT JOIN packing_type ptt ON ps.packing_type_id = ptt.id
+            LEFT JOIN packaging_treatment pt ON ps.packaging_treatment_id = pt.id
+            LEFT JOIN users u ON sh.user_id = u.user_id
             WHERE 1 = 1
         `;
 

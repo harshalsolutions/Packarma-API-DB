@@ -89,21 +89,25 @@ export const createCreditPriceController = async (req, res, next) => {
 export const updateCreditPriceController = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { price, percentage, currency, status, country } = req.body;
+    const fields = req.body;
+
+    if (Object.keys(fields).length === 0) {
+      throw new CustomError(400, "No fields provided to update");
+    }
+
+    const columns = Object.keys(fields)
+      .map((key) => `${key} = ?`)
+      .join(", ");
+    const values = Object.values(fields);
 
     const query = `
-            UPDATE credit_prices 
-            SET price = ?, percentage = ?, currency = ?, status = ?, country = ? , updatedAt = CURRENT_TIMESTAMP
-            WHERE id = ?
-        `;
-    const [result] = await pool.query(query, [
-      price,
-      percentage,
-      currency,
-      status,
-      country,
-      id,
-    ]);
+              UPDATE credit_prices 
+              SET ${columns}, updatedAt = CURRENT_TIMESTAMP
+              WHERE id = ?
+          `;
+    values.push(id);
+
+    const [result] = await pool.query(query, values);
 
     if (result.affectedRows === 0)
       throw new CustomError(404, "Credit Price not found");

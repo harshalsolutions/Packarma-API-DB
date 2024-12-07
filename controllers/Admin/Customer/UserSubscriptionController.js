@@ -35,6 +35,7 @@ export const getAllUserSubscriptionsController = async (req, res, next) => {
             ci.currency, 
             ci.invoice_link, 
             ci.transaction_id, 
+            ci.payment_id, 
             ci.invoice_date, 
             ci.createdAt AS invoice_createdAt, 
             ci.updatedAt AS invoice_updatedAt, 
@@ -76,7 +77,7 @@ export const getAllUserSubscriptionsController = async (req, res, next) => {
 
     if (name) {
       whereClauses.push(
-        `(u.firstname LIKE ? OR u.lastname LIKE ? OR u.email LIKE ?)`
+        `(u.firstname LIKE ? OR u.lastname LIKE ? OR u.email LIKE ?)`,
       );
       queryParams.push(`%${name}%`, `%${name}%`, `%${name}%`);
     }
@@ -116,7 +117,7 @@ export const getAllUserSubscriptionsController = async (req, res, next) => {
 
     const [totalCountResult] = await connection.query(
       countQuery,
-      queryParams.slice(0, -2)
+      queryParams.slice(0, -2),
     );
     const totalCount = totalCountResult[0].totalCount;
 
@@ -143,6 +144,7 @@ export const getAllUserSubscriptionsController = async (req, res, next) => {
         currency: invoice.currency,
         invoice_link: invoice.invoice_link,
         transaction_id: invoice.transaction_id,
+        payment_id: invoice.payment_id,
         invoice_date: invoice.invoice_date,
         product_details: {
           product_description: invoice.product_description,
@@ -180,7 +182,7 @@ export const getAllUserSubscriptionsController = async (req, res, next) => {
           totalItems: totalCount,
           itemsPerPage: Number(limit),
         },
-      })
+      }),
     );
   } catch (error) {
     console.log(error);
@@ -195,7 +197,7 @@ export const getAllUserSubscriptionsController = async (req, res, next) => {
 export const getFreeTrailSubscriptionDataController = async (
   req,
   res,
-  next
+  next,
 ) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
@@ -283,7 +285,7 @@ export const getFreeTrailSubscriptionDataController = async (
           totalItems: total,
           itemsPerPage: Number(limit),
         },
-      })
+      }),
     );
   } catch (error) {
     res
@@ -298,7 +300,7 @@ export const getAllSubscriptionController = async (req, res, next) => {
   const connection = await pool.getConnection();
   try {
     const [subscriptions] = await connection.query(
-      "SELECT * FROM subscriptions"
+      "SELECT * FROM subscriptions",
     );
     res.json(new ApiResponse(200, subscriptions));
   } catch (error) {
@@ -327,6 +329,7 @@ export const exportAllSubscriptionController = async (req, res, next) => {
             us.start_date,
             us.end_date,
             ci.transaction_id, 
+            ci.payment_id, 
             ci.invoice_link, 
             ci.invoice_date,
             ci.total_price, 
@@ -343,7 +346,7 @@ export const exportAllSubscriptionController = async (req, res, next) => {
 
     if (name) {
       whereClauses.push(
-        `(u.firstname LIKE ? OR u.lastname LIKE ? OR u.email LIKE ?)`
+        `(u.firstname LIKE ? OR u.lastname LIKE ? OR u.email LIKE ?)`,
       );
       queryParams.push(`%${name}%`, `%${name}%`, `%${name}%`);
     }
@@ -376,6 +379,7 @@ export const exportAllSubscriptionController = async (req, res, next) => {
       subscription_start_date: formatDateTime(subscription.start_date),
       subscription_end_date: formatDateTime(subscription.end_date),
       transaction_id: subscription.transaction_id,
+      payment_id: subscription.payment_id,
       invoice_link: (link ? link : "") + subscription.invoice_link,
       invoice_date: formatDateTime(subscription.invoice_date),
       total_price: subscription.total_price,
@@ -401,6 +405,7 @@ export const exportAllSubscriptionController = async (req, res, next) => {
         width: 20,
       },
       { header: "Transaction ID", key: "transaction_id", width: 30 },
+      { header: "Payment ID", key: "payment_id", width: 30 },
       { header: "Invoice Link", key: "invoice_link", width: 30 },
       { header: "Total Price", key: "total_price", width: 20 },
       { header: "Currency", key: "currency", width: 20 },
@@ -411,7 +416,7 @@ export const exportAllSubscriptionController = async (req, res, next) => {
 
     res.header(
       "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     );
     res.attachment(`user_subscriptions_${new Date().toISOString()}.xlsx`);
     await workbook.xlsx.write(res);

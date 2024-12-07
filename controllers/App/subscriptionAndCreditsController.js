@@ -14,7 +14,7 @@ export const modifyCredits = async (req, res, next) => {
     try {
       const [rows] = await connection.query(
         "SELECT credits FROM users WHERE user_id = ?",
-        [userId]
+        [userId],
       );
       if (!rows.length) throw new CustomError(404, "User not found");
 
@@ -23,7 +23,7 @@ export const modifyCredits = async (req, res, next) => {
 
       await connection.query(
         "UPDATE users SET credits = ?, updatedAt = CURRENT_TIMESTAMP WHERE user_id = ?",
-        [newCredits, userId]
+        [newCredits, userId],
       );
 
       await connection.query(
@@ -32,7 +32,7 @@ export const modifyCredits = async (req, res, next) => {
           userId,
           credits,
           description || (credits > 0 ? "Credit added" : "Credit deducted"),
-        ]
+        ],
       );
 
       await connection.commit();
@@ -40,8 +40,8 @@ export const modifyCredits = async (req, res, next) => {
         new ApiResponse(
           200,
           { credits: newCredits },
-          "Credits updated successfully"
-        )
+          "Credits updated successfully",
+        ),
       );
     } catch (error) {
       await connection.rollback();
@@ -62,15 +62,15 @@ export const getCreditHistory = async (req, res, next) => {
     try {
       const [rows] = await connection.query(
         "SELECT * FROM credit_history WHERE user_id = ? ORDER BY created_at DESC",
-        [userId]
+        [userId],
       );
       if (rows.length === 0) {
         return res.json(
-          new ApiResponse(404, null, "No credit history found for this user")
+          new ApiResponse(404, null, "No credit history found for this user"),
         );
       }
       res.json(
-        new ApiResponse(200, rows, "Credit history retrieved successfully")
+        new ApiResponse(200, rows, "Credit history retrieved successfully"),
       );
     } catch (error) {
       handleError(error, next);
@@ -81,32 +81,53 @@ export const getCreditHistory = async (req, res, next) => {
     handleError(error, next);
   }
 };
-
 export const getSubscriptionsController = async (req, res, next) => {
   try {
-    const query = `
-        SELECT s.id, s.type, s.credit_amount, s.duration, s.benefits, s.sequence, s.deleted_at, s.createdAt, s.updatedAt,
-               GROUP_CONCAT(CONCAT(ps.price, ':', ps.currency, ':', ps.status) SEPARATOR '|') AS prices
-        FROM subscriptions s
-        JOIN subscriptions_prices ps ON s.id = ps.subscription_id
-        GROUP BY s.id
-        ORDER BY s.sequence;
+    const subscriptionsQuery = `
+      SELECT id, type, credit_amount, duration, benefits, sequence, 
+             deleted_at, createdAt, updatedAt
+      FROM subscriptions
+      ORDER BY sequence;
     `;
 
-    const [rows] = await pool.query(query);
+    const [subscriptions] = await pool.query(subscriptionsQuery);
 
-    rows.map((row) => {
-      row.prices = row.prices.split("|").map((price) => {
-        const [priceValue, currency, status] = price.split(":");
-        return { price: priceValue, currency, status };
-      });
+    if (!subscriptions.length) {
+      throw new CustomError(404, "No subscriptions found");
+    }
 
-      row.benefits = row.benefits ? row.benefits.split("#") : [];
+    const pricesQuery = `
+      SELECT subscription_id, price, currency, status
+      FROM subscriptions_prices
+      WHERE subscription_id IN (?)
+    `;
+
+    const subscriptionIds = subscriptions.map((sub) => sub.id);
+    const [prices] = await pool.query(pricesQuery, [subscriptionIds]);
+
+    const processedSubscriptions = subscriptions.map((subscription) => {
+      const subscriptionPrices = prices
+        .filter((price) => price.subscription_id === subscription.id)
+        .map((price) => ({
+          price: price.price,
+          currency: price.currency,
+          status: price.status,
+        }));
+
+      return {
+        ...subscription,
+        prices: subscriptionPrices,
+        benefits: subscription.benefits ? subscription.benefits.split("#") : [],
+      };
     });
 
-    if (!rows.length) throw new CustomError(404, "No subscriptions found");
-
-    res.json(new ApiResponse(200, rows, "Subscriptions fetched successfully"));
+    res.json(
+      new ApiResponse(
+        200,
+        processedSubscriptions,
+        "Subscriptions fetched successfully",
+      ),
+    );
   } catch (error) {
     next(new CustomError(500, error.message));
   }
@@ -121,7 +142,7 @@ export const addFreeTrailController = async (req, res, next) => {
 
     const [subscriptionData] = await connection.query(
       `SELECT * FROM subscriptions WHERE id = ?`,
-      [1]
+      [1],
     );
     if (subscriptionData.length === 0) {
       throw new Error("Subscription not found");
@@ -131,7 +152,7 @@ export const addFreeTrailController = async (req, res, next) => {
 
     const [existingSubscriptions] = await connection.query(
       "SELECT end_date FROM user_subscriptions WHERE user_id = ? ORDER BY end_date DESC LIMIT 1",
-      [userId]
+      [userId],
     );
 
     let startDate = new Date();
@@ -148,7 +169,7 @@ export const addFreeTrailController = async (req, res, next) => {
 
     await connection.query(
       `INSERT INTO user_subscriptions (user_id, subscription_id, start_date, end_date) VALUES (?, ?, ?, ?)`,
-      [userId, 1, startDate, endDate]
+      [userId, 1, startDate, endDate],
     );
 
     await connection.commit();

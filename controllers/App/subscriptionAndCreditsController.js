@@ -99,7 +99,7 @@ export const getSubscriptionsController = async (req, res, next) => {
     const pricesQuery = `
       SELECT subscription_id, price, currency, status
       FROM subscriptions_prices
-      WHERE subscription_id IN (?)
+      WHERE subscription_id IN (?) AND status = 'active'
     `;
 
     const subscriptionIds = subscriptions.map((sub) => sub.id);

@@ -110,7 +110,7 @@ export const getSubscriptionsController = async (req, res, next) => {
         .filter((price) => price.subscription_id === subscription.id)
         .map((price) => ({
           price: price.price,
-          currency: price.currency,
+          currency: price.currency?.toString(),
           status: price.status,
         }));
 
